@@ -1,0 +1,31 @@
+ColumnLimit: 0
+
+UseTab: Never
+IndentWidth: 2
+AccessModifierOffset: -2
+NamespaceIndentation: None
+ShortNamespaceLines: 0
+
+AlignAfterOpenBracket: true
+PointerAlignment: Left
+AlignConsecutiveAssignments: None
+
+BreakBeforeBraces: Attach
+BreakBeforeBinaryOperators: NonAssignment
+BreakTemplateDeclarations: Yes
+BreakConstructorInitializers: BeforeColon
+PackConstructorInitializers: Never
+BinPackArguments: false
+BinPackParameters: true
+AllowShortBlocksOnASingleLine: Never
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+
+SpaceAfterCStyleCast: false
+
+IncludeBlocks: Preserve
+SortIncludes: Never

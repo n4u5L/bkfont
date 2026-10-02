@@ -1,0 +1,96 @@
+// Port source: third_party/blink/renderer/platform/fonts/font_variant_east_asian.h
+// Copyright 2017 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+#pragma once
+
+#include "wtf/forward.h"
+
+#include <cstdint>
+#include "wtf/text/wtf_string.h"
+
+namespace blink {
+
+class FontVariantEastAsian {
+
+public:
+  enum EastAsianForm {
+    kNormalForm,
+    kJis78,
+    kJis83,
+    kJis90,
+    kJis04,
+    kSimplified,
+    kTraditional
+    // Ensure |BitFields| has enough bits when adding values.
+  };
+  static String ToString(EastAsianForm);
+
+  enum EastAsianWidth {
+    kNormalWidth,
+    kFullWidth,
+    kProportionalWidth
+    // Ensure |BitFields| has enough bits when adding values.
+  };
+  static String ToString(EastAsianWidth);
+
+  FontVariantEastAsian()
+      : fields_as_unsigned_(0) {
+  }
+
+  static FontVariantEastAsian InitializeFromUnsigned(unsigned init_value) {
+    return FontVariantEastAsian(init_value);
+  }
+
+  EastAsianForm Form() const {
+    return static_cast<EastAsianForm>(fields_.form_);
+  }
+  EastAsianWidth Width() const {
+    return static_cast<EastAsianWidth>(fields_.width_);
+  }
+  bool Ruby() const {
+    return fields_.ruby_;
+  }
+
+  void SetForm(EastAsianForm form) {
+    fields_.form_ = form;
+  }
+  void SetWidth(EastAsianWidth width) {
+    fields_.width_ = width;
+  }
+  void SetRuby(bool ruby) {
+    fields_.ruby_ = ruby;
+  }
+
+  bool IsAllNormal() const {
+    return !fields_as_unsigned_;
+  }
+
+  bool operator==(const FontVariantEastAsian& other) const {
+    return fields_as_unsigned_ == other.fields_as_unsigned_;
+  }
+
+  String ToString() const;
+
+private:
+  FontVariantEastAsian(unsigned init_value)
+      : fields_as_unsigned_(init_value) {
+  }
+
+  struct BitFields {
+    unsigned form_ : 3;
+    unsigned width_ : 2;
+    unsigned ruby_ : 1;
+    // Ensure |FontDescription| has enough bits when adding values.
+  };
+
+  union {
+    BitFields fields_;
+    unsigned fields_as_unsigned_;
+  };
+
+  // Used in setVariant to store the value in m_fields.m_variantNumeric;
+  friend class FontDescription;
+};
+} // namespace blink
