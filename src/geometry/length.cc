@@ -29,14 +29,14 @@
 #include <array>
 #include <memory>
 #include <utility>
-#include "wtf/hash_map.h"
+#include "base/hash_map.h"
 
 #include "blend.h"
 #include "calculation_value.h"
-#include "wtf/allocator/allocator.h"
-#include "wtf/static_constructors.h"
-#include "wtf/text/string_builder.h"
-#include "wtf/wtf.h"
+#include "base/allocator/allocator.h"
+#include "base/static_constructors.h"
+#include "base/text/string_builder.h"
+#include "base/wtf.h"
 
 namespace blink {
 

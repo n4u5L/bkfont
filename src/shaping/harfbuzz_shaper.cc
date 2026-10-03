@@ -34,7 +34,7 @@
 #include <cstddef>
 #include <optional>
 #include "base/containers/span.h"
-#include "wtf/vector.h"
+#include "base/vector.h"
 #include "harfbuzz_shaper.h"
 
 #include <hb.h>
@@ -61,10 +61,10 @@
 #include "utf16_text_iterator.h"
 #include "runtime_enabled_features.h"
 #include "text/text_break_iterator.h"
-#include "wtf/deque.h"
-#include "wtf/math_extras.h"
-#include "wtf/text/string_builder.h"
-#include "wtf/text/unicode.h"
+#include "base/deque.h"
+#include "base/math_extras.h"
+#include "base/text/string_builder.h"
+#include "base/text/unicode.h"
 
 namespace blink {
 

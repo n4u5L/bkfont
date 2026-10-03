@@ -7,7 +7,7 @@
 
 #include "shaping/support/layout_unit.h"
 #include "platform_export.h"
-#include "wtf/math_extras.h"
+#include "base/math_extras.h"
 #include "shaping/support/gfx/geometry.h"
 
 #include <type_traits>

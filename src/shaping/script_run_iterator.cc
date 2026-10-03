@@ -7,7 +7,7 @@
 #include "script_run_iterator.h"
 #include "runtime_enabled_features.h"
 #include "text/character.h"
-#include "wtf/text/character_names.h"
+#include "base/text/character_names.h"
 
 namespace blink {
 

@@ -34,7 +34,7 @@
 #include "target_platform.h"
 #include "font_family_names.h"
 #include "font_description.h"
-#include "wtf/text/atomic_string.h"
+#include "base/text/atomic_string.h"
 
 namespace blink {
 

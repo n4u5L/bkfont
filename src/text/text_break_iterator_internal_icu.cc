@@ -23,9 +23,9 @@
 #include "text_break_iterator_internal_icu.h"
 
 #include "language.h"
-#include "wtf/std_lib_extras.h"
-#include "wtf/text/atomic_string.h"
-#include "wtf/text/wtf_string.h"
+#include "base/std_lib_extras.h"
+#include "base/text/atomic_string.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

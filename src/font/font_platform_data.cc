@@ -23,7 +23,7 @@
 #include "shaping/harfbuzz_face.h"
 #include <cstring>
 #include <cmath>
-#include "wtf/math_extras.h"
+#include "base/math_extras.h"
 #include "font_cache.h"
 #include "runtime_enabled_features.h"
 namespace blink {

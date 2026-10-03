@@ -32,9 +32,9 @@
 #pragma once
 
 #include "target_platform.h"
-#include "wtf/text/atomic_string.h"
-#include "wtf/text/case_folding_hash.h"
-#include "wtf/text/string_hasher.h"
+#include "base/text/atomic_string.h"
+#include "base/text/case_folding_hash.h"
+#include "base/text/string_hasher.h"
 
 #include <optional>
 
@@ -157,7 +157,7 @@ private:
 #if defined(ADDRESS_SANITIZER) || BUILDFLAG(IS_QTWEBENGINE)
   // We put the `std::string` behind an optional as ASAN counter checks require
   // that we properly call constructors and destructors for all strings. This is
-  // not the case when `FontFaceCreationParams` is used in `WTF::HashMap` as key
+  // not the case when `FontFaceCreationParams` is used in `blink::HashMap` as key
   // where we also cosntruct empty and deleted values that are never properly
   // destroyed.
   //

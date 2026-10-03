@@ -14,7 +14,7 @@
 #include "support/font_test_helpers.h"
 #include "text/tab_size.h"
 #include "text/text_direction.h"
-#include "wtf/text/string_view.h"
+#include "base/text/string_view.h"
 
 using blink::test::CreateTestFont;
 

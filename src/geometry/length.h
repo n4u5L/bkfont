@@ -33,9 +33,9 @@
 #include "evaluation_input.h"
 #include "shaping/support/layout_unit.h"
 #include "platform_export.h"
-#include "wtf/allocator/allocator.h"
-#include "wtf/forward.h"
-#include "wtf/math_extras.h"
+#include "base/allocator/allocator.h"
+#include "base/forward.h"
+#include "base/math_extras.h"
 
 namespace blink {
 
@@ -469,7 +469,7 @@ public:
 
   static wtf_size_t GetCalcHandleMapSizeForTest();
 
-  WTF::String ToString() const;
+  blink::String ToString() const;
 
   unsigned GetHash() const;
 

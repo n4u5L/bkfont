@@ -1,6 +1,6 @@
 // Port source: third_party/blink/renderer/platform/fonts/font_family_names.json5
 #pragma once
-#include "wtf/text/atomic_string.h"
+#include "base/text/atomic_string.h"
 namespace blink::font_family_names {
 extern const AtomicString& kWebkitStandard;
 extern const AtomicString& kSystemUi;

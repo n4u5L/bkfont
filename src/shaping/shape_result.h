@@ -35,7 +35,7 @@
 #include <cstdint>
 #include "base/containers/span.h"
 #include "base/types/strong_alias.h"
-#include "wtf/vector.h"
+#include "base/vector.h"
 #include <memory>
 
 #include <span>
@@ -49,10 +49,10 @@
 
 #include "text/text_direction.h"
 
-#include "wtf/hash_set.h"
-#include "wtf/ref_counted.h"
-#include "wtf/vector_traits.h"
-#include "wtf/text/wtf_uchar.h"
+#include "base/hash_set.h"
+#include "base/ref_counted.h"
+#include "base/vector_traits.h"
+#include "base/text/wtf_uchar.h"
 #include "shaping/support/gfx/geometry.h"
 
 #if defined(ARCH_CPU_X86_64) || defined(ARCH_CPU_ARM64)
@@ -556,5 +556,5 @@ std::ostream& operator<<(std::ostream&, const ShapeResult&);
 
 } // namespace blink
 
-WTF_ALLOW_MOVE_INIT_AND_COMPARE_WITH_MEM_FUNCTIONS(
+BASE_ALLOW_MOVE_INIT_AND_COMPARE_WITH_MEM_FUNCTIONS(
     blink::ShapeResultCharacterData)

@@ -6,10 +6,10 @@
 #pragma once
 
 #include "shaping/font_features.h"
-#include "wtf/vector.h"
+#include "base/vector.h"
 
 #include <cstdint>
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

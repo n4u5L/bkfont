@@ -26,8 +26,8 @@
 
 #include <span>
 
-#include "wtf/text/character_names.h"
-#include "wtf/text/wtf_string.h"
+#include "base/text/character_names.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

@@ -8,7 +8,7 @@
 #include "gtest/gtest.h"
 #include "initialize.h"
 #include "language.h"
-#include "wtf/text/atomic_string.h"
+#include "base/text/atomic_string.h"
 
 int main(int argc, char** argv) {
   UErrorCode error = U_ZERO_ERROR;

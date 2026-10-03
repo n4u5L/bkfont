@@ -6,7 +6,7 @@
 #include "palette_interpolation.h"
 
 #include "open_type_cpal_lookup.h"
-#include "wtf/math_extras.h"
+#include "base/math_extras.h"
 
 #include "platform/font_face.h"
 #include "font_table_harfbuzz.h"

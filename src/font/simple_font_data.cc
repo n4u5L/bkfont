@@ -45,10 +45,10 @@
 #include "shaping/harfbuzz_shaper.h"
 #include "shaping/ng_shape_cache.h"
 #include "runtime_enabled_features.h"
-#include "wtf/allocator/partitions.h"
-#include "wtf/math_extras.h"
-#include "wtf/text/character_names.h"
-#include "wtf/text/unicode.h"
+#include "base/allocator/partitions.h"
+#include "base/math_extras.h"
+#include "base/text/character_names.h"
+#include "base/text/unicode.h"
 #include "shaping/support/gfx/geometry/rect_f.h"
 
 namespace blink {

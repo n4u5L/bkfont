@@ -26,10 +26,10 @@
 
 #pragma once
 
-#include "wtf/vector.h"
-#include "wtf/text/character_names.h"
-#include "wtf/text/wtf_string.h"
-#include "wtf/text/wtf_uchar.h"
+#include "base/vector.h"
+#include "base/text/character_names.h"
+#include "base/text/wtf_string.h"
+#include "base/text/wtf_uchar.h"
 
 namespace blink {
 

@@ -45,9 +45,9 @@
 #include "font_fallback_priority.h"
 #include "runtime_enabled_features.h"
 #include "text/icu_error.h"
-#include "wtf/hash_map.h"
-#include "wtf/text/string_hash.h"
-#include "wtf/text/wtf_string.h"
+#include "base/hash_map.h"
+#include "base/text/string_hash.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

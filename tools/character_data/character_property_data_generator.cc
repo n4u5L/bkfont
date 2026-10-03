@@ -518,7 +518,7 @@ private:
     fprintf(fp,
             "#include <cstdint>\n"
             "#include "
-            "\"wtf/text/wtf_uchar.h\"\n"
+            "\"base/text/wtf_uchar.h\"\n"
             "\nnamespace {\n\n");
 
     fprintf(fp, "inline constexpr UChar kFastLineBreakMinChar = 0x%02X;\n", kMinChar);

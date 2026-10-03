@@ -31,10 +31,10 @@
 
 #pragma once
 
-#include "wtf/hash_map.h"
-#include "wtf/text/atomic_string.h"
-#include "wtf/text/atomic_string_hash.h"
-#include "wtf/vector.h"
+#include "base/hash_map.h"
+#include "base/text/atomic_string.h"
+#include "base/text/atomic_string_hash.h"
+#include "base/vector.h"
 
 #include <unicode/uscript.h>
 

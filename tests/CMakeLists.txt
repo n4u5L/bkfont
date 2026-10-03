@@ -65,33 +65,33 @@ target_sources(blink_fonts_tests PRIVATE
   text/layout_locale_test.cc
   text/text_break_iterator_test.cc
   text/text_run_test.cc
-  wtf/casting_test.cc
-  wtf/deque_test.cc
-  wtf/dtoa_test.cc
-  wtf/hash_map_test.cc
-  wtf/hash_set_test.cc
-  wtf/linked_hash_set_test.cc
-  wtf/math_extras_test.cc
-  wtf/type_traits_test.cc
-  wtf/vector_backed_linked_list_test.cc
-  wtf/vector_test.cc
-  wtf/allocator/allocator_test.cc
-  wtf/allocator/partitions_test.cc
-  wtf/text/ascii_ctype_test.cc
-  wtf/text/atomic_string_table_test.cc
-  wtf/text/atomic_string_test.cc
-  wtf/text/case_map_test.cc
-  wtf/text/code_point_iterator_test.cc
-  wtf/text/integer_to_string_conversion_test.cc
-  wtf/text/strcat_test.cc
-  wtf/text/string_buffer_test.cc
-  wtf/text/string_builder_test.cc
-  wtf/text/string_hasher_test.cc
-  wtf/text/string_impl_test.cc
-  wtf/text/string_to_number_test.cc
-  wtf/text/string_view_test.cc
-  wtf/text/text_offset_map_test.cc
-  wtf/text/wtf_string_test.cc)
+  base/casting_test.cc
+  base/deque_test.cc
+  base/dtoa_test.cc
+  base/hash_map_test.cc
+  base/hash_set_test.cc
+  base/linked_hash_set_test.cc
+  base/math_extras_test.cc
+  base/type_traits_test.cc
+  base/vector_backed_linked_list_test.cc
+  base/vector_test.cc
+  base/allocator/allocator_test.cc
+  base/allocator/partitions_test.cc
+  base/text/ascii_ctype_test.cc
+  base/text/atomic_string_table_test.cc
+  base/text/atomic_string_test.cc
+  base/text/case_map_test.cc
+  base/text/code_point_iterator_test.cc
+  base/text/integer_to_string_conversion_test.cc
+  base/text/strcat_test.cc
+  base/text/string_buffer_test.cc
+  base/text/string_builder_test.cc
+  base/text/string_hasher_test.cc
+  base/text/string_impl_test.cc
+  base/text/string_to_number_test.cc
+  base/text/string_view_test.cc
+  base/text/text_offset_map_test.cc
+  base/text/wtf_string_test.cc)
 target_include_directories(blink_fonts_tests PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}"
   "${CMAKE_CURRENT_SOURCE_DIR}/support"

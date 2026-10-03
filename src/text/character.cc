@@ -41,9 +41,9 @@
 #include "base/synchronization/lock.h"
 #include "character_property_data.h"
 #include "icu_error.h"
-#include "wtf/std_lib_extras.h"
-#include "wtf/text/string_builder.h"
-#include "wtf/text/unicode.h"
+#include "base/std_lib_extras.h"
+#include "base/text/string_builder.h"
+#include "base/text/unicode.h"
 
 namespace blink {
 

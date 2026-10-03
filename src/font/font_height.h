@@ -9,7 +9,7 @@
 #include "shaping/support/layout_unit.h"
 
 #include <cstdint>
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

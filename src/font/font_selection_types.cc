@@ -26,7 +26,7 @@
 
 #include "font_selection_types.h"
 
-#include "wtf/text/string_hasher.h"
+#include "base/text/string_hasher.h"
 
 #include "base/containers/span.h"
 namespace blink {

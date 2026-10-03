@@ -30,8 +30,8 @@
 #include "text/text_break_iterator.h"
 #include "text/text_run.h"
 
-#include "wtf/text/atomic_string.h"
-#include "wtf/vector.h"
+#include "base/text/atomic_string.h"
+#include "base/vector.h"
 
 #if BUILDFLAG(IS_ANDROID)
 #include "base/android/build_info.h"

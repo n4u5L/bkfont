@@ -32,8 +32,8 @@
 #pragma once
 #include "font_platform_data.h"
 #include "simple_font_data.h"
-#include "wtf/hash_map.h"
-#include "wtf/linked_hash_set.h"
+#include "base/hash_map.h"
+#include "base/linked_hash_set.h"
 namespace blink {
 struct FontDataCacheKeyHashTraits : GenericHashTraits<std::shared_ptr<const FontPlatformData>> {
   static unsigned GetHash(const std::shared_ptr<const FontPlatformData>& data) {

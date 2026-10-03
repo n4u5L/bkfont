@@ -28,13 +28,13 @@
 
 #include <algorithm>
 
-#include "wtf/hash_table_deleted_value_type.h"
-#include "wtf/hash_traits.h"
-#include "wtf/math_extras.h"
-#include "wtf/text/wtf_string.h"
+#include "base/hash_table_deleted_value_type.h"
+#include "base/hash_traits.h"
+#include "base/math_extras.h"
+#include "base/text/wtf_string.h"
 
 #include <cstdint>
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

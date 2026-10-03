@@ -6,9 +6,9 @@
 #pragma once
 
 #include <memory>
-#include "wtf/text/atomic_string.h"
-#include "wtf/text/string_builder.h"
-#include "wtf/vector.h"
+#include "base/text/atomic_string.h"
+#include "base/text/string_builder.h"
+#include "base/vector.h"
 
 namespace blink {
 

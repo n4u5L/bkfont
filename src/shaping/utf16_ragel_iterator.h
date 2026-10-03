@@ -14,7 +14,7 @@
 #include "text/emoji_segmentation_category.h"
 #include "text/emoji_segmentation_category_inline_header.h"
 
-#include "wtf/text/character_names.h"
+#include "base/text/character_names.h"
 
 namespace blink {
 

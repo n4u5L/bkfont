@@ -18,11 +18,11 @@
 #include "language.h"
 #include "icu_error.h"
 #include "locale_to_script_mapping.h"
-#include "wtf/hash_map.h"
-#include "wtf/hash_set.h"
-#include "wtf/text/atomic_string_hash.h"
-#include "wtf/text/case_folding_hash.h"
-#include "wtf/thread_specific.h"
+#include "base/hash_map.h"
+#include "base/hash_set.h"
+#include "base/text/atomic_string_hash.h"
+#include "base/text/case_folding_hash.h"
+#include "base/thread_specific.h"
 
 namespace blink {
 

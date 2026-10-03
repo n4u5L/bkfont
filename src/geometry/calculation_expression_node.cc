@@ -13,7 +13,7 @@
 #include "length.h"
 #include "length_functions.h"
 #include "math_functions.h"
-#include "wtf/math_extras.h"
+#include "base/math_extras.h"
 
 namespace blink {
 
@@ -220,7 +220,7 @@ CalculationExpressionOperationNode::CreateSimplified(Children&& children,
     auto* number = DynamicTo<CalculationExpressionNumberNode>(*children[0]);
     if (number) {
       return std::make_shared<CalculationExpressionNumberNode>(
-          1.0 / number->Value());
+          static_cast<float>(1.0 / number->Value()));
     }
     return std::make_shared<CalculationExpressionOperationNode>(
         Children({std::move(children[0])}),

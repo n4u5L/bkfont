@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 String To16Bit(std::string_view text);

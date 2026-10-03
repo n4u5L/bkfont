@@ -30,14 +30,14 @@
 
 #include <memory>
 #include "base/hash/hash.h"
-#include "wtf/hash_map.h"
+#include "base/hash_map.h"
 #include "shape_result.h"
 
 #include "runtime_enabled_features.h"
 #include "text/text_direction.h"
-#include "wtf/hash_functions.h"
-#include "wtf/hash_table_deleted_value_type.h"
-#include "wtf/text/wtf_string.h"
+#include "base/hash_functions.h"
+#include "base/hash_table_deleted_value_type.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

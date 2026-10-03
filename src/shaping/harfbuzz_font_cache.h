@@ -4,8 +4,8 @@
 #pragma once
 #include <cstdint>
 #include <memory>
-#include "wtf/hash_map.h"
-#include "wtf/hash_traits.h"
+#include "base/hash_map.h"
+#include "base/hash_traits.h"
 
 namespace blink {
 class FontPlatformData;

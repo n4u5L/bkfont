@@ -5,7 +5,7 @@
 
 #include "font_variant_east_asian.h"
 
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

@@ -7,7 +7,7 @@
 
 #include <memory>
 #include "base/containers/span.h"
-#include "wtf/forward.h"
+#include "base/forward.h"
 #include "glyph_data.h"
 
 namespace blink {

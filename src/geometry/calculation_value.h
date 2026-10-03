@@ -35,7 +35,7 @@
 #include "base/types/pass_key.h"
 #include "length.h"
 #include "length_functions.h"
-#include "wtf/allocator/allocator.h"
+#include "base/allocator/allocator.h"
 
 namespace blink {
 

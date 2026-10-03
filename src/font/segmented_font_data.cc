@@ -27,7 +27,7 @@
 #include "segmented_font_data.h"
 
 #include "simple_font_data.h"
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

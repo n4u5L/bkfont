@@ -83,7 +83,10 @@ float FontMetrics::FloatAscentInternal(
     // in TrueType AAT.
     return float_ascent_ * 0.5f;
   case kHangingBaseline:
-    if (hanging_baseline_position_.has_value(), apply_baseline_table) {
+    // Upstream uses the comma operator here, so only `apply_baseline_table`
+    // decides the branch. Kept as-is; the cast only silences C4834.
+    if (static_cast<void>(hanging_baseline_position_.has_value()),
+        apply_baseline_table) {
       return float_ascent_ - hanging_baseline_position_.value();
     }
     return float_ascent_ * 0.2f;

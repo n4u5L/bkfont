@@ -41,7 +41,7 @@
 #include "palette_interpolation.h"
 #include "web_font_decoder.h"
 #include "runtime_enabled_features.h"
-#include "wtf/wtf_size_t.h"
+#include "base/wtf_size_t.h"
 
 #include <hb.h>
 #include <memory>

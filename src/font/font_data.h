@@ -27,12 +27,12 @@
 #pragma once
 
 #include <memory>
-#include "wtf/forward.h"
-#include "wtf/text/wtf_uchar.h"
+#include "base/forward.h"
+#include "base/text/wtf_uchar.h"
 
 #include <memory>
 #include <cmath>
-#include "wtf/vector.h"
+#include "base/vector.h"
 
 namespace blink {
 

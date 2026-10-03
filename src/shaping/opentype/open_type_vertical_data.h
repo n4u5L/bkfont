@@ -30,8 +30,8 @@
 #include <memory>
 #include "font/glyph.h"
 
-#include "wtf/hash_map.h"
-#include "wtf/vector.h"
+#include "base/hash_map.h"
+#include "base/vector.h"
 
 namespace blink {
 class FontPlatformData;

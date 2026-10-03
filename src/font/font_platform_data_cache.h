@@ -33,7 +33,7 @@
 #include "font_cache_key.h"
 
 #include <memory>
-#include "wtf/hash_map.h"
+#include "base/hash_map.h"
 namespace blink {
 
 enum class AlternateFontName;

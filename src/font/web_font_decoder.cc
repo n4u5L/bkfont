@@ -36,7 +36,7 @@
 #include <memory>
 
 #include "font_cache.h"
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 #include <ots-memory-stream.h>
 
 namespace blink {

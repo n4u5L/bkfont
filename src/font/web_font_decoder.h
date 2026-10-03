@@ -31,7 +31,7 @@
 
 #pragma once
 
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 #include <span>
 #include "platform/font_face.h"
 

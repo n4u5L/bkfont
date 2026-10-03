@@ -27,8 +27,8 @@
 #pragma once
 
 #include "platform_export.h"
-#include "wtf/forward.h"
-#include "wtf/vector.h"
+#include "base/forward.h"
+#include "base/vector.h"
 
 namespace blink {
 

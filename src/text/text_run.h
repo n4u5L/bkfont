@@ -27,9 +27,9 @@
 #include "base/containers/span.h"
 #include "platform_export.h"
 #include "text_direction.h"
-#include "wtf/allocator/allocator.h"
-#include "wtf/text/string_view.h"
-#include "wtf/text/wtf_string.h"
+#include "base/allocator/allocator.h"
+#include "base/text/string_view.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

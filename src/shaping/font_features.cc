@@ -7,7 +7,7 @@
 #include <utility>
 #include <hb.h>
 #include "base/containers/span.h"
-#include "wtf/vector.h"
+#include "base/vector.h"
 #include "font_features.h"
 #include "font/font_description.h"
 

@@ -28,7 +28,7 @@
 
 #include "font_family_names.h"
 #include "font_cache.h"
-#include "wtf/text/string_builder.h"
+#include "base/text/string_builder.h"
 
 namespace blink {
 

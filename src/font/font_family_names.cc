@@ -1,7 +1,7 @@
 // Port source: third_party/blink/renderer/platform/fonts/font_family_names.json5
-// Initialization mirrors Blink generated names; call after WTF::Initialize.
+// Initialization mirrors Blink generated names; call after blink::Initialize.
 #include "font_family_names.h"
-#include "wtf/static_constructors.h"
+#include "base/static_constructors.h"
 #include <new>
 namespace blink::font_family_names {
 DEFINE_GLOBAL(, AtomicString, kWebkitStandard);

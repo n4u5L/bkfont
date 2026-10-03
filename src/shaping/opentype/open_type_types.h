@@ -28,7 +28,7 @@
 #include <cstddef>
 #include <cstdint>
 #include "base/numerics/byte_conversions.h"
-#include "wtf/vector.h"
+#include "base/vector.h"
 
 namespace blink {
 namespace open_type {

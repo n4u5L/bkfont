@@ -40,9 +40,9 @@
 #include "harfbuzz_font_cache.h"
 #include "runtime_enabled_features.h"
 #include "text/character.h"
-#include "wtf/text/character_names.h"
-#include "wtf/vector.h"
-#include "wtf/math_extras.h"
+#include "base/text/character_names.h"
+#include "base/vector.h"
+#include "base/math_extras.h"
 #include "font/font_table_harfbuzz.h"
 
 namespace blink {

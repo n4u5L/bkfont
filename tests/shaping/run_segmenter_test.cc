@@ -8,9 +8,9 @@
 #include "string"
 #include "gtest/gtest.h"
 #include "shaping/orientation_iterator.h"
-#include "wtf/text/string_builder.h"
-#include "wtf/text/wtf_string.h"
-#include "wtf/vector.h"
+#include "base/text/string_builder.h"
+#include "base/text/wtf_string.h"
+#include "base/vector.h"
 
 namespace blink {
 

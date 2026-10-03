@@ -41,8 +41,8 @@
 #include "glyph.h"
 #include "shaping/han_kerning.h"
 #include "typesetting_features.h"
-#include "wtf/casting.h"
-#include "wtf/text/string_hash.h"
+#include "base/casting.h"
+#include "base/text/string_hash.h"
 #include "shaping/support/gfx/geometry/rect_f.h"
 
 #if BUILDFLAG(IS_APPLE)

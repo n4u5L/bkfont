@@ -30,13 +30,13 @@
 #include "font_cache_client.h"
 #include "font_fallback_priority.h"
 #include "font_invalidation_reason.h"
-#include "wtf/forward.h"
-#include "wtf/text/atomic_string.h"
+#include "base/forward.h"
+#include "base/text/atomic_string.h"
 
 #include <memory>
 #include <span>
-#include "wtf/vector.h"
-#include "wtf/hash_map.h"
+#include "base/vector.h"
+#include "base/hash_map.h"
 namespace blink {
 
 class ExecutionContext;

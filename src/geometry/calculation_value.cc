@@ -80,12 +80,13 @@ std::shared_ptr<const CalculationValue> CalculationValue::Blend(
           CalculationExpressionOperationNode::Children(
               {from.GetOrCreateExpression(),
                std::make_shared<CalculationExpressionNumberNode>(
-                   1.0 - progress)}),
+                   static_cast<float>(1.0 - progress))}),
           CalculationOperator::kMultiply);
   const auto blended_to = CalculationExpressionOperationNode::CreateSimplified(
       CalculationExpressionOperationNode::Children(
           {GetOrCreateExpression(),
-           std::make_shared<CalculationExpressionNumberNode>(progress)}),
+           std::make_shared<CalculationExpressionNumberNode>(
+               static_cast<float>(progress))}),
       CalculationOperator::kMultiply);
   const auto result_expression =
       CalculationExpressionOperationNode::CreateSimplified(

@@ -8,7 +8,7 @@
 #include <optional>
 
 #include <cstdint>
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

@@ -36,8 +36,8 @@
 #include "base/numerics/clamped_math.h"
 #include "base/numerics/safe_conversions.h"
 #include "build/build_config.h"
-#include "wtf/forward.h"
-#include "wtf/vector_traits.h"
+#include "base/forward.h"
+#include "base/vector_traits.h"
 #include <climits>
 #include <iosfwd>
 #include <limits>
@@ -359,7 +359,7 @@ public:
     return NullOptIf(Min());
   }
 
-  WTF::String ToString() const;
+  blink::String ToString() const;
 
 private:
 #if defined(ARCH_CPU_ARM_FAMILY) && defined(ARCH_CPU_32_BITS) && defined(COMPILER_GCC) && __OPTIMIZE__
@@ -864,4 +864,4 @@ std::ostream& operator<<(
 
 } // namespace blink
 
-WTF_ALLOW_MOVE_INIT_AND_COMPARE_WITH_MEM_FUNCTIONS(blink::LayoutUnit)
+BASE_ALLOW_MOVE_INIT_AND_COMPARE_WITH_MEM_FUNCTIONS(blink::LayoutUnit)

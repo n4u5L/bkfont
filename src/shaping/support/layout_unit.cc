@@ -8,8 +8,8 @@
 
 #include <ostream>
 
-#include "wtf/text/strcat.h"
-#include "wtf/text/wtf_string.h"
+#include "base/text/strcat.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

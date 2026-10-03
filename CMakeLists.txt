@@ -97,77 +97,76 @@ target_sources(blink_fonts PRIVATE
   include/base/types/supports_ostream_operator.h
   include/base/types/to_address.h
   include/base/types/zip.h
+  include/base/casting.h
+  include/base/deque.h
+  include/base/dtoa.h
+  include/base/dynamic_annotations.h
+  include/base/forward.h
+  include/base/get_ptr.h
+  include/base/hash_functions.h
+  include/base/hash_map.h
+  include/base/hash_set.h
+  include/base/hash_table.h
+  include/base/hash_table_deleted_value_type.h
+  include/base/hash_traits.h
+  include/base/key_value_pair.h
+  include/base/leak_annotations.h
+  include/base/linked_hash_set.h
+  include/base/math_extras.h
+  include/base/ref_counted.h
+  include/base/sanitizers.h
+  include/base/stack_util.h
+  include/base/static_constructors.h
+  include/base/std_lib_extras.h
+  include/base/thread_safe_ref_counted.h
+  include/base/thread_specific.h
+  include/base/threading.h
+  include/base/type_traits.h
+  include/base/vector.h
+  include/base/vector_backed_linked_list.h
+  include/base/vector_traits.h
+  include/base/wtf.h
+  include/base/wtf_size_t.h
+  include/base/allocator/allocator.h
+  include/base/allocator/partition_allocator.h
+  include/base/allocator/partitions.h
+  include/base/text/ascii_ctype.h
+  include/base/text/ascii_fast_path.h
+  include/base/text/atomic_string.h
+  include/base/text/atomic_string_encoding.h
+  include/base/text/atomic_string_hash.h
+  include/base/text/atomic_string_table.h
+  include/base/text/case_folding_hash.h
+  include/base/text/case_map.h
+  include/base/text/character_names.h
+  include/base/text/character_visitor.h
+  include/base/text/code_point_iterator.h
+  include/base/text/convert_to_8bit_hash_reader.h
+  include/base/text/copy_lchars_from_uchar_source.h
+  include/base/text/integer_to_string_conversion.h
+  include/base/text/number_parsing_options.h
+  include/base/text/strcat.h
+  include/base/text/string_buffer.h
+  include/base/text/string_builder.h
+  include/base/text/string_concatenate.h
+  include/base/text/string_hash.h
+  include/base/text/string_hasher.h
+  include/base/text/string_impl.h
+  include/base/text/string_operators.h
+  include/base/text/string_operators_atomic.h
+  include/base/text/string_statics.h
+  include/base/text/string_to_number.h
+  include/base/text/string_utf8_adaptor.h
+  include/base/text/string_view.h
+  include/base/text/text_offset_map.h
+  include/base/text/unicode.h
+  include/base/text/unicode_string.h
+  include/base/text/utf16.h
+  include/base/text/utf8.h
+  include/base/text/wtf_string.h
+  include/base/text/wtf_uchar.h
   include/build/build_config.h
   include/third_party/rapidhash/rapidhash.h
-  include/wtf/casting.h
-  include/wtf/deque.h
-  include/wtf/dtoa.h
-  include/wtf/dynamic_annotations.h
-  include/wtf/forward.h
-  include/wtf/get_ptr.h
-  include/wtf/hash_functions.h
-  include/wtf/hash_map.h
-  include/wtf/hash_set.h
-  include/wtf/hash_table.h
-  include/wtf/hash_table_deleted_value_type.h
-  include/wtf/hash_traits.h
-  include/wtf/key_value_pair.h
-  include/wtf/leak_annotations.h
-  include/wtf/linked_hash_set.h
-  include/wtf/math_extras.h
-  include/wtf/ref_counted.h
-  include/wtf/sanitizers.h
-  include/wtf/stack_util.h
-  include/wtf/static_constructors.h
-  include/wtf/std_lib_extras.h
-  include/wtf/thread_safe_ref_counted.h
-  include/wtf/thread_specific.h
-  include/wtf/threading.h
-  include/wtf/type_traits.h
-  include/wtf/vector.h
-  include/wtf/vector_backed_linked_list.h
-  include/wtf/vector_traits.h
-  include/wtf/wtf.h
-  include/wtf/wtf_export.h
-  include/wtf/wtf_size_t.h
-  include/wtf/allocator/allocator.h
-  include/wtf/allocator/partition_allocator.h
-  include/wtf/allocator/partitions.h
-  include/wtf/text/ascii_ctype.h
-  include/wtf/text/ascii_fast_path.h
-  include/wtf/text/atomic_string.h
-  include/wtf/text/atomic_string_encoding.h
-  include/wtf/text/atomic_string_hash.h
-  include/wtf/text/atomic_string_table.h
-  include/wtf/text/case_folding_hash.h
-  include/wtf/text/case_map.h
-  include/wtf/text/character_names.h
-  include/wtf/text/character_visitor.h
-  include/wtf/text/code_point_iterator.h
-  include/wtf/text/convert_to_8bit_hash_reader.h
-  include/wtf/text/copy_lchars_from_uchar_source.h
-  include/wtf/text/integer_to_string_conversion.h
-  include/wtf/text/number_parsing_options.h
-  include/wtf/text/strcat.h
-  include/wtf/text/string_buffer.h
-  include/wtf/text/string_builder.h
-  include/wtf/text/string_concatenate.h
-  include/wtf/text/string_hash.h
-  include/wtf/text/string_hasher.h
-  include/wtf/text/string_impl.h
-  include/wtf/text/string_operators.h
-  include/wtf/text/string_operators_atomic.h
-  include/wtf/text/string_statics.h
-  include/wtf/text/string_to_number.h
-  include/wtf/text/string_utf8_adaptor.h
-  include/wtf/text/string_view.h
-  include/wtf/text/text_offset_map.h
-  include/wtf/text/unicode.h
-  include/wtf/text/unicode_string.h
-  include/wtf/text/utf16.h
-  include/wtf/text/utf8.h
-  include/wtf/text/wtf_string.h
-  include/wtf/text/wtf_uchar.h
   src/fonts.h
   src/initialize.cc
   src/initialize.h
@@ -187,6 +186,27 @@ target_sources(blink_fonts PRIVATE
   src/base/third_party/double_conversion/double-conversion/string-to-double.cc
   src/base/third_party/double_conversion/double-conversion/strtod.cc
   src/base/third_party/superfasthash/superfasthash.cc
+  src/base/dtoa.cc
+  src/base/dynamic_annotations.cc
+  src/base/stack_util.cc
+  src/base/threading.cc
+  src/base/wtf.cc
+  src/base/allocator/partition_allocator.cc
+  src/base/allocator/partitions.cc
+  src/base/text/atomic_string.cc
+  src/base/text/atomic_string_table.cc
+  src/base/text/case_map.cc
+  src/base/text/strcat.cc
+  src/base/text/string_builder.cc
+  src/base/text/string_concatenate.cc
+  src/base/text/string_impl.cc
+  src/base/text/string_statics.cc
+  src/base/text/string_to_number.cc
+  src/base/text/string_utf8_adaptor.cc
+  src/base/text/string_view.cc
+  src/base/text/text_offset_map.cc
+  src/base/text/utf8.cc
+  src/base/text/wtf_string.cc
   src/font/alternate_font_family.h
   src/font/canvas_rotation_in_vertical.h
   src/font/character_range.h
@@ -423,27 +443,6 @@ target_sources(blink_fonts PRIVATE
   src/text/text_direction.h
   src/text/text_run.cc
   src/text/text_run.h
-  src/wtf/dtoa.cc
-  src/wtf/dynamic_annotations.cc
-  src/wtf/stack_util.cc
-  src/wtf/threading.cc
-  src/wtf/wtf.cc
-  src/wtf/allocator/partition_allocator.cc
-  src/wtf/allocator/partitions.cc
-  src/wtf/text/atomic_string.cc
-  src/wtf/text/atomic_string_table.cc
-  src/wtf/text/case_map.cc
-  src/wtf/text/strcat.cc
-  src/wtf/text/string_builder.cc
-  src/wtf/text/string_concatenate.cc
-  src/wtf/text/string_impl.cc
-  src/wtf/text/string_statics.cc
-  src/wtf/text/string_to_number.cc
-  src/wtf/text/string_utf8_adaptor.cc
-  src/wtf/text/string_view.cc
-  src/wtf/text/text_offset_map.cc
-  src/wtf/text/utf8.cc
-  src/wtf/text/wtf_string.cc
   "${GENERATED_CHARACTER_DATA}")
 # Ragel output textually included by symbols_iterator.cc.
 set_source_files_properties(src/shaping/emoji_presentation_scanner.c

@@ -9,10 +9,10 @@
 
 #include "base/memory/scoped_refptr.h"
 #include "gtest/gtest.h"
-#include "wtf/allocator/allocator.h"
-#include "wtf/hash_functions.h"
-#include "wtf/hash_set.h"
-#include "wtf/ref_counted.h"
+#include "base/allocator/allocator.h"
+#include "base/hash_functions.h"
+#include "base/hash_set.h"
+#include "base/ref_counted.h"
 
 namespace blink {
 

@@ -7,14 +7,14 @@
 #include "font/font_family_names.h"
 #include "geometry/length.h"
 #include "language.h"
-#include "wtf/allocator/partitions.h"
-#include "wtf/wtf.h"
+#include "base/allocator/partitions.h"
+#include "base/wtf.h"
 
 namespace blink {
 
 void InitializeFonts() {
   Partitions::Initialize();
-  InitializeWtf();
+  InitializeBase();
   Length::Initialize();
   font_family_names::Init();
   InitializePlatformLanguage();

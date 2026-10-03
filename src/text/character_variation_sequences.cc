@@ -6,7 +6,7 @@
 #include <unicode/uvernum.h>
 
 #include "character.h"
-#include "wtf/text/unicode.h"
+#include "base/text/unicode.h"
 
 namespace blink {
 

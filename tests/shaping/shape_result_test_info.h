@@ -7,7 +7,7 @@
 
 #include "shaping/harfbuzz_shaper.h"
 // Bloberizer test support is excluded: painting/Skia blobs are not ported.
-#include "wtf/allocator/allocator.h"
+#include "base/allocator/allocator.h"
 
 #include "hb.h"
 

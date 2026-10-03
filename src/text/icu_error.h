@@ -7,7 +7,7 @@
 
 #include <unicode/utypes.h>
 #include "platform_export.h"
-#include "wtf/allocator/allocator.h"
+#include "base/allocator/allocator.h"
 
 namespace blink {
 

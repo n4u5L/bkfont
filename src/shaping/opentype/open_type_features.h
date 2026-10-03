@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <hb.h>
 
-#include "wtf/vector.h"
+#include "base/vector.h"
 
 namespace blink {
 

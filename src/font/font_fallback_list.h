@@ -28,13 +28,13 @@
 #include "shaping/ng_shape_cache.h"
 #include "shaping/shape_cache.h"
 #include "simple_font_data.h"
-#include "wtf/forward.h"
-#include "wtf/text/character_names.h"
+#include "base/forward.h"
+#include "base/text/character_names.h"
 
 #include <memory>
 #include <span>
-#include "wtf/vector.h"
-#include "wtf/hash_map.h"
+#include "base/vector.h"
+#include "base/hash_map.h"
 namespace blink {
 
 class FontDescription;

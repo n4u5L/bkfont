@@ -8,13 +8,13 @@
 #include "base/memory/raw_ptr.h"
 #include "platform_export.h"
 #include "quotes_data.h"
-#include "wtf/allocator/allocator.h"
-#include "wtf/forward.h"
-#include "wtf/std_lib_extras.h"
-#include "wtf/text/atomic_string.h"
-#include "wtf/text/atomic_string_hash.h"
-#include "wtf/text/case_map.h"
-#include "wtf/thread_safe_ref_counted.h"
+#include "base/allocator/allocator.h"
+#include "base/forward.h"
+#include "base/std_lib_extras.h"
+#include "base/text/atomic_string.h"
+#include "base/text/atomic_string_hash.h"
+#include "base/text/case_map.h"
+#include "base/thread_safe_ref_counted.h"
 
 #include <unicode/uscript.h>
 

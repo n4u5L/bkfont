@@ -33,15 +33,15 @@
 #include <ranges>
 #include "base/containers/span.h"
 #include "base/hash/hash.h"
-#include "wtf/hash_map.h"
+#include "base/hash_map.h"
 #include <algorithm>
 
 #include <span>
 #include "shape_result.h"
 
 #include "text/text_run.h"
-#include "wtf/hash_functions.h"
-#include "wtf/hash_table_deleted_value_type.h"
+#include "base/hash_functions.h"
+#include "base/hash_table_deleted_value_type.h"
 
 namespace blink {
 

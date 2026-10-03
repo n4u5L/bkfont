@@ -28,11 +28,11 @@
 
 #include "font_data.h"
 #include "font_data_for_range_set.h"
-#include "wtf/casting.h"
+#include "base/casting.h"
 
 #include <memory>
 #include <cmath>
-#include "wtf/vector.h"
+#include "base/vector.h"
 
 namespace blink {
 

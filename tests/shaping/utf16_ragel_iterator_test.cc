@@ -9,8 +9,8 @@
 
 #include "gtest/gtest.h"
 #include "text/character.h"
-#include "wtf/text/character_names.h"
-#include "wtf/text/unicode_string.h"
+#include "base/text/character_names.h"
+#include "base/text/unicode_string.h"
 
 namespace blink {
 

@@ -34,15 +34,15 @@
 #include <unicode/uscript.h>
 
 #include "platform_export.h"
-#include "wtf/forward.h"
+#include "base/forward.h"
 
 namespace blink {
 
 UScriptCode
-LocaleToScriptCodeForFontSelection(const WTF::String&);
-UScriptCode ScriptNameToCode(const WTF::String&);
+LocaleToScriptCodeForFontSelection(const blink::String&);
+UScriptCode ScriptNameToCode(const blink::String&);
 
-UScriptCode ScriptCodeForHanFromSubtags(const WTF::String&,
+UScriptCode ScriptCodeForHanFromSubtags(const blink::String&,
                                         char delimiter = '-');
 
 inline bool IsUnambiguousHanScript(UScriptCode script) {

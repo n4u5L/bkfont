@@ -11,7 +11,7 @@
 #include "graphics/color.h"
 #include "support/font_test_base.h"
 #include "support/font_test_helpers.h"
-#include "wtf/wtf_size_t.h"
+#include "base/wtf_size_t.h"
 
 #include <utility>
 #include <vector>

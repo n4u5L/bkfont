@@ -28,9 +28,9 @@
 
 #include <windows.h>
 #include "text/layout_locale.h"
-#include "wtf/text/atomic_string.h"
-#include "wtf/text/wtf_string.h"
-#include "wtf/thread_specific.h"
+#include "base/text/atomic_string.h"
+#include "base/text/wtf_string.h"
+#include "base/thread_specific.h"
 
 namespace blink {
 

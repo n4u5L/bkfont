@@ -34,16 +34,16 @@
 #include <limits>
 
 #include "value_equivalent.h"
-#include "wtf/math_extras.h"
+#include "base/math_extras.h"
 #include "target_platform.h"
 #include "font_face_creation_params.h"
 #include "font_palette.h"
 #include "font_size_adjust.h"
 #include "font_variant_alternates.h"
 #include "font_settings.h"
-#include "wtf/hash_table_deleted_value_type.h"
-#include "wtf/text/atomic_string_hash.h"
-#include "wtf/text/string_hash.h"
+#include "base/hash_table_deleted_value_type.h"
+#include "base/text/atomic_string_hash.h"
+#include "base/text/string_hash.h"
 
 #include <span>
 #include <string>

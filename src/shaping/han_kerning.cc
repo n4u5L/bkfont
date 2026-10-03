@@ -16,7 +16,7 @@
 #include "shape_result_run.h"
 #include "font/simple_font_data.h"
 #include "runtime_enabled_features.h"
-#include "wtf/text/character_names.h"
+#include "base/text/character_names.h"
 
 namespace blink {
 

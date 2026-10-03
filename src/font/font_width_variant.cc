@@ -5,7 +5,7 @@
 
 #include "font_width_variant.h"
 
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

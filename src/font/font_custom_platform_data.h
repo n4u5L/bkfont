@@ -39,8 +39,8 @@
 #include "variable_axes_names.h"
 #include "resolved_font_features.h"
 #include "text_rendering_mode.h"
-#include "wtf/forward.h"
-#include "wtf/text/wtf_string.h"
+#include "base/forward.h"
+#include "base/text/wtf_string.h"
 
 #include <span>
 #include "platform/font_face.h"

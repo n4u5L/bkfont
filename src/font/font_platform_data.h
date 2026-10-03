@@ -37,7 +37,7 @@
 #include "text_rendering_mode.h"
 #include "typesetting_features.h"
 #include "platform/font_face.h"
-#include "wtf/hash_table_deleted_value_type.h"
+#include "base/hash_table_deleted_value_type.h"
 namespace blink {
 class HarfBuzzFace;
 class FontDescription;

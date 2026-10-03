@@ -9,7 +9,7 @@
 #include <optional>
 #include "shape_result.h"
 
-#include "wtf/vector.h"
+#include "base/vector.h"
 
 namespace blink {
 

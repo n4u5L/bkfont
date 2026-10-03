@@ -9,8 +9,8 @@
 
 #include <unicode/utf16.h>
 
-#include "wtf/text/case_map.h"
-#include "wtf/text/utf16.h"
+#include "base/text/case_map.h"
+#include "base/text/utf16.h"
 
 namespace blink {
 

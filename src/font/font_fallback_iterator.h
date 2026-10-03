@@ -7,13 +7,13 @@
 
 #include "font_data_for_range_set.h"
 #include "font_fallback_priority.h"
-#include "wtf/hash_set.h"
-#include "wtf/text/wtf_uchar.h"
+#include "base/hash_set.h"
+#include "base/text/wtf_uchar.h"
 
 #include <memory>
 #include <span>
-#include "wtf/vector.h"
-#include "wtf/hash_map.h"
+#include "base/vector.h"
+#include "base/hash_map.h"
 namespace blink {
 
 class FontDescription;

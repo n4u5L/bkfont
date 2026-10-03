@@ -7,11 +7,11 @@
 
 #include <array>
 
-#include "wtf/hash_functions.h"
-#include "wtf/text/atomic_string.h"
-#include "wtf/text/atomic_string_hash.h"
-#include "wtf/text/string_hash.h"
-#include "wtf/text/string_hasher.h"
+#include "base/hash_functions.h"
+#include "base/text/atomic_string.h"
+#include "base/text/atomic_string_hash.h"
+#include "base/text/string_hash.h"
+#include "base/text/string_hasher.h"
 
 #include <span>
 namespace blink {

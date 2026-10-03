@@ -24,10 +24,10 @@
 
 #include "base/memory/scoped_refptr.h"
 #include "platform_export.h"
-#include "wtf/allocator/allocator.h"
-#include "wtf/ref_counted.h"
-#include "wtf/text/wtf_string.h"
-#include "wtf/vector.h"
+#include "base/allocator/allocator.h"
+#include "base/ref_counted.h"
+#include "base/text/wtf_string.h"
+#include "base/vector.h"
 
 namespace blink {
 

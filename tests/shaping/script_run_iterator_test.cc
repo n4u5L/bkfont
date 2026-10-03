@@ -11,9 +11,9 @@
 #include <iostream>
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "wtf/text/string_builder.h"
-#include "wtf/text/wtf_string.h"
-#include "wtf/threading.h"
+#include "base/text/string_builder.h"
+#include "base/text/wtf_string.h"
+#include "base/threading.h"
 
 namespace blink {
 

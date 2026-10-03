@@ -6,7 +6,7 @@
 #pragma once
 
 #include "runtime_enabled_features.h"
-#include "wtf/allocator/allocator.h"
+#include "base/allocator/allocator.h"
 
 namespace blink {
 

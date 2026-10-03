@@ -7,8 +7,8 @@
 
 #include <array>
 
-#include "wtf/text/string_builder.h"
-#include "wtf/text/wtf_string.h"
+#include "base/text/string_builder.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

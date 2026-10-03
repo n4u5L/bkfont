@@ -9,8 +9,8 @@
 #include <unicode/uscript.h>
 
 #include "base/containers/span.h"
-#include "wtf/deque.h"
-#include "wtf/vector.h"
+#include "base/deque.h"
+#include "base/vector.h"
 
 namespace blink {
 

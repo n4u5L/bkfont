@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 
 #include "platform/font_face.h"
 #include "font_table_harfbuzz.h"

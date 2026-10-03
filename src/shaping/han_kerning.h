@@ -7,14 +7,14 @@
 
 #include "base/gtest_prod_util.h"
 #include <cstdint>
-#include "wtf/vector.h"
+#include "base/vector.h"
 #include "font/font_description.h"
 #include "font_features.h"
 
 #include "text/character.h"
 #include "text/han_kerning_char_type.h"
 
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

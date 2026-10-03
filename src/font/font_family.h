@@ -27,10 +27,10 @@
 #pragma once
 
 #include <memory>
-#include "wtf/text/atomic_string.h"
+#include "base/text/atomic_string.h"
 
 #include <cstdint>
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

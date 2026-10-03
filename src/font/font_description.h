@@ -49,8 +49,8 @@
 #include "typesetting_features.h"
 #include "geometry/length.h"
 #include "text/layout_locale.h"
-#include "wtf/math_extras.h"
-#include "wtf/text/wtf_string.h"
+#include "base/math_extras.h"
+#include "base/text/wtf_string.h"
 #include "platform/font_face.h"
 
 namespace blink {

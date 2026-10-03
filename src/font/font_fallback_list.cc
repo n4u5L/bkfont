@@ -37,8 +37,8 @@
 #include "font_fallback_map.h"
 #include "font_family.h"
 #include "segmented_font_data.h"
-#include "wtf/text/character_names.h"
-#include "wtf/text/wtf_uchar.h"
+#include "base/text/character_names.h"
+#include "base/text/wtf_uchar.h"
 
 namespace blink {
 

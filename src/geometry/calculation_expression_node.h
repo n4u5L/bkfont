@@ -6,11 +6,11 @@
 #pragma once
 
 #include <memory>
-#include "wtf/vector.h"
+#include "base/vector.h"
 #include "length.h"
-#include "wtf/casting.h"
-#include "wtf/ref_counted.h"
-#include "wtf/text/atomic_string.h"
+#include "base/casting.h"
+#include "base/ref_counted.h"
+#include "base/text/atomic_string.h"
 
 namespace blink {
 

@@ -27,7 +27,7 @@
 #include "text_run.h"
 
 #include "character.h"
-#include "wtf/text/string_buffer.h"
+#include "base/text/string_buffer.h"
 
 namespace blink {
 

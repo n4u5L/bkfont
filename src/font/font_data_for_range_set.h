@@ -29,11 +29,11 @@
 #include "font_data.h"
 #include "simple_font_data.h"
 #include "unicode_range_set.h"
-#include "wtf/text/character_names.h"
+#include "base/text/character_names.h"
 
 #include <memory>
 #include <cmath>
-#include "wtf/vector.h"
+#include "base/vector.h"
 
 namespace blink {
 

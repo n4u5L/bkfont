@@ -34,10 +34,10 @@
 
 #include "base/containers/span.h"
 #include "platform_export.h"
-#include "wtf/allocator/allocator.h"
-#include "wtf/forward.h"
-#include "wtf/hash_functions.h"
-#include "wtf/text/wtf_uchar.h"
+#include "base/allocator/allocator.h"
+#include "base/forward.h"
+#include "base/hash_functions.h"
+#include "base/text/wtf_uchar.h"
 #include "color_float.h"
 #include <cstdint>
 
@@ -114,7 +114,7 @@ public:
   };
 
   // For testing purposes and for serializer.
-  static WTF::String ColorSpaceToString(Color::ColorSpace color_space);
+  static blink::String ColorSpaceToString(Color::ColorSpace color_space);
 
   // https://www.w3.org/TR/css-color-4/#predefined
   static bool IsPredefinedColorSpace(ColorSpace color_space) {
@@ -269,28 +269,28 @@ public:
   // Host configuration replacing the Chromium feature (default disabled).
   static void SetBakedGamutMappingEnabled(bool);
 
-  WTF::String SerializeInternal() const;
+  blink::String SerializeInternal() const;
   // Returns the color serialized according to HTML5:
   // http://www.whatwg.org/specs/web-apps/current-work/#serialization-of-a-color
-  WTF::String SerializeAsCSSColor() const;
+  blink::String SerializeAsCSSColor() const;
   // Canvas colors are serialized somewhat differently:
   // https://html.spec.whatwg.org/multipage/canvas.html#serialisation-of-a-color
-  WTF::String SerializeAsCanvasColor() const;
+  blink::String SerializeAsCanvasColor() const;
   // For appending color interpolation spaces and hue interpolation methods to
   // the serialization of gradients and color-mix functions.
-  static WTF::String SerializeInterpolationSpace(
+  static blink::String SerializeInterpolationSpace(
       Color::ColorSpace color_space,
       Color::HueInterpolationMethod hue_interpolation_method =
           Color::HueInterpolationMethod::kShorter);
 
   // Returns the color serialized as either #RRGGBB or #RRGGBBAA. The latter
   // format is not a valid CSS color, and should only be seen in DRT dumps.
-  WTF::String NameForLayoutTreeAsText() const;
+  blink::String NameForLayoutTreeAsText() const;
 
   // Returns whether parsing succeeded. The resulting Color is arbitrary
   // if parsing fails.
-  bool SetFromString(const WTF::String&);
-  bool SetNamedColor(const WTF::String&);
+  bool SetFromString(const blink::String&);
+  bool SetNamedColor(const blink::String&);
 
   bool IsFullyTransparent() const {
     return Alpha() <= 0.0f;
@@ -411,7 +411,7 @@ public:
   void ResolveNonFiniteValues();
 
 private:
-  WTF::String SerializeLegacyColorAsCSSColor() const;
+  blink::String SerializeLegacyColorAsCSSColor() const;
   constexpr explicit Color(RGBA32 color)
       : param0_is_none_(0),
         param1_is_none_(0),

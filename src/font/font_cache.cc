@@ -37,7 +37,7 @@
 #include "text/character.h"
 #include <windows.h>
 #include "font_prewarmer.h"
-#include "wtf/hash_set.h"
+#include "base/hash_set.h"
 #include <unicode/uscript.h>
 namespace blink {
 const char kColorEmojiLocale[] = "und-Zsye";

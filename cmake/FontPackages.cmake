@@ -1,6 +1,11 @@
 set(BLINK_FONTS_ICU_ROOT "${BLINK_FONTS_PACKAGES_ROOT}/icu_78.3-x64" CACHE PATH "ICU installation")
 set(BLINK_FONTS_HARFBUZZ_ROOT "${BLINK_FONTS_PACKAGES_ROOT}/harfbuzz_14.2.0-x64" CACHE PATH "HarfBuzz installation")
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+# The prebuilt packages only provide Debug and Release. Without a mapping,
+# RelWithDebInfo picks the first listed configuration (Debug) and mismatches
+# the /MD runtime and _ITERATOR_DEBUG_LEVEL.
+set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release)
+set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL Release)
 
 foreach(_component IN ITEMS data uc i18n)
   if(_component STREQUAL "data")

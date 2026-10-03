@@ -8,7 +8,7 @@
 #include "font_invalidation_reason.h"
 
 #include <memory>
-#include "wtf/hash_map.h"
+#include "base/hash_map.h"
 namespace blink {
 
 class FontSelector;

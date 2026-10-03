@@ -26,11 +26,11 @@
 #include "font_height.h"
 #include "font_metrics_override.h"
 #include "shaping/support/layout_unit.h"
-#include "wtf/math_extras.h"
+#include "base/math_extras.h"
 
 #include <memory>
 #include <cmath>
-#include "wtf/vector.h"
+#include "base/vector.h"
 
 namespace blink {
 

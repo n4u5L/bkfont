@@ -35,7 +35,7 @@
 #include "font_platform_data_cache.h"
 #include "font_fallback_priority.h"
 #include "platform/font_manager.h"
-#include "wtf/hash_map.h"
+#include "base/hash_map.h"
 namespace blink {
 class ShapeCache;
 class FontPrewarmer;

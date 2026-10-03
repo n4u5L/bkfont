@@ -36,7 +36,7 @@
 
 #include "font_description.h"
 #include "font_fallback_priority.h"
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 
 #include "platform/font_manager.h"
 namespace blink {

@@ -32,9 +32,9 @@
 #include "character.h"
 #include "character_break_iterator.h"
 #include "layout_locale.h"
-#include "wtf/text/atomic_string.h"
-#include "wtf/text/character_names.h"
-#include "wtf/text/wtf_uchar.h"
+#include "base/text/atomic_string.h"
+#include "base/text/character_names.h"
+#include "base/text/wtf_uchar.h"
 
 namespace blink {
 

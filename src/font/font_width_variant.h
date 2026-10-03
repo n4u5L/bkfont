@@ -26,10 +26,10 @@
 
 #pragma once
 
-#include "wtf/forward.h"
+#include "base/forward.h"
 
 #include <cstdint>
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

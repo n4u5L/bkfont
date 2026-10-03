@@ -9,7 +9,7 @@
 #include "base/containers/span.h"
 #include <optional>
 
-#include "wtf/vector.h"
+#include "base/vector.h"
 
 struct hb_feature_t;
 

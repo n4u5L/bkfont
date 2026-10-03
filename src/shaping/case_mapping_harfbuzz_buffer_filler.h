@@ -6,9 +6,9 @@
 #pragma once
 
 #include "base/containers/span.h"
-#include "wtf/text/atomic_string.h"
-#include "wtf/text/wtf_string.h"
-#include "wtf/text/wtf_uchar.h"
+#include "base/text/atomic_string.h"
+#include "base/text/wtf_string.h"
+#include "base/text/wtf_uchar.h"
 
 #include <hb.h>
 

@@ -35,7 +35,7 @@
 #include <cstdint>
 #include "base/containers/adapters.h"
 #include "base/containers/span.h"
-#include "wtf/vector.h"
+#include "base/vector.h"
 #include "shape_result.h"
 
 #include <hb.h>
@@ -54,7 +54,7 @@
 #include "shape_result_spacing.h"
 #include "text/text_break_iterator.h"
 
-#include "wtf/text/string_builder.h"
+#include "base/text/string_builder.h"
 
 namespace blink {
 
@@ -1617,7 +1617,7 @@ unsigned ShapeResult::CopyRangeInternal(unsigned run_index,
       if (auto sub_run = run->CreateSubRun(start, end)) {
         sub_run->start_index_ += index_diff;
         target->width_ += sub_run->width_;
-        has_glyphs |= sub_run->glyph_data_.size();
+        has_glyphs |= sub_run->glyph_data_.size() != 0;
         if (auto merged_run =
                 should_merge ? target->runs_.back()->MergeIfPossible(*sub_run)
                              : nullptr) {

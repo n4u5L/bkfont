@@ -9,7 +9,7 @@
 #include "base/containers/span.h"
 #include "font/font.h"
 #include "font/font_prewarmer.h"
-#include "wtf/vector.h"
+#include "base/vector.h"
 
 namespace blink::test {
 std::shared_ptr<Font> CreateTestFont(

@@ -28,7 +28,7 @@
 
 #include "shape_result_buffer.h"
 #include "text/text_run.h"
-#include "wtf/vector.h"
+#include "base/vector.h"
 #include "shaping/support/gfx/geometry/rect_f.h"
 
 namespace blink {

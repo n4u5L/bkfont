@@ -4,7 +4,7 @@
 // Source: third_party/blink/public/platform/web_font_prewarmer.h.
 // The native boundary uses WTF String instead of the public WebString wrapper.
 #pragma once
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 namespace blink {
 class FontPrewarmer {
 public:

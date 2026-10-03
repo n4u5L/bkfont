@@ -31,9 +31,9 @@
 
 #include "locale_to_script_mapping.h"
 
-#include "wtf/hash_map.h"
-#include "wtf/hash_set.h"
-#include "wtf/text/string_hash.h"
+#include "base/hash_map.h"
+#include "base/hash_set.h"
+#include "base/text/string_hash.h"
 
 namespace blink {
 

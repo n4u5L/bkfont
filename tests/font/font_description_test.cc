@@ -32,8 +32,8 @@
 #include "geometry/calculation_value.h"
 #include "geometry/length.h"
 #include "support/font_test_base.h"
-#include "wtf/hash_map.h"
-#include "wtf/vector.h"
+#include "base/hash_map.h"
+#include "base/vector.h"
 
 namespace blink {
 
@@ -67,7 +67,7 @@ TEST_F(FontDescriptionTest, TestHashCollision) {
       std::to_array<FontSelectionValue>({kNormalSlopeValue, kItalicSlopeValue});
 
   FontDescription source;
-  WTF::Vector<unsigned> hashes;
+  blink::Vector<unsigned> hashes;
   for (size_t i = 0; i < std::size(weights); i++) {
     source.SetWeight(weights[i]);
     for (size_t j = 0; j < std::size(stretches); j++) {

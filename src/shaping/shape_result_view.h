@@ -20,7 +20,7 @@
 #include "shaping/support/layout_unit.h"
 
 #include "text/text_direction.h"
-#include "wtf/vector.h"
+#include "base/vector.h"
 
 namespace blink {
 

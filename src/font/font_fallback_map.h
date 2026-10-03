@@ -9,12 +9,12 @@
 #include "font_description.h"
 #include "font_fallback_list.h"
 #include "font_selector_client.h"
-#include "wtf/vector.h"
+#include "base/vector.h"
 
 #include <memory>
 #include <span>
-#include "wtf/vector.h"
-#include "wtf/hash_map.h"
+#include "base/vector.h"
+#include "base/hash_map.h"
 namespace blink {
 
 class FontSelector;

@@ -6,7 +6,7 @@
 #include "font/font_size_adjust.h"
 
 #include "gtest/gtest.h"
-#include "wtf/text/wtf_string.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

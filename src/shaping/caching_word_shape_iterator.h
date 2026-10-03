@@ -30,7 +30,7 @@
 #include "shape_cache.h"
 #include "shape_result_spacing.h"
 #include "font/simple_font_data.h"
-#include "wtf/text/character_names.h"
+#include "base/text/character_names.h"
 
 namespace blink {
 

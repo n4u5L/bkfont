@@ -9,7 +9,7 @@
 #include <utility>
 #include "base/containers/adapters.h"
 #include "base/containers/span.h"
-#include "wtf/vector.h"
+#include "base/vector.h"
 #include "shape_result_view.h"
 
 #include <algorithm>

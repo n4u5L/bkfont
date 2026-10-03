@@ -12,10 +12,10 @@
 
 #include "base/containers/span.h"
 #include "text_direction.h"
-#include "wtf/allocator/allocator.h"
-#include "wtf/forward.h"
-#include "wtf/text/string_view.h"
-#include "wtf/vector.h"
+#include "base/allocator/allocator.h"
+#include "base/forward.h"
+#include "base/text/string_view.h"
+#include "base/vector.h"
 
 namespace blink {
 
@@ -30,7 +30,7 @@ class BidiParagraph {
 
 public:
   BidiParagraph() = default;
-  BidiParagraph(const WTF::String& text,
+  BidiParagraph(const blink::String& text,
                 std::optional<TextDirection> base_direction) {
     SetParagraph(text, base_direction);
   }
@@ -40,7 +40,7 @@ public:
   //
   // Returns false on failure. Nothing other than the destructor should be
   // called.
-  bool SetParagraph(const WTF::String&,
+  bool SetParagraph(const blink::String&,
                     std::optional<TextDirection> base_direction);
 
   // @return the entire text is unidirectional.
@@ -74,7 +74,7 @@ public:
   // string with a Unicode BiDi override character (LRO or ROL) and PDF.
   // https://unicode.org/reports/tr9/#Explicit_Directional_Overrides
   // https://unicode.org/reports/tr9/#Terminating_Explicit_Directional_Embeddings_and_Overrides
-  static WTF::String StringWithDirectionalOverride(const StringView& text,
+  static blink::String StringWithDirectionalOverride(const StringView& text,
                                                    TextDirection direction);
 
   struct Run {
@@ -104,7 +104,7 @@ public:
   // Get a list of `Run` in the logical order (before bidi reorder.)
   // `text` must be the same one as `SetParagraph`.
   // This is higher-level API for `GetLogicalRun`.
-  void GetLogicalRuns(const WTF::String& text, Runs* runs) const;
+  void GetLogicalRuns(const blink::String& text, Runs* runs) const;
 
   // Returns the end offset of a logical run that starts from the |start|
   // offset.
@@ -113,7 +113,7 @@ public:
   // Get a list of `Run` in the visual order (after bidi reorder.)
   // `text` must be the same one as `SetParagraph`.
   // This is higher-level API for `GetLogicalRuns` and `IndicesInVisualOrder`.
-  void GetVisualRuns(const WTF::String& text, Runs* runs) const;
+  void GetVisualRuns(const blink::String& text, Runs* runs) const;
 
   // Create a list of indices in the visual order.
   // A wrapper for ICU |ubidi_reorderVisual()|.

@@ -5,7 +5,7 @@
 
 #include <algorithm>
 #include <memory>
-#include "wtf/vector.h"
+#include "base/vector.h"
 #include "shape_result_buffer.h"
 
 #include "font/character_range.h"
@@ -114,7 +114,7 @@ CharacterRange ShapeResultBuffer::GetCharacterRange(
     context.to_x = direction == TextDirection::kRtl ? 0 : total_width;
   }
   if (!context.from_x) {
-    context.from_x = 0;
+    context.from_x = 0.0f;
   }
   if (!context.to_x) {
     context.to_x = direction == TextDirection::kRtl ? 0 : total_width;
@@ -122,7 +122,7 @@ CharacterRange ShapeResultBuffer::GetCharacterRange(
 
   // None of our runs is part of the selection, possibly invalid arguments.
   if (!context.to_x && !context.from_x) {
-    context.from_x = context.to_x = 0;
+    context.from_x = context.to_x = 0.0f;
   }
   if (*context.from_x < *context.to_x) {
     return CharacterRange(*context.from_x, *context.to_x, -context.min_y, context.max_y);

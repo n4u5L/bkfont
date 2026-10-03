@@ -32,7 +32,7 @@
 #pragma once
 
 #include <memory>
-#include "wtf/hash_map.h"
+#include "base/hash_map.h"
 namespace blink {
 
 class FontCacheClient {

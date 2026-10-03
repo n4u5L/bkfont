@@ -30,10 +30,10 @@
 
 #include "runtime_enabled_features.h"
 #include "text/break_iterator_data_inline_header.h"
-#include "wtf/std_lib_extras.h"
-#include "wtf/text/ascii_ctype.h"
-#include "wtf/text/character_names.h"
-#include "wtf/text/unicode.h"
+#include "base/std_lib_extras.h"
+#include "base/text/ascii_ctype.h"
+#include "base/text/character_names.h"
+#include "base/text/unicode.h"
 
 namespace blink {
 

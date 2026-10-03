@@ -22,7 +22,7 @@
 #pragma once
 
 #include "length.h"
-#include "wtf/allocator/allocator.h"
+#include "base/allocator/allocator.h"
 
 namespace blink {
 

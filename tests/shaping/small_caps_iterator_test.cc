@@ -7,7 +7,7 @@
 
 #include "gtest/gtest.h"
 
-#include "wtf/text/string_builder.h"
+#include "base/text/string_builder.h"
 
 namespace blink {
 

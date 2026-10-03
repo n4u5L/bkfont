@@ -29,7 +29,7 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
-#include "wtf/vector.h"
+#include "base/vector.h"
 #include "open_type_vertical_data.h"
 
 #include "open_type_types.h"

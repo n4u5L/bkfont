@@ -31,14 +31,14 @@
 #include "font_description.h"
 #include <utility>
 
-#include "wtf/hash_set.h"
+#include "base/hash_set.h"
 
 #include "value_equivalent.h"
 #include "target_platform.h"
-#include "wtf/hash_functions.h"
-#include "wtf/text/atomic_string_hash.h"
-#include "wtf/text/string_hash.h"
-#include "wtf/text/string_hasher.h"
+#include "base/hash_functions.h"
+#include "base/text/atomic_string_hash.h"
+#include "base/text/string_hash.h"
+#include "base/text/string_hasher.h"
 
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_ANDROID)
 #include "font_cache.h"

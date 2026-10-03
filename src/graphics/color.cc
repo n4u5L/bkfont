@@ -37,10 +37,10 @@
 #include <utility>
 #include "geometry/blend.h"
 #include "runtime_enabled_features.h"
-#include "wtf/math_extras.h"
-#include "wtf/text/character_visitor.h"
-#include "wtf/text/string_builder.h"
-#include "wtf/text/string_view.h"
+#include "base/math_extras.h"
+#include "base/text/character_visitor.h"
+#include "base/text/string_builder.h"
+#include "base/text/string_view.h"
 #include "color_conversions.h"
 
 namespace blink {

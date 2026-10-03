@@ -8,10 +8,10 @@
 #include "alternate_font_family.h"
 #include "font_cache_key.h"
 #include "font_description.h"
-#include "wtf/hash_table_deleted_value_type.h"
+#include "base/hash_table_deleted_value_type.h"
 
 #include <memory>
-#include "wtf/hash_map.h"
+#include "base/hash_map.h"
 namespace blink {
 
 class FontDescription;

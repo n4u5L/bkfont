@@ -34,10 +34,10 @@
 #include "base/memory/ptr_util.h"
 #include "icu_error.h"
 #include "text_break_iterator_internal_icu.h"
-#include "wtf/hash_map.h"
-#include "wtf/text/atomic_string_hash.h"
-#include "wtf/text/wtf_string.h"
-#include "wtf/thread_specific.h"
+#include "base/hash_map.h"
+#include "base/text/atomic_string_hash.h"
+#include "base/text/wtf_string.h"
+#include "base/thread_specific.h"
 
 namespace blink {
 

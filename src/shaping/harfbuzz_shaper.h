@@ -35,8 +35,8 @@
 #include "shape_options.h"
 #include "shape_result.h"
 
-#include "wtf/text/wtf_string.h"
-#include "wtf/vector.h"
+#include "base/text/wtf_string.h"
+#include "base/vector.h"
 
 namespace blink {
 

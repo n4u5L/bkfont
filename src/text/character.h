@@ -41,10 +41,10 @@
 #include "east_asian_spacing_type.h"
 #include "han_kerning_char_type.h"
 #include "text_direction.h"
-#include "wtf/allocator/allocator.h"
-#include "wtf/text/ascii_ctype.h"
-#include "wtf/text/character_names.h"
-#include "wtf/text/wtf_string.h"
+#include "base/allocator/allocator.h"
+#include "base/text/ascii_ctype.h"
+#include "base/text/character_names.h"
+#include "base/text/wtf_string.h"
 
 namespace blink {
 

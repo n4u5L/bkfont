@@ -8,7 +8,7 @@
 #include <cstdint>
 #include "font/glyph.h"
 
-#include "wtf/vector.h"
+#include "base/vector.h"
 
 namespace blink {
 

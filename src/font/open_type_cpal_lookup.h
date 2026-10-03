@@ -8,7 +8,7 @@
 #include <optional>
 
 #include "graphics/color.h"
-#include "wtf/vector.h"
+#include "base/vector.h"
 
 #include "platform/font_face.h"
 #include "font_table_harfbuzz.h"

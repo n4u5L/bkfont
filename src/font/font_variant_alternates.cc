@@ -4,8 +4,8 @@
 // found in the LICENSE file.
 
 #include "font_variant_alternates.h"
-#include "wtf/hash_functions.h"
-#include "wtf/text/atomic_string_hash.h"
+#include "base/hash_functions.h"
+#include "base/text/atomic_string_hash.h"
 
 #include <hb.h>
 

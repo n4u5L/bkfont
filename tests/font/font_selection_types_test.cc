@@ -6,7 +6,7 @@
 #include "font/font_selection_types.h"
 
 #include "gtest/gtest.h"
-#include "wtf/hash_set.h"
+#include "base/hash_set.h"
 
 namespace blink {
 
