@@ -7,7 +7,7 @@
 
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 String ToString(FontWidthVariant variant) {
   switch (variant) {
@@ -23,4 +23,4 @@ String ToString(FontWidthVariant variant) {
   return "Unknown";
 }
 
-} // namespace blink
+} // namespace bkfont

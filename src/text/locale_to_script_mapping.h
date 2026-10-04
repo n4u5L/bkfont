@@ -36,13 +36,13 @@
 #include "platform_export.h"
 #include "base/forward.h"
 
-namespace blink {
+namespace bkfont {
 
 UScriptCode
-LocaleToScriptCodeForFontSelection(const blink::String&);
-UScriptCode ScriptNameToCode(const blink::String&);
+LocaleToScriptCodeForFontSelection(const bkfont::String&);
+UScriptCode ScriptNameToCode(const bkfont::String&);
 
-UScriptCode ScriptCodeForHanFromSubtags(const blink::String&,
+UScriptCode ScriptCodeForHanFromSubtags(const bkfont::String&,
                                         char delimiter = '-');
 
 inline bool IsUnambiguousHanScript(UScriptCode script) {
@@ -50,4 +50,4 @@ inline bool IsUnambiguousHanScript(UScriptCode script) {
   ;
   return script == USCRIPT_KATAKANA_OR_HIRAGANA || script == USCRIPT_SIMPLIFIED_HAN || script == USCRIPT_TRADITIONAL_HAN || script == USCRIPT_HANGUL;
 }
-} // namespace blink
+} // namespace bkfont

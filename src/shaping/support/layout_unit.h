@@ -44,7 +44,7 @@
 #include <optional>
 #include <type_traits>
 
-namespace blink {
+namespace bkfont {
 
 //
 // `FixedPoint` is a fixed-point math class template, with the number of bits
@@ -359,7 +359,7 @@ public:
     return NullOptIf(Min());
   }
 
-  blink::String ToString() const;
+  bkfont::String ToString() const;
 
 private:
 #if defined(ARCH_CPU_ARM_FAMILY) && defined(ARCH_CPU_32_BITS) && defined(COMPILER_GCC) && __OPTIMIZE__
@@ -862,6 +862,6 @@ std::ostream& operator<<(
     std::ostream&,
     const FixedPoint<fractional_bits, RawValue>&);
 
-} // namespace blink
+} // namespace bkfont
 
-BASE_ALLOW_MOVE_INIT_AND_COMPARE_WITH_MEM_FUNCTIONS(blink::LayoutUnit)
+BASE_ALLOW_MOVE_INIT_AND_COMPARE_WITH_MEM_FUNCTIONS(bkfont::LayoutUnit)

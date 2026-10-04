@@ -20,7 +20,7 @@
 #include "base/text/utf8.h"
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 class StackStringViewAllocator {
@@ -315,7 +315,7 @@ UChar32 StringView::CodepointAt(unsigned i) const {
   ;
   if (Is8Bit())
     return (*this)[i];
-  return blink::CodePointAt(Span16(), i);
+  return bkfont::CodePointAt(Span16(), i);
 }
 
 unsigned StringView::NextCodePointOffset(unsigned i) const {
@@ -334,7 +334,7 @@ UChar32 StringView::CodePointAtAndNext(unsigned& i) const {
   if (Is8Bit()) {
     return (*this)[i++];
   }
-  return blink::CodePointAtAndNext(Span16(), i);
+  return bkfont::CodePointAtAndNext(Span16(), i);
 }
 
 CodePointIterator StringView::begin() const {
@@ -349,4 +349,4 @@ std::ostream& operator<<(std::ostream& out, const StringView& string) {
   return out << string.EncodeForDebugging().Utf8();
 }
 
-} // namespace blink
+} // namespace bkfont

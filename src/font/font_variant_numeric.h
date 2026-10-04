@@ -10,7 +10,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 class FontVariantNumeric {
 
@@ -119,4 +119,4 @@ private:
   // Used in SetVariant to store the value in m_fields.m_variantNumeric;
   friend class FontDescription;
 };
-} // namespace blink
+} // namespace bkfont

@@ -9,7 +9,7 @@
 #include "gtest/gtest.h"
 #include "base/text/string_view.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(IntegerToStringConversionTest, SimpleIntConversion) {
   const IntegerToStringConverter<int> conv(100500);
@@ -47,4 +47,4 @@ TYPED_TEST(IntegerToStringConversionBoundsTest, UpperBound) {
   EXPECT_EQ(StringView(expected.c_str()), StringView(conv.Span()));
 }
 
-} // namespace blink
+} // namespace bkfont

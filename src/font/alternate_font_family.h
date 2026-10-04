@@ -36,7 +36,7 @@
 #include "font_description.h"
 #include "base/text/atomic_string.h"
 
-namespace blink {
+namespace bkfont {
 
 // We currently do not support bitmap fonts on windows.
 // Instead of trying to construct a bitmap font and then going down the fallback
@@ -113,4 +113,4 @@ inline const AtomicString& GetFallbackFontFamily(
   }
 }
 
-} // namespace blink
+} // namespace bkfont

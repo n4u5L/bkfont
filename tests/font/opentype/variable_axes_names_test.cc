@@ -9,10 +9,10 @@
 #include "gtest/gtest.h"
 #include "support/font_test_helpers.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(VariableAxesNamesTest, TestVariableAxes) {
-  String file_path = blink::test::BlinkWebTestsDir() + "/third_party/Homecomputer/Sixtyfour.ttf";
+  String file_path = bkfont::test::BlinkWebTestsDir() + "/third_party/Homecomputer/Sixtyfour.ttf";
   if (!test::ReadFromFile(file_path))
     GTEST_SKIP() << "Missing upstream font resource: " << file_path.Utf8();
   auto mgr = FontManager::Create();
@@ -33,4 +33,4 @@ TEST(VariableAxesNamesTest, TestVariableAxes) {
   EXPECT_EQ(axis2.defaultValue, 100);
 }
 
-} // namespace blink
+} // namespace bkfont

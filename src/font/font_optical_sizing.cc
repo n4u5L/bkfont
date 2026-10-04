@@ -5,7 +5,7 @@
 
 #include "font_optical_sizing.h"
 
-namespace blink {
+namespace bkfont {
 
 String ToString(OpticalSizing font_optical_sizing) {
   switch (font_optical_sizing) {
@@ -17,4 +17,4 @@ String ToString(OpticalSizing font_optical_sizing) {
   return "Unknown";
 }
 
-} // namespace blink
+} // namespace bkfont

@@ -7,7 +7,7 @@
 
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(DtoaTest, TestNumberToFixedPrecisionString) {
   NumberToStringBuffer buffer;
@@ -40,4 +40,4 @@ TEST(DtoaTest, TestNumberToFixedPrecisionString) {
   EXPECT_STREQ("1.00000e-10", buffer);
 }
 
-} // namespace blink
+} // namespace bkfont

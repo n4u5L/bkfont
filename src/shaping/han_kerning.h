@@ -16,7 +16,7 @@
 
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 class LayoutLocale;
 class ShapeResult;
@@ -168,4 +168,4 @@ inline void HanKerning::DidShapeSegment(ShapeResult& result) {
   }
 }
 
-} // namespace blink
+} // namespace bkfont

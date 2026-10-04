@@ -16,8 +16,9 @@
 // clang-format on
 
 #include "open_type_caps_support.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -295,7 +296,7 @@ void OpenTypeCapsSupport::DetermineFontSupport(hb_script_t script) {
     }
     break;
   default:
-    std::unreachable();
+    NOTREACHED();
   }
 }
 
@@ -303,4 +304,4 @@ bool OpenTypeCapsSupport::SyntheticSmallCapsAllowed() const {
   return font_synthesis_small_caps_ == FontDescription::kAutoFontSynthesisSmallCaps;
 }
 
-} // namespace blink
+} // namespace bkfont

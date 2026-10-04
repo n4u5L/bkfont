@@ -13,7 +13,7 @@
 
 struct hb_feature_t;
 
-namespace blink {
+namespace bkfont {
 
 class FontDescription;
 
@@ -98,4 +98,4 @@ private:
   wtf_size_t num_features_before_;
 };
 
-} // namespace blink
+} // namespace bkfont

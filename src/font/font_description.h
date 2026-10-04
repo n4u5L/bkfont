@@ -53,7 +53,7 @@
 #include "base/text/wtf_string.h"
 #include "platform/font_face.h"
 
-namespace blink {
+namespace bkfont {
 
 typedef struct {
   uint32_t parts[2];
@@ -379,16 +379,16 @@ public:
     return static_cast<FontOrientation>(fields_.orientation_);
   }
   bool IsVerticalAnyUpright() const {
-    return blink::IsVerticalAnyUpright(Orientation());
+    return bkfont::IsVerticalAnyUpright(Orientation());
   }
   bool IsVerticalNonCJKUpright() const {
-    return blink::IsVerticalNonCJKUpright(Orientation());
+    return bkfont::IsVerticalNonCJKUpright(Orientation());
   }
   bool IsVerticalUpright(UChar32 character) const {
-    return blink::IsVerticalUpright(Orientation(), character);
+    return bkfont::IsVerticalUpright(Orientation(), character);
   }
   bool IsVerticalBaseline() const {
-    return blink::IsVerticalBaseline(Orientation());
+    return bkfont::IsVerticalBaseline(Orientation());
   }
   FontWidthVariant WidthVariant() const {
     return static_cast<FontWidthVariant>(fields_.width_variant_);
@@ -670,7 +670,7 @@ private:
 
 template <>
 struct HashTraits<FontDescription>
-    : SimpleClassHashTraits<blink::FontDescription> {
+    : SimpleClassHashTraits<bkfont::FontDescription> {
   // Owning fields use std::shared_ptr in this port. Construct an empty key;
   // do not assume that a zero-filled standard-library object is valid.
   static constexpr bool kEmptyValueIsZero = false;
@@ -681,4 +681,4 @@ struct HashTraits<FontDescription>
   }
 };
 
-} // namespace blink
+} // namespace bkfont

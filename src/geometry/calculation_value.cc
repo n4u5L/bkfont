@@ -9,7 +9,7 @@
 #include "blend.h"
 #include "calculation_expression_node.h"
 
-namespace blink {
+namespace bkfont {
 
 // static
 std::shared_ptr<const CalculationValue> CalculationValue::CreateSimplified(
@@ -62,10 +62,10 @@ std::shared_ptr<const CalculationValue> CalculationValue::Blend(
   if (!IsExpression() && !from.IsExpression()) {
     PixelsAndPercent from_pixels_and_percent = from.GetPixelsAndPercent();
     PixelsAndPercent to_pixels_and_percent = GetPixelsAndPercent();
-    const float pixels = blink::Blend(from_pixels_and_percent.pixels,
+    const float pixels = bkfont::Blend(from_pixels_and_percent.pixels,
                                       to_pixels_and_percent.pixels,
                                       progress);
-    const float percent = blink::Blend(from_pixels_and_percent.percent,
+    const float percent = bkfont::Blend(from_pixels_and_percent.percent,
                                        to_pixels_and_percent.percent,
                                        progress);
     bool has_explicit_pixels = from_pixels_and_percent.has_explicit_pixels | to_pixels_and_percent.has_explicit_pixels;
@@ -183,4 +183,4 @@ bool CalculationValue::HasOnlyFixedAndPercent() const {
   return true;
 }
 
-} // namespace blink
+} // namespace bkfont

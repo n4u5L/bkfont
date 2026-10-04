@@ -9,7 +9,7 @@
 
 #include "text/character.h"
 
-namespace blink {
+namespace bkfont {
 
 class FontDescription;
 class TextRun;
@@ -116,4 +116,4 @@ private:
 template <>
 void ShapeResultSpacing<TextRun>::SetSpacingAndExpansion(
     const FontDescription&);
-} // namespace blink
+} // namespace bkfont

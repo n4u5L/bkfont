@@ -7,7 +7,7 @@
 // Scalar routines extracted from third_party/skia/modules/skcms/{skcms.cc,src/skcms_public.h}.
 // No Skia or skcms binary/header dependency.
 #pragma once
-namespace blink::color_math {
+namespace bkfont::color_math {
 struct skcms_Matrix3x3 {
   float vals[3][3];
 };
@@ -59,4 +59,4 @@ inline constexpr skcms_Matrix3x3 kRec2020 = {{{0.673459f, 0.165661f, 0.125100f},
                                               {0.279033f, 0.675338f, 0.0456288f},
                                               {-0.00193139f, 0.0299794f, 0.797162f}}};
 } // namespace NamedGamut
-} // namespace blink::color_math
+} // namespace bkfont::color_math

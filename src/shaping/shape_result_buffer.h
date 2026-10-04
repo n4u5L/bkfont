@@ -11,7 +11,7 @@
 
 #include "base/vector.h"
 
-namespace blink {
+namespace bkfont {
 
 struct CharacterRange;
 class FontDescription;
@@ -70,4 +70,4 @@ private:
   bool has_vertical_offsets_;
 };
 
-} // namespace blink
+} // namespace bkfont

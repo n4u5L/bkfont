@@ -39,7 +39,7 @@
 #include "shape_result_run.h"
 #include "shaping/support/gfx/geometry.h"
 
-namespace blink {
+namespace bkfont {
 
 // Helper class to accumulate glyph bounding box.
 //
@@ -123,4 +123,4 @@ private:
   }
 };
 
-} // namespace blink
+} // namespace bkfont

@@ -4,15 +4,20 @@
 // Port of platform/testing/font_test_helpers.cc and unit_test_helpers.cc.
 #include "font_test_helpers.h"
 
+#include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
-#include <stdexcept>
-#include <string>
 #include "font/font_custom_platform_data.h"
 #include "font/font_selector.h"
 
-namespace blink::test {
+namespace bkfont::test {
 namespace {
+[[noreturn]] void FailToLoadTestFont(const char* reason, const String& path) {
+  std::fprintf(stderr, "%s: %s\n", reason, path.Utf8().c_str());
+  std::abort();
+}
+
 String SourcePath(const char* relative, const String& suffix = String()) {
   std::filesystem::path path(CHROMIUM_SOURCE_DIR);
   path /= relative;
@@ -30,9 +35,9 @@ public:
   }
   static std::shared_ptr<TestFontSelector> Create(const String& path) {
     auto data = ReadFromFile(path);
-    if (!data) throw std::runtime_error("Cannot read test font: " + std::string(path.Utf8().c_str()));
+    if (!data) FailToLoadTestFont("Cannot read test font", path);
     auto selector = Create(base::as_byte_span(*data));
-    if (!selector) throw std::runtime_error("Cannot decode test font: " + std::string(path.Utf8().c_str()));
+    if (!selector) FailToLoadTestFont("Cannot decode test font", path);
     return selector;
   }
   explicit TestFontSelector(std::shared_ptr<FontCustomPlatformData> custom)
@@ -161,4 +166,4 @@ ScopedTestFontPrewarmer::ScopedTestFontPrewarmer()
 ScopedTestFontPrewarmer::~ScopedTestFontPrewarmer() {
   FontCache::SetFontPrewarmer(saved_);
 }
-} // namespace blink::test
+} // namespace bkfont::test

@@ -14,7 +14,7 @@
 #include "base/hash_set.h"
 #include "base/ref_counted.h"
 
-namespace blink {
+namespace bkfont {
 
 class DestructCounter {
   USING_FAST_MALLOC(DestructCounter);
@@ -125,7 +125,7 @@ struct MoveOnlyHashTraits : public GenericHashTraits<MoveOnlyHashValue> {
     return value.Value() == MoveOnlyHashValue::kDeleted;
   }
   static unsigned GetHash(const MoveOnlyHashValue& value) {
-    return blink::GetHash(value.Value());
+    return bkfont::GetHash(value.Value());
   }
   static bool Equal(const MoveOnlyHashValue& left,
                     const MoveOnlyHashValue& right) {
@@ -181,7 +181,7 @@ struct CountCopyHashTraits : public GenericHashTraits<CountCopy> {
     return value.Counter() == CountCopy::kDeletedValue;
   }
   static unsigned GetHash(const CountCopy& value) {
-    return blink::GetHash(value.Counter());
+    return bkfont::GetHash(value.Counter());
   }
   static bool Equal(const CountCopy& left, const CountCopy& right) {
     return left.Counter() == right.Counter();
@@ -254,7 +254,7 @@ struct ValueInstanceCountHashTraits
     return value.Counter() == ValueInstanceCount<T>::kDeletedValue;
   }
   static unsigned GetHash(const ValueInstanceCount<T>& value) {
-    return blink::GetHash(value.Counter());
+    return bkfont::GetHash(value.Counter());
   }
   static bool Equal(const ValueInstanceCount<T>& left,
                     const ValueInstanceCount<T>& right) {
@@ -354,4 +354,4 @@ public:
   static unsigned live_;
 };
 
-} // namespace blink
+} // namespace bkfont

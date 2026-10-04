@@ -35,7 +35,7 @@
 #include "base/math_extras.h"
 #include "base/text/string_hash.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(StringTest, CreationFromLiteral) {
   String string_from_literal("Explicit construction syntax");
@@ -460,4 +460,4 @@ TEST(StringTest, Issue420990876FuzzerCase) {
   EXPECT_EQ(String(), String::FromUTF8("\364\244\204\244"));
 }
 
-} // namespace blink
+} // namespace bkfont

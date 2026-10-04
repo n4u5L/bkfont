@@ -15,13 +15,14 @@
 #include "base/containers/span.h"
 #include "base/numerics/safe_conversions.h"
 #include "base/third_party/cityhash/city.h"
+#include "base/notreached.h"
 
 // Definition in base/third_party/superfasthash/superfasthash.c. (Third-party
 // code did not come with its own header file, so declaring the function here.)
 // Note: This algorithm is also in Blink under Source/wtf/StringHasher.h.
 extern "C" uint32_t SuperFastHash(const char* data, int len);
 
-namespace base {
+namespace bkfont::base {
 
 namespace {
 
@@ -143,7 +144,7 @@ uint32_t PersistentHash(span<const uint8_t> data) {
   // This hash function must not change, since it is designed to be persistable
   // to disk.
   if (data.size() > size_t{std::numeric_limits<int>::max()}) {
-    std::unreachable();
+    NOTREACHED();
   }
   auto chars = as_chars(data);
   return ::SuperFastHash(chars.data(), checked_cast<int>(chars.size()));
@@ -161,4 +162,4 @@ size_t HashInts64(uint64_t value1, uint64_t value2) {
   return Scramble(HashInts64Impl(value1, value2));
 }
 
-} // namespace base
+} // namespace bkfont::base

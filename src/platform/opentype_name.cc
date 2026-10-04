@@ -13,7 +13,7 @@
 #include <iterator>
 #include <memory>
 
-namespace blink {
+namespace bkfont {
 namespace {
 static const uint16_t UnicodeFromMacRoman[0x80] = {
     0x00C4,
@@ -656,4 +656,4 @@ Vector<LocalizedFontName> FamilyNamesFromNameTable(std::span<const std::uint8_t>
   return result;
 }
 
-} // namespace blink
+} // namespace bkfont

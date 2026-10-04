@@ -29,7 +29,7 @@
 #include "character.h"
 #include "base/text/string_buffer.h"
 
-namespace blink {
+namespace bkfont {
 
 String TextRun::NormalizedUTF16() const {
   const UChar* source;
@@ -82,4 +82,4 @@ unsigned TextRun::IndexOfSubRun(const TextRun& sub_run) const {
   return std::numeric_limits<unsigned>::max();
 }
 
-} // namespace blink
+} // namespace bkfont

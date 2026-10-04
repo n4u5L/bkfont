@@ -30,7 +30,7 @@
 
 // Port source: platform/fonts/font_data_cache.cc.
 #include "font_data_cache.h"
-namespace blink {
+namespace bkfont {
 std::shared_ptr<const SimpleFontData> FontDataCache::Get(std::shared_ptr<const FontPlatformData> platform_data, bool subpixel_ascent_descent) {
   if (!platform_data || !platform_data->GetFontFace()) return nullptr;
   // Upstream GC removes entries whose weak font data is dead. Without GC,
@@ -49,4 +49,4 @@ std::shared_ptr<const SimpleFontData> FontDataCache::Get(std::shared_ptr<const F
   while (strong_reference_lru_.size() > 64) strong_reference_lru_.pop_back();
   return result;
 }
-} // namespace blink
+} // namespace bkfont

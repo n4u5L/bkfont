@@ -17,8 +17,9 @@
 #include "font/simple_font_data.h"
 #include "runtime_enabled_features.h"
 #include "base/text/character_names.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -196,7 +197,7 @@ HanKerning::CharType HanKerning::GetCharType(UChar ch,
     return font_data.is_quote_fullwidth ? CharType::kClose
                                         : CharType::kCloseNarrow;
   }
-  std::unreachable();
+  NOTREACHED();
 }
 
 inline bool HanKerning::ShouldKern(CharType type, CharType last_type) {
@@ -405,7 +406,7 @@ void HanKerning::ApplyKerning(ShapeResult& result) {
       cursor.AddSpaceToRight(advance / -2);
       break;
     default:
-      std::unreachable();
+      NOTREACHED();
     }
   }
   changed_indexes_.Shrink(0);
@@ -549,4 +550,4 @@ HanKerning::FontData::FontData(const SimpleFontData& font,
   }
 }
 
-} // namespace blink
+} // namespace bkfont

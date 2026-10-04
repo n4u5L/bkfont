@@ -30,7 +30,7 @@
 #include "simple_font_data.h"
 #include "shaping/support/layout_unit.h"
 #include "text/tab_size.h"
-namespace blink {
+namespace bkfont {
 class TextRun;
 class Font {
 public:
@@ -98,4 +98,4 @@ private:
   FontDescription font_description_;
   mutable std::shared_ptr<FontFallbackList> font_fallback_list_;
 };
-} // namespace blink
+} // namespace bkfont

@@ -12,7 +12,7 @@
 
 #include <hb.h>
 
-namespace blink {
+namespace bkfont {
 
 enum class CaseMapIntend {
   kKeepSameCase,
@@ -39,4 +39,4 @@ private:
   hb_buffer_t* harfbuzz_buffer_;
 };
 
-} // namespace blink
+} // namespace bkfont

@@ -33,7 +33,7 @@
 #include "ieee.h"
 #include "strtod.h"
 
-namespace double_conversion {
+namespace bkfont::double_conversion {
 
 #if defined(DOUBLE_CONVERSION_CORRECT_DOUBLE_OPERATIONS)
 // 2^53 = 9007199254740992.
@@ -257,7 +257,7 @@ static DiyFp AdjustmentPowerOfTen(int exponent) {
   case 7:
     return DiyFp(DOUBLE_CONVERSION_UINT64_2PART_C(0x98968000, 00000000), -40);
   default:
-    std::unreachable();
+    DOUBLE_CONVERSION_UNREACHABLE();
   }
 }
 
@@ -594,4 +594,4 @@ float StrtofTrimmed(Vector<const char> trimmed, int exponent) {
   }
 }
 
-} // namespace double_conversion
+} // namespace bkfont::double_conversion

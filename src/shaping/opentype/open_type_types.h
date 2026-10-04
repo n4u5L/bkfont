@@ -30,7 +30,7 @@
 #include "base/numerics/byte_conversions.h"
 #include "base/vector.h"
 
-namespace blink {
+namespace bkfont {
 namespace open_type {
 
 struct Int16 {
@@ -117,4 +117,4 @@ protected:
 };
 
 } // namespace open_type
-} // namespace blink
+} // namespace bkfont

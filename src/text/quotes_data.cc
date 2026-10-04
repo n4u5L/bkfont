@@ -22,7 +22,7 @@
 
 #include "quotes_data.h"
 
-namespace blink {
+namespace bkfont {
 
 scoped_refptr<QuotesData> QuotesData::Create(UChar open1,
                                              UChar close1,
@@ -58,4 +58,4 @@ const String QuotesData::GetCloseQuote(int index) const {
   return quote_pairs_.at(index).second;
 }
 
-} // namespace blink
+} // namespace bkfont

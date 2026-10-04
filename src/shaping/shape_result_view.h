@@ -22,7 +22,7 @@
 #include "text/text_direction.h"
 #include "base/vector.h"
 
-namespace blink {
+namespace bkfont {
 
 class ShapeResult;
 
@@ -139,10 +139,10 @@ public:
     return static_cast<TextDirection>(direction_);
   }
   bool IsLtr() const {
-    return blink::IsLtr(Direction());
+    return bkfont::IsLtr(Direction());
   }
   bool IsRtl() const {
-    return blink::IsRtl(Direction());
+    return bkfont::IsRtl(Direction());
   }
   bool HasVerticalOffsets() const {
     return has_vertical_offsets_;
@@ -370,4 +370,4 @@ private:
                          const RunInfoPart& part) const;
 };
 
-} // namespace blink
+} // namespace bkfont

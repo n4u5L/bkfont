@@ -7,7 +7,7 @@
 
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(ShapeResultSpacingTest, ExpansionOppotunityCountZws) {
   // ZERO WIDTH SPACE, one of Default Ignorable Code Point.
@@ -26,4 +26,4 @@ TEST(ShapeResultSpacingTest, ExpansionOppotunityCountBidiControlAndCjk) {
   EXPECT_EQ(1u, spacing.ExpansionOppotunityCount());
 }
 
-} // namespace blink
+} // namespace bkfont

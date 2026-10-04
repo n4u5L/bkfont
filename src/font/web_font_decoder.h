@@ -35,7 +35,7 @@
 #include <span>
 #include "platform/font_face.h"
 
-namespace blink {
+namespace bkfont {
 
 class WebFontDecoder final {
 
@@ -60,4 +60,4 @@ private:
   size_t decoded_size_ = 0;
 };
 
-} // namespace blink
+} // namespace bkfont

@@ -10,8 +10,9 @@
 #include "base/vector.h"
 #include "font_features.h"
 #include "font/font_description.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -52,7 +53,7 @@ void FontFeatureRange::FromFontDescription(
   }
 
   {
-    bool default_is_off = description.TextRendering() == blink::kOptimizeSpeed;
+    bool default_is_off = description.TextRendering() == bkfont::kOptimizeSpeed;
     bool letter_spacing = description.LetterSpacing() != 0;
     constexpr auto normal = FontDescription::kNormalLigaturesState;
     constexpr auto enabled = FontDescription::kEnabledLigaturesState;
@@ -134,7 +135,7 @@ void FontFeatureRange::FromFontDescription(
       features.push_back(trad);
       break;
     default:
-      std::unreachable();
+      NOTREACHED();
     }
     static constexpr FontFeatureRange fwid{{{'f', 'w', 'i', 'd'}, 1}};
     static constexpr FontFeatureRange pwid{{{'p', 'w', 'i', 'd'}, 1}};
@@ -148,7 +149,7 @@ void FontFeatureRange::FromFontDescription(
       features.push_back(pwid);
       break;
     default:
-      std::unreachable();
+      NOTREACHED();
     }
     static constexpr FontFeatureRange ruby{{{'r', 'u', 'b', 'y'}, 1}};
     if (east_asian.Ruby())
@@ -238,4 +239,4 @@ template void FontFeatureRange::FromFontDescription(
     const FontDescription&,
     FontFeatureRanges&);
 
-} // namespace blink
+} // namespace bkfont

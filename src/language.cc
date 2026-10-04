@@ -32,7 +32,7 @@
 #include "base/text/wtf_string.h"
 #include "base/thread_specific.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -161,4 +161,4 @@ wtf_size_t IndexOfBestMatchingLanguageInList(
   return language_list.size();
 }
 
-} // namespace blink
+} // namespace bkfont

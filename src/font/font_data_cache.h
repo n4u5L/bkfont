@@ -34,7 +34,7 @@
 #include "simple_font_data.h"
 #include "base/hash_map.h"
 #include "base/linked_hash_set.h"
-namespace blink {
+namespace bkfont {
 struct FontDataCacheKeyHashTraits : GenericHashTraits<std::shared_ptr<const FontPlatformData>> {
   static unsigned GetHash(const std::shared_ptr<const FontPlatformData>& data) {
     return data->GetHash();
@@ -59,4 +59,4 @@ private:
   HashMap<std::shared_ptr<const FontPlatformData>, std::weak_ptr<const SimpleFontData>, FontDataCacheKeyHashTraits> cache_;
   LinkedHashSet<std::shared_ptr<const SimpleFontData>> strong_reference_lru_;
 };
-} // namespace blink
+} // namespace bkfont

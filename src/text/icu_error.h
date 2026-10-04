@@ -9,7 +9,7 @@
 #include "platform_export.h"
 #include "base/allocator/allocator.h"
 
-namespace blink {
+namespace bkfont {
 
 // ICUError provides the unified way to handle ICU errors in Blink.
 class ICUError {
@@ -35,4 +35,4 @@ private:
   UErrorCode error_ = U_ZERO_ERROR;
 };
 
-} // namespace blink
+} // namespace bkfont

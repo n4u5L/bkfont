@@ -46,7 +46,7 @@
 #include "base/text/character_names.h"
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 class Character {
 
@@ -326,4 +326,4 @@ inline bool Character::MayNeedEastAsianSpacing(UChar32 ch) {
          !IsInRange(ch, 0x1200, 0x3004);
 }
 
-} // namespace blink
+} // namespace bkfont

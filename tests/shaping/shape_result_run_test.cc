@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -157,4 +157,4 @@ TEST_F(ShapeResultRunTest, GlyphDataShrink) {
   EXPECT_EQ(GlyphOffset(5, 0), run_shrink_same_size->glyph_data_.Offsets()[0]);
 }
 
-} // namespace blink
+} // namespace bkfont

@@ -7,7 +7,7 @@
 
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(StrCatTest, Only8Bit) {
   const String src8("8bit 8bit");
@@ -53,4 +53,4 @@ TEST(StrCatTest, StringSelfSubstitution) {
   EXPECT_EQ(" after", view);
 }
 
-} // namespace blink
+} // namespace bkfont

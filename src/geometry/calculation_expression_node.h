@@ -12,7 +12,7 @@
 #include "base/ref_counted.h"
 #include "base/text/atomic_string.h"
 
-namespace blink {
+namespace bkfont {
 
 enum class CalculationOperator {
   kAdd,
@@ -388,4 +388,4 @@ struct DowncastTraits<CalculationExpressionOperationNode> {
   }
 };
 
-} // namespace blink
+} // namespace bkfont

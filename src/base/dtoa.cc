@@ -45,7 +45,7 @@
 #include "base/third_party/double_conversion/double-conversion/double-conversion.h"
 #include "base/wtf_size_t.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -205,4 +205,4 @@ void InitializeDoubleConverter() {
 
 } // namespace internal
 
-} // namespace blink
+} // namespace bkfont

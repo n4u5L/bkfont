@@ -7,7 +7,7 @@
 
 #include <unicode/uvernum.h>
 
-namespace blink {
+namespace bkfont {
 
 // ICU 61 or earlier does not have up to date v11 Emoji properties, so we're
 // temporarily uing our own functions again. Compare crbug.com/628333 Other than
@@ -232,4 +232,4 @@ bool Character::IsRegionalIndicator(UChar32 ch) {
   return (ch >= 0x1F1E6 && ch <= 0x1F1FF);
 }
 
-} // namespace blink
+} // namespace bkfont

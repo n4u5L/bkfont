@@ -8,7 +8,7 @@
 #include "base/text/character_visitor.h"
 #include "base/text/string_impl.h"
 
-namespace blink {
+namespace bkfont {
 
 void StringTypeAdapter<const char*>::WriteTo(
     base::span<LChar> destination) const {
@@ -41,4 +41,4 @@ void StringTypeAdapter<StringView>::WriteTo(
   });
 }
 
-} // namespace blink
+} // namespace bkfont

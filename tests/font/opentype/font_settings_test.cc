@@ -9,7 +9,7 @@
 #include <memory>
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -92,4 +92,4 @@ TEST(FontSettingsTest, FindTestEmpty) {
   ASSERT_FALSE(settings->FindPair('aaaa', &found_axis));
 }
 
-} // namespace blink
+} // namespace bkfont

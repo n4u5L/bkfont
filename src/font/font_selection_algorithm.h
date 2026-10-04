@@ -31,7 +31,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 class FontSelectionAlgorithm {
 public:
@@ -61,4 +61,4 @@ private:
   FontSelectionCapabilities capabilities_bounds_;
 };
 
-} // namespace blink
+} // namespace bkfont

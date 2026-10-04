@@ -10,7 +10,7 @@
 #include "build/build_config.h"
 #include "support/font_test_base.h"
 
-namespace blink {
+namespace bkfont {
 
 #if BUILDFLAG(IS_WIN)
 
@@ -45,4 +45,4 @@ TEST_F(BlockListBitmapGlyphsTest, Calibri) {
 }
 
 #endif
-} // namespace blink
+} // namespace bkfont

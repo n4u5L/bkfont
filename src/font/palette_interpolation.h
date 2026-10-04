@@ -12,7 +12,7 @@
 
 #include "platform/font_face.h"
 #include "font_table_harfbuzz.h"
-namespace blink {
+namespace bkfont {
 
 class PaletteInterpolation {
 public:
@@ -38,4 +38,4 @@ private:
   std::shared_ptr<FontFace> typeface_;
 };
 
-} // namespace blink
+} // namespace bkfont

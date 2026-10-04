@@ -26,7 +26,7 @@
 #include "base/math_extras.h"
 #include "font_cache.h"
 #include "runtime_enabled_features.h"
-namespace blink {
+namespace bkfont {
 FontPlatformData::FontPlatformData() = default;
 FontPlatformData::FontPlatformData(HashTableDeletedValueType)
     : is_hash_table_deleted_value_(true) {
@@ -97,9 +97,9 @@ unsigned FontPlatformData::GetHash() const {
 bool FontPlatformData::FontContainsCharacter(UChar32 character) const {
   return typeface_->ContainsCharacter(character);
 }
-} // namespace blink
+} // namespace bkfont
 
-namespace blink {
+namespace bkfont {
 FontRenderOptions FontPlatformData::RenderOptions() const {
   FontRenderOptions options;
   options.synthetic_bold = synthetic_bold_;
@@ -109,6 +109,38 @@ FontRenderOptions FontPlatformData::RenderOptions() const {
   options.subpixel_positioning = use_anti_alias_;
   options.embedded_bitmaps = !avoid_embedded_bitmaps_;
   return options;
+}
+PlatformFont FontPlatformData::CreatePlatformFont(const FontDescription*) const {
+  PlatformFont font(typeface_);
+  font.SetSize(text_size_);
+  font.SetEmbolden(synthetic_bold_);
+  font.SetSkewX(synthetic_italic_ ? -1.0f / 4 : 0);
+
+  bool use_subpixel_rendering = use_subpixel_rendering_;
+  bool use_anti_alias = use_anti_alias_;
+
+  if (use_subpixel_rendering) {
+    font.SetEdging(PlatformFont::Edging::kSubpixelAntiAlias);
+  } else if (use_anti_alias) {
+    font.SetEdging(PlatformFont::Edging::kAntiAlias);
+  } else {
+    font.SetEdging(PlatformFont::Edging::kAlias);
+  }
+
+  // Only use sub-pixel positioning if anti aliasing is enabled. Otherwise,
+  // without font smoothing, subpixel text positioning leads to uneven spacing
+  // since subpixel test placement coordinates would be passed to Skia, which
+  // only has non-antialiased glyphs to draw, so they necessarily get clamped at
+  // pixel positions, which leads to uneven spacing, either too close or too far
+  // away from adjacent glyphs. We avoid this by linking the two flags.
+  if (use_anti_alias) {
+    font.SetSubpixel(true);
+  }
+
+  // The WebTestSupport subpixel override has no counterpart here.
+
+  font.SetEmbeddedBitmaps(!avoid_embedded_bitmaps_);
+  return font;
 }
 bool FontPlatformData::MeasureGlyph(uint16_t glyph, PlatformGlyphMetrics* metrics) const {
   const bool measured = typeface_->MeasureGlyph(glyph, text_size_, RenderOptions(), metrics);
@@ -130,4 +162,4 @@ bool FontPlatformData::MeasureGlyph(uint16_t glyph, PlatformGlyphMetrics* metric
 PlatformFontMetrics FontPlatformData::GetFontMetrics() const {
   return typeface_->GetFontMetrics(text_size_, RenderOptions());
 }
-} // namespace blink
+} // namespace bkfont

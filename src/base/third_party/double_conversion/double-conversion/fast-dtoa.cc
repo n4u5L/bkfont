@@ -31,7 +31,7 @@
 #include "diy-fp.h"
 #include "ieee.h"
 
-namespace double_conversion {
+namespace bkfont::double_conversion {
 
 // The minimal and maximal target exponent define the range of w's binary
 // exponent, where 'w' is the result of multiplying the input by a cached power
@@ -626,7 +626,7 @@ bool FastDtoa(double v,
     result = Grisu3Counted(v, requested_digits, buffer, length, &decimal_exponent);
     break;
   default:
-    std::unreachable();
+    DOUBLE_CONVERSION_UNREACHABLE();
   }
   if (result) {
     *decimal_point = *length + decimal_exponent;
@@ -635,4 +635,4 @@ bool FastDtoa(double v,
   return result;
 }
 
-} // namespace double_conversion
+} // namespace bkfont::double_conversion

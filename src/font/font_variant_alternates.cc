@@ -9,7 +9,7 @@
 
 #include <hb.h>
 
-namespace blink {
+namespace bkfont {
 
 FontVariantAlternates::FontVariantAlternates() = default;
 
@@ -186,22 +186,22 @@ std::shared_ptr<FontVariantAlternates> FontVariantAlternates::Resolve(
 unsigned FontVariantAlternates::GetHash() const {
   unsigned computed_hash = 0;
   AddIntToHash(computed_hash,
-               stylistic_.has_value() ? blink::GetHash(*stylistic_) : -1);
+               stylistic_.has_value() ? bkfont::GetHash(*stylistic_) : -1);
   AddIntToHash(computed_hash, historical_forms_);
   AddIntToHash(computed_hash,
-               swash_.has_value() ? blink::GetHash(*swash_) : -1);
+               swash_.has_value() ? bkfont::GetHash(*swash_) : -1);
   AddIntToHash(computed_hash,
-               ornaments_.has_value() ? blink::GetHash(*ornaments_) : -1);
+               ornaments_.has_value() ? bkfont::GetHash(*ornaments_) : -1);
   AddIntToHash(computed_hash,
-               annotation_.has_value() ? blink::GetHash(*annotation_) : -1);
+               annotation_.has_value() ? bkfont::GetHash(*annotation_) : -1);
   if (!styleset_.empty()) {
     for (const AtomicString& styleset_alias : styleset_) {
-      AddIntToHash(computed_hash, blink::GetHash(styleset_alias));
+      AddIntToHash(computed_hash, bkfont::GetHash(styleset_alias));
     }
   }
   if (!character_variant_.empty()) {
     for (const AtomicString& character_variant_alias : character_variant_) {
-      AddIntToHash(computed_hash, blink::GetHash(character_variant_alias));
+      AddIntToHash(computed_hash, bkfont::GetHash(character_variant_alias));
     }
   }
   AddIntToHash(computed_hash, resolved_features_.size());
@@ -213,4 +213,4 @@ bool FontVariantAlternates::operator==(
   return stylistic_ == other.stylistic_ && historical_forms_ == other.historical_forms_ && styleset_ == other.styleset_ && character_variant_ == other.character_variant_ && swash_ == other.swash_ && ornaments_ == other.ornaments_ && annotation_ == other.annotation_ && resolved_features_ == other.resolved_features_;
 }
 
-} // namespace blink
+} // namespace bkfont

@@ -8,7 +8,7 @@
 #include "font/font_platform_data.h"
 #include "harfbuzz_face.h"
 #include "shaping/opentype/open_type_vertical_data.h"
-namespace blink {
+namespace bkfont {
 inline constexpr unsigned kInvalidFallbackMetricsValue = static_cast<unsigned>(-1);
 struct HarfBuzzFontData final {
   explicit HarfBuzzFontData(hb_font_t* font)
@@ -25,6 +25,7 @@ struct HarfBuzzFontData final {
     return vertical_data_.get();
   }
   const hb::unique_ptr<hb_font_t> unscaled_font_;
+  PlatformFont font_;
   // Owning value snapshot replaces the source SkFont value; no pointer back
   // to any FontPlatformData/HarfBuzzFace that retains this shared cache entry.
   std::unique_ptr<FontPlatformData> platform_data_;
@@ -43,4 +44,4 @@ struct HarfBuzzFontData final {
   // strong Member does, without retaining a GC-managed object.
   std::unique_ptr<const UnicodeRangeSet> range_set_;
 };
-} // namespace blink
+} // namespace bkfont

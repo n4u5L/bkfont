@@ -11,7 +11,7 @@
 #include "script_run_iterator.h"
 #include "utf16_text_iterator.h"
 
-namespace blink {
+namespace bkfont {
 
 class OrientationIterator {
 
@@ -38,4 +38,4 @@ private:
   bool at_end_;
 };
 
-} // namespace blink
+} // namespace bkfont

@@ -32,7 +32,7 @@
 #include "base/text/case_folding_hash.h"
 #include "base/text/convert_to_8bit_hash_reader.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -137,4 +137,4 @@ TEST(StringHasherTest, ContractionAndExpansion) {
   }
 }
 
-} // namespace blink
+} // namespace bkfont

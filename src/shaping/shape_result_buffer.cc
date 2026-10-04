@@ -17,7 +17,7 @@
 #include "text/text_run.h"
 #include "shaping/support/gfx/geometry.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -147,4 +147,4 @@ GlyphData ShapeResultBuffer::EmphasisMarkGlyphData(
   return GlyphData();
 }
 
-} // namespace blink
+} // namespace bkfont

@@ -36,8 +36,8 @@
 #include <cmath>
 #include "base/vector.h"
 
-namespace blink {
+namespace bkfont {
 
 typedef uint16_t Glyph;
 
-} // namespace blink
+} // namespace bkfont

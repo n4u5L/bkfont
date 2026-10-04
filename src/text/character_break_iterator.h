@@ -31,7 +31,7 @@
 #include "base/text/character_names.h"
 #include "base/text/wtf_uchar.h"
 
-namespace blink {
+namespace bkfont {
 
 typedef icu::BreakIterator TextBreakIterator;
 
@@ -113,4 +113,4 @@ unsigned LengthOfGraphemeCluster(const String&, unsigned = 0);
 void GraphemesClusterList(const StringView& text,
                           base::span<unsigned> graphemes);
 
-} // namespace blink
+} // namespace bkfont

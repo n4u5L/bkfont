@@ -7,7 +7,7 @@
 
 #include <unicode/uobject.h>
 
-namespace blink {
+namespace bkfont {
 
 static const UChar32 kIsCJKIdeographOrSymbolArray[] = {
     // 0x2C7 Caron, Mandarin Chinese 3rd Tone
@@ -404,4 +404,4 @@ static const UChar32 kIsHangulRanges[] = {
 extern const int32_t kSerializedCharacterDataSize;
 extern const uint8_t kSerializedCharacterData[];
 
-} // namespace blink
+} // namespace bkfont

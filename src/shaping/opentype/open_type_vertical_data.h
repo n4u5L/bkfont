@@ -33,7 +33,7 @@
 #include "base/hash_map.h"
 #include "base/vector.h"
 
-namespace blink {
+namespace bkfont {
 class FontPlatformData;
 class FontFace;
 
@@ -77,4 +77,4 @@ private:
   int height_fallback_;
 };
 
-} // namespace blink
+} // namespace bkfont

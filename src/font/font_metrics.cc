@@ -33,8 +33,9 @@
 
 #include "target_platform.h"
 #include "font_platform_data.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_FUCHSIA)
 // This is the largest VDMX table which we'll try to load and parse.
@@ -62,7 +63,7 @@ float FontMetrics::FloatAscentInternal(
     ApplyBaselineTable apply_baseline_table) const {
   switch (baseline_type) {
   case kAlphabeticBaseline:
-    std::unreachable();
+    NOTREACHED();
   case kCentralBaseline:
     return FloatHeight() / 2;
 
@@ -94,7 +95,7 @@ float FontMetrics::FloatAscentInternal(
     return 0;
   }
 
-  std::unreachable();
+  NOTREACHED();
 }
 
 int FontMetrics::IntAscentInternal(
@@ -102,7 +103,7 @@ int FontMetrics::IntAscentInternal(
     ApplyBaselineTable apply_baseline_table) const {
   switch (baseline_type) {
   case kAlphabeticBaseline:
-    std::unreachable();
+    NOTREACHED();
   case kCentralBaseline:
     return Height() - Height() / 2;
 
@@ -132,6 +133,6 @@ int FontMetrics::IntAscentInternal(
     return 0;
   }
 
-  std::unreachable();
+  NOTREACHED();
 }
-} // namespace blink
+} // namespace bkfont

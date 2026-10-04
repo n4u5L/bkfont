@@ -5,7 +5,7 @@
 
 #pragma once
 
-namespace blink {
+namespace bkfont {
 
 // Set of color channel keywords that can appear in a calc() expression.
 enum class ColorChannelKeyword {
@@ -24,4 +24,4 @@ enum class ColorChannelKeyword {
   kAlpha
 };
 
-} // namespace blink
+} // namespace bkfont

@@ -1,7 +1,7 @@
 // Port source: third_party/blink/renderer/platform/fonts/font_family_names.json5
 #pragma once
 #include "base/text/atomic_string.h"
-namespace blink::font_family_names {
+namespace bkfont::font_family_names {
 extern const AtomicString& kWebkitStandard;
 extern const AtomicString& kSystemUi;
 extern const AtomicString& kArial;
@@ -28,4 +28,4 @@ extern const AtomicString& kSerif;
 extern const AtomicString& kMath;
 extern const AtomicString& kBlinkMacSystemFont;
 void Init();
-} // namespace blink::font_family_names
+} // namespace bkfont::font_family_names

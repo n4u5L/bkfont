@@ -43,7 +43,7 @@
 #include "base/vector.h"
 #include "support/wtf_test_helper.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -604,7 +604,7 @@ TEST(HashMapTest, InitializerList) {
 }
 
 TEST(HashMapTest, IsValidKey) {
-  using blink::AtomicString;
+  using bkfont::AtomicString;
   static_assert(HashTraits<int>::kSafeToCompareToEmptyOrDeleted,
                 "type should be comparable to empty or deleted");
   static_assert(HashTraits<int*>::kSafeToCompareToEmptyOrDeleted,
@@ -763,4 +763,4 @@ static_assert(
 
 } // anonymous namespace
 
-} // namespace blink
+} // namespace bkfont

@@ -32,7 +32,7 @@
 #include "bignum.h"
 #include "ieee.h"
 
-namespace double_conversion {
+namespace bkfont::double_conversion {
 
 static int NormalizedExponent(uint64_t significand, int exponent) {
   (void)0;
@@ -150,7 +150,7 @@ void BignumDtoa(double v, BignumDtoaMode mode, int requested_digits,
     GenerateCountedDigits(requested_digits, decimal_point, &numerator, &denominator, buffer, length);
     break;
   default:
-    std::unreachable();
+    DOUBLE_CONVERSION_UNREACHABLE();
   }
   buffer[*length] = '\0';
 }
@@ -632,4 +632,4 @@ static void FixupMultiply10(int estimated_power, bool is_even,
   }
 }
 
-} // namespace double_conversion
+} // namespace bkfont::double_conversion

@@ -21,7 +21,7 @@
 #include "support/runtime_enabled_features_test_helpers.h"
 #include "support/font_test_helpers.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 class FontsHolder {
@@ -42,25 +42,25 @@ protected:
   void SetUp() override {
     FontDescription::VariantLigatures ligatures;
     fonts_holder = std::make_shared<FontsHolder>();
-    fonts_holder->fonts[0] = blink::test::CreateTestFont(
+    fonts_holder->fonts[0] = bkfont::test::CreateTestFont(
         AtomicString("Roboto"),
-        blink::test::PlatformTestDataPath(
+        bkfont::test::PlatformTestDataPath(
             "third_party/Roboto/roboto-regular.woff2"),
         12.0,
         &ligatures);
 
-    fonts_holder->fonts[1] = blink::test::CreateTestFont(
+    fonts_holder->fonts[1] = bkfont::test::CreateTestFont(
         AtomicString("Noto"),
-        blink::test::PlatformTestDataPath(
+        bkfont::test::PlatformTestDataPath(
             "third_party/Noto/NotoNaskhArabic-regular.woff2"),
         12.0,
         &ligatures);
 
     if (test::ReadFromFile(test::BlinkWebTestsFontsTestDataPath(
             "mplus-1p-regular.woff"))) {
-      fonts_holder->fonts[2] = blink::test::CreateTestFont(
+      fonts_holder->fonts[2] = bkfont::test::CreateTestFont(
           AtomicString("M PLUS 1p"),
-          blink::test::BlinkWebTestsFontsTestDataPath("mplus-1p-regular.woff"),
+          bkfont::test::BlinkWebTestsFontsTestDataPath("mplus-1p-regular.woff"),
           12.0,
           &ligatures);
     }
@@ -902,4 +902,4 @@ TEST_F(ShapeResultCursorTest, Rtl) {
             GlyphOffset(-space, 0));
 }
 
-} // namespace blink
+} // namespace bkfont

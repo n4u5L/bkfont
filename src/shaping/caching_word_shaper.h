@@ -31,7 +31,7 @@
 #include "base/vector.h"
 #include "shaping/support/gfx/geometry/rect_f.h"
 
-namespace blink {
+namespace bkfont {
 
 struct CharacterRange;
 class Font;
@@ -61,4 +61,4 @@ private:
   const Font& font_;
 };
 
-} // namespace blink
+} // namespace bkfont

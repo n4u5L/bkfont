@@ -42,8 +42,10 @@
 #include "base/text/string_builder.h"
 #include "base/text/string_view.h"
 #include "color_conversions.h"
+#include "base/compiler_specific.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 const Color Color::kBlack = Color(0xFF000000);
 const Color Color::kWhite = Color(0xFFFFFFFF);
@@ -274,7 +276,7 @@ float Color::HueInterpolation(float value1,
     ;
     break;
   }
-  return AngleToUnitCircleDegrees(blink::Blend(value1, value2, percentage));
+  return AngleToUnitCircleDegrees(bkfont::Blend(value1, value2, percentage));
 }
 
 std::array<bool, 3> Color::GetAnalogousMissingComponents(
@@ -441,7 +443,7 @@ Color Color::InterpolateColors(Color::ColorSpace interpolation_space,
   color2.ConvertToColorSpaceForInterpolation(interpolation_space);
 
   if (!SubstituteMissingParameters(color1, color2)) {
-    std::unreachable();
+    NOTREACHED();
   }
 
   float alpha1 = color1.PremultiplyColor();
@@ -459,23 +461,23 @@ Color Color::InterpolateColors(Color::ColorSpace interpolation_space,
           ? std::optional<float>(std::nullopt)
       : (interpolation_space == ColorSpace::kHSL || interpolation_space == ColorSpace::kHWB)
           ? HueInterpolation(color1.param0_, color2.param0_, percentage, hue_method.value())
-          : blink::Blend(color1.param0_, color2.param0_, percentage);
+          : bkfont::Blend(color1.param0_, color2.param0_, percentage);
 
   std::optional<float> param1 =
       (color1.param1_is_none_ && color2.param1_is_none_)
           ? std::optional<float>(std::nullopt)
-          : blink::Blend(color1.param1_, color2.param1_, percentage);
+          : bkfont::Blend(color1.param1_, color2.param1_, percentage);
 
   std::optional<float> param2 =
       (color1.param2_is_none_ && color2.param2_is_none_)
           ? std::optional<float>(std::nullopt)
       : (IsChromaSecondComponent(interpolation_space))
           ? HueInterpolation(color1.param2_, color2.param2_, percentage, hue_method.value())
-          : blink::Blend(color1.param2_, color2.param2_, percentage);
+          : bkfont::Blend(color1.param2_, color2.param2_, percentage);
 
   std::optional<float> alpha = (color1.alpha_is_none_ && color2.alpha_is_none_)
                                    ? std::optional<float>(std::nullopt)
-                                   : blink::Blend(alpha1, alpha2, percentage);
+                                   : bkfont::Blend(alpha1, alpha2, percentage);
 
   Color result =
       FromColorSpace(interpolation_space, param0, param1, param2, alpha);
@@ -531,9 +533,9 @@ std::tuple<float, float, float> Color::ExportAsXYZD50Floats() const {
     return gfx::SRGBToXYZD50(r, g, b);
   }
   case ColorSpace::kNone:
-    std::unreachable();
+    NOTREACHED();
   }
-  std::unreachable();
+  FALLS_OFF_END();
 }
 
 // https://www.w3.org/TR/css-color-4/#missing:
@@ -1004,9 +1006,9 @@ String Color::ColorSpaceToString(Color::ColorSpace color_space) {
   case Color::ColorSpace::kHWB:
     return "hwb";
   case ColorSpace::kNone:
-    std::unreachable();
+    NOTREACHED();
   }
-  std::unreachable();
+  FALLS_OFF_END();
 }
 
 static String ColorParamToString(float param, int precision = 6) {
@@ -1402,4 +1404,4 @@ std::ostream& operator<<(std::ostream& os, const Color& color) {
   return os << color.SerializeAsCSSColor();
 }
 
-} // namespace blink
+} // namespace bkfont

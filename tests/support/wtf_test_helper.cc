@@ -5,7 +5,7 @@
 
 #include "wtf_test_helper.h"
 
-namespace blink {
+namespace bkfont {
 
 int* const CountCopy::kDeletedValue =
     reinterpret_cast<int*>(static_cast<uintptr_t>(-1));
@@ -19,4 +19,4 @@ HashSet<void*> g_constructed_wrapped_ints;
 
 unsigned LivenessCounter::live_ = 0;
 
-} // namespace blink
+} // namespace bkfont

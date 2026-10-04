@@ -31,7 +31,8 @@
 #include "character_range.h"
 #include "shaping/caching_word_shaper.h"
 #include "text/bidi_paragraph.h"
-namespace blink {
+#include "base/notreached.h"
+namespace bkfont {
 static std::shared_ptr<FontFallbackList> GetOrCreateFontFallbackList(const FontDescription& description,
                                                                      FontSelector* selector) {
   FontFallbackMap& map = selector ? selector->GetFontFallbackMap() : FontCache::Get().GetFontFallbackMap();
@@ -120,7 +121,7 @@ float Font::TextAutoSpaceInlineSize() const {
     return font_data->TextAutoSpaceInlineSize();
   }
 
-  std::unreachable();
+  NOTREACHED();
 }
 
 std::pair<float, bool> Font::TabWidthInternal(const SimpleFontData* font_data,
@@ -191,9 +192,9 @@ bool Font::IsFallbackValid() const {
   return !font_fallback_list_ || font_fallback_list_->IsValid();
 }
 
-} // namespace blink
+} // namespace bkfont
 
-namespace blink {
+namespace bkfont {
 float Font::DeprecatedWidth(const TextRun& run,
                             gfx::RectF* glyph_bounds) const {
   CachingWordShaper shaper(*this);
@@ -254,9 +255,9 @@ float Font::DeprecatedSubRunWidth(const TextRun& run,
   return x_pos;
 }
 
-} // namespace blink
+} // namespace bkfont
 
-namespace blink {
+namespace bkfont {
 GlyphData Font::GetEmphasisMarkGlyphData(const AtomicString& mark) const {
   if (mark.empty())
     return GlyphData();
@@ -293,4 +294,4 @@ int Font::EmphasisMarkHeight(const AtomicString& mark) const {
   return mark_font_data->GetFontMetrics().Height();
 }
 
-} // namespace blink
+} // namespace bkfont

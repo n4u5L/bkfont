@@ -10,7 +10,7 @@
 #include "shaping/harfbuzz_face.h"
 #include "font/simple_font_data.h"
 
-namespace blink {
+namespace bkfont {
 
 OpenTypeFeatures::OpenTypeFeatures(const SimpleFontData& font)
     : features_(kInitialSize) {
@@ -34,4 +34,4 @@ OpenTypeFeatures::OpenTypeFeatures(const SimpleFontData& font)
   }
 }
 
-} // namespace blink
+} // namespace bkfont

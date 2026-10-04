@@ -10,7 +10,7 @@
 
 #include "base/vector.h"
 
-namespace blink {
+namespace bkfont {
 
 class OpenTypeMathStretchData {
 public:
@@ -43,4 +43,4 @@ public:
   };
 };
 
-} // namespace blink
+} // namespace bkfont

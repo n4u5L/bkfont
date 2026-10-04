@@ -5,7 +5,7 @@
 
 #include "font_test_utilities.h"
 
-namespace blink {
+namespace bkfont {
 
 String To16Bit(std::string_view text) {
   String s = String::FromUTF8(text);
@@ -13,4 +13,4 @@ String To16Bit(std::string_view text) {
   return s;
 }
 
-} // namespace blink
+} // namespace bkfont

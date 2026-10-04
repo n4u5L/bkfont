@@ -10,7 +10,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 enum FontVariantEmoji {
   kNormalVariantEmoji,
   kTextVariantEmoji,
@@ -19,4 +19,4 @@ enum FontVariantEmoji {
 };
 
 String ToString(FontVariantEmoji);
-} // namespace blink
+} // namespace bkfont

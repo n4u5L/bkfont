@@ -52,7 +52,7 @@
 
 using std::numeric_limits;
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -132,7 +132,7 @@ void CopyStringFragment(const StringView& fragment,
 
 void* StringImpl::operator new(size_t size) {
   ;
-  return Partitions::BufferMalloc(size, "blink::StringImpl");
+  return Partitions::BufferMalloc(size, "bkfont::StringImpl");
 }
 
 void StringImpl::operator delete(void* ptr) {
@@ -196,7 +196,7 @@ scoped_refptr<StringImpl> StringImpl::CreateUninitialized(
   // heap allocation from this call.
   StringImpl* string = new (Partitions::BufferMalloc(
       AllocationSize<LChar>(narrowed_length),
-      "blink::StringImpl"))
+      "bkfont::StringImpl"))
       StringImpl(narrowed_length, kForce8BitConstructor);
 
   data = string->CharacterBuffer<LChar>();
@@ -217,7 +217,7 @@ scoped_refptr<StringImpl> StringImpl::CreateUninitialized(
   // heap allocation from this call.
   StringImpl* string = new (Partitions::BufferMalloc(
       AllocationSize<UChar>(narrowed_length),
-      "blink::StringImpl"))
+      "bkfont::StringImpl"))
       StringImpl(narrowed_length);
 
   data = string->CharacterBuffer<UChar>();
@@ -287,7 +287,7 @@ StringImpl* StringImpl::CreateStatic(base::span<const char> string) {
   BASE_INTERNAL_LEAK_SANITIZER_DISABLED_SCOPE;
   StringImpl* impl = new (Partitions::BufferMalloc(
       AllocationSize<LChar>(narrowed_length),
-      "blink::StringImpl"))
+      "bkfont::StringImpl"))
       StringImpl(narrowed_length, hash, kStaticString);
 
   impl->CharacterBuffer<LChar>().copy_from(base::as_bytes(string));
@@ -1109,8 +1109,8 @@ bool DeprecatedEqualIgnoringCase(base::span<const UChar> a,
 wtf_size_t StringImpl::Find(CharacterMatchFunctionPtr match_function,
                             wtf_size_t start) const {
   if (Is8Bit())
-    return blink::Find(Span8(), match_function, start);
-  return blink::Find(Span16(), match_function, start);
+    return bkfont::Find(Span8(), match_function, start);
+  return bkfont::Find(Span16(), match_function, start);
 }
 
 wtf_size_t StringImpl::Find(base::RepeatingCallback<bool(UChar)> match_callback,
@@ -1177,8 +1177,8 @@ wtf_size_t StringImpl::Find(const StringView& match_string,
   // Optimization 1: fast case for strings of length 1.
   if (match_length == 1) {
     if (Is8Bit())
-      return blink::Find(Span8(), match_string[0], index);
-    return blink::Find(Span16(), match_string[0], index);
+      return bkfont::Find(Span8(), match_string[0], index);
+    return bkfont::Find(Span16(), match_string[0], index);
   }
 
   if (!match_length) [[unlikely]] {
@@ -1308,8 +1308,8 @@ wtf_size_t StringImpl::FindIgnoringASCIICase(const StringView& match_string,
 
 wtf_size_t StringImpl::ReverseFind(UChar c, wtf_size_t index) const {
   if (Is8Bit())
-    return blink::ReverseFind(Span8(), c, index);
-  return blink::ReverseFind(Span16(), c, index);
+    return bkfont::ReverseFind(Span8(), c, index);
+  return bkfont::ReverseFind(Span16(), c, index);
 }
 
 template <typename SearchCharacterType, typename MatchCharacterType>
@@ -1366,8 +1366,8 @@ wtf_size_t StringImpl::ReverseFind(const StringView& match_string,
   // Optimization 1: fast case for strings of length 1.
   if (match_length == 1) {
     if (Is8Bit())
-      return blink::ReverseFind(Span8(), match_string[0], index);
-    return blink::ReverseFind(Span16(), match_string[0], index);
+      return bkfont::ReverseFind(Span8(), match_string[0], index);
+    return bkfont::ReverseFind(Span16(), match_string[0], index);
   }
 
   // Check index & matchLength are in range.
@@ -1414,7 +1414,7 @@ bool StringImpl::DeprecatedStartsWithIgnoringCase(
 bool StringImpl::StartsWithIgnoringCaseAndAccents(
     const StringView& prefix) const {
   std::u16string s = ToU16String();
-  std::u16string p = blink::ToU16String(prefix);
+  std::u16string p = bkfont::ToU16String(prefix);
   size_t match_index = 1U;
 
   if (base::i18n::StringSearchIgnoringCaseAndAccents(
@@ -1429,7 +1429,7 @@ bool StringImpl::StartsWithIgnoringCaseAndAccents(
 }
 
 std::u16string StringImpl::ToU16String() const {
-  return blink::ToU16String(StringView(*this));
+  return bkfont::ToU16String(StringView(*this));
 }
 
 bool StringImpl::StartsWithIgnoringASCIICase(const StringView& prefix) const {
@@ -1836,4 +1836,4 @@ int CodeUnitCompareIgnoringASCIICase(const StringImpl* string1,
   });
 }
 
-} // namespace blink
+} // namespace bkfont

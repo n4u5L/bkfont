@@ -9,7 +9,7 @@
 
 #include "platform/font_face.h"
 #include "font_table_harfbuzz.h"
-namespace blink {
+namespace bkfont {
 
 struct VariationAxis {
   String tag;
@@ -24,4 +24,4 @@ public:
   static Vector<VariationAxis> GetVariationAxes(std::shared_ptr<FontFace> typeface);
 };
 
-} // namespace blink
+} // namespace bkfont

@@ -12,9 +12,9 @@
 #include "third_party/blink/renderer/platform/testing/font_test_helpers.h"
 #include "third_party/blink/renderer/platform/testing/unit_test_helpers.h"
 
-using blink::test::CreateTestFont;
+using bkfont::test::CreateTestFont;
 
-namespace blink {
+namespace bkfont {
 
 class FontGlobalContextTest : public FontTestBase {};
 
@@ -96,6 +96,6 @@ TEST_F(FontGlobalContextTest, PostScriptNameDigestCacheDifferentEntry) {
   EXPECT_NE(digest_ahem, digest_ahem_space_ligature);
 }
 
-}  // namespace blink
+}  // namespace bkfont
 
 #endif

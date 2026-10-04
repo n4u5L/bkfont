@@ -50,8 +50,9 @@
 #include "base/text/character_names.h"
 #include "base/text/unicode.h"
 #include "shaping/support/gfx/geometry/rect_f.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 constexpr float kSmallCapsFontSizeMultiplier = 0.7f;
 constexpr float kEmphasisMarkFontSizeMultiplier = 0.5f;
@@ -324,7 +325,7 @@ LayoutUnit SimpleFontData::VerticalPosition(
     return -NormalizedTypoDescent(baseline_type);
   }
 
-  std::unreachable();
+  NOTREACHED();
 }
 
 const std::optional<float>& SimpleFontData::IdeographicAdvanceWidth() const {
@@ -453,4 +454,4 @@ float SimpleFontData::ZeroInlineSize() const {
   return size;
 }
 
-} // namespace blink
+} // namespace bkfont

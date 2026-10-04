@@ -28,7 +28,7 @@
 
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(MathExtrasTest, Lrint) {
   EXPECT_EQ(-8, lrint(-7.5));
@@ -239,4 +239,4 @@ TEST(MathExtrasTest, infinityMath) {
   EXPECT_EQ(1.0, pow(nan, 0.0));
 }
 
-} // namespace blink
+} // namespace bkfont

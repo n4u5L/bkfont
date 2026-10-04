@@ -29,8 +29,9 @@
 #include "length_point.h"
 #include "length_size.h"
 #include "shaping/support/gfx/geometry.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 int IntValueForLength(const Length& length, int maximum_value) {
   return ValueForLength(length, LayoutUnit(maximum_value)).ToInt();
@@ -60,9 +61,9 @@ float FloatValueForLength(const Length& length,
   case Length::kDeviceWidth:
   case Length::kDeviceHeight:
   case Length::kNone:
-    std::unreachable();
+    NOTREACHED();
   }
-  std::unreachable();
+  NOTREACHED();
 }
 
 LayoutUnit MinimumValueForLengthInternal(const Length& length,
@@ -91,9 +92,9 @@ LayoutUnit MinimumValueForLengthInternal(const Length& length,
   case Length::kDeviceWidth:
   case Length::kDeviceHeight:
   case Length::kNone:
-    std::unreachable();
+    NOTREACHED();
   }
-  std::unreachable();
+  NOTREACHED();
 }
 
 LayoutUnit ValueForLength(const Length& length,
@@ -118,9 +119,9 @@ LayoutUnit ValueForLength(const Length& length,
   case Length::kDeviceWidth:
   case Length::kDeviceHeight:
   case Length::kNone:
-    std::unreachable();
+    NOTREACHED();
   }
-  std::unreachable();
+  NOTREACHED();
 }
 
 gfx::SizeF SizeForLengthSize(const LengthSize& length_size,
@@ -136,4 +137,4 @@ gfx::PointF PointForLengthPoint(const LengthPoint& length_point,
                      FloatValueForLength(length_point.Y(), box_size.height()));
 }
 
-} // namespace blink
+} // namespace bkfont

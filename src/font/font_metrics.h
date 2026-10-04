@@ -32,7 +32,7 @@
 #include <cmath>
 #include "base/vector.h"
 
-namespace blink {
+namespace bkfont {
 
 class FontPlatformData;
 
@@ -292,4 +292,4 @@ private:
   bool has_zero_width_ = false;
 };
 
-} // namespace blink
+} // namespace bkfont

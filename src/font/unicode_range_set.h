@@ -31,7 +31,7 @@
 #include "base/text/wtf_string.h"
 #include "base/text/wtf_uchar.h"
 
-namespace blink {
+namespace bkfont {
 
 struct UnicodeRange final {
 
@@ -87,4 +87,4 @@ private:
       ranges_; // If empty, represents the whole code space.
 };
 
-} // namespace blink
+} // namespace bkfont

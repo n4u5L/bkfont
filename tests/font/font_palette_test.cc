@@ -8,7 +8,7 @@
 #include <memory>
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(FontPaletteTest, HashingAndComparison) {
   std::shared_ptr<FontPalette> a = FontPalette::Create();
@@ -191,4 +191,4 @@ TEST(FontPaletteTest, ComputeEndpointPercentagesFromNormalized) {
   EXPECT_EQ(expected_percentages_3, actual_percentages_3);
 }
 
-} // namespace blink
+} // namespace bkfont

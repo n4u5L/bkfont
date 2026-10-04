@@ -12,7 +12,7 @@
 #include "base/text/wtf_string.h"
 #include "base/vector.h"
 
-namespace blink {
+namespace bkfont {
 
 struct SegmenterTestRun {
   std::string text;
@@ -268,4 +268,4 @@ TEST_F(RunSegmenterTest, CJKBracketsAfterUnmatchingLatinParenthesis) {
        {")", USCRIPT_LATIN, OrientationIterator::kOrientationKeep, FontFallbackPriority::kText}});
 }
 
-} // namespace blink
+} // namespace bkfont

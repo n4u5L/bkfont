@@ -7,7 +7,7 @@
 
 #include "font/font_variant_emoji.h"
 
-namespace blink {
+namespace bkfont {
 enum VariationSelectorMode {
   // font-variant-emoji="normal". This value will behave as if
   // no variation selector was specified. This means that if no
@@ -45,4 +45,4 @@ VariationSelectorMode
 GetVariationSelectorModeFromFontVariantEmoji(
     FontVariantEmoji font_variant_emoji);
 
-} // namespace blink
+} // namespace bkfont

@@ -35,7 +35,7 @@
 #include "base/text/character_names.h"
 #include "base/text/string_hasher.h"
 
-namespace blink::unicode {
+namespace bkfont::unicode {
 
 namespace {
 
@@ -347,7 +347,7 @@ ConversionStatus ConvertUtf8ToUtf16Internal(base::span<const uint8_t>& source,
           status = kSourceIllegal;
           break;
         }
-        target[target_cursor++] = blink::uchar::kReplacementCharacter;
+        target[target_cursor++] = bkfont::uchar::kReplacementCharacter;
       } else {
         target[target_cursor++] = static_cast<UChar>(character); // normal case
       }
@@ -470,4 +470,4 @@ unsigned CalculateStringLengthFromUtf8(base::span<const uint8_t> data,
   return utf16_length;
 }
 
-} // namespace blink::unicode
+} // namespace bkfont::unicode

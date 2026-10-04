@@ -5,7 +5,7 @@
 
 #include "base/text/string_utf8_adaptor.h"
 
-namespace blink {
+namespace bkfont {
 
 StringUtf8Adaptor::StringUtf8Adaptor(StringView string,
                                      Utf8ConversionMode mode) {
@@ -25,4 +25,4 @@ StringUtf8Adaptor::StringUtf8Adaptor(StringView string,
 
 StringUtf8Adaptor::~StringUtf8Adaptor() = default;
 
-} // namespace blink
+} // namespace bkfont

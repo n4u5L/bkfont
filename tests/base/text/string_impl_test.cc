@@ -32,7 +32,7 @@
 #include "base/text/unicode.h"
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(StringImplTest, Create8Bit) {
   scoped_refptr<StringImpl> test_string_impl =
@@ -43,7 +43,7 @@ TEST(StringImplTest, Create8Bit) {
 TEST(StringImplTest, Latin1CaseFoldTable) {
   LChar symbol = 0xff;
   while (symbol--) {
-    EXPECT_EQ(blink::unicode::FoldCase(symbol),
+    EXPECT_EQ(bkfont::unicode::FoldCase(symbol),
               StringImpl::kLatin1CaseFoldTable[symbol]);
   }
 }
@@ -64,7 +64,7 @@ TEST(StringImplTest, LowerASCII) {
       test_string_impl.get(),
       StringImpl::Create(base::span_from_cstring("lInk"))->LowerASCII().get()));
 
-  blink::CaseMap case_map(blink::g_empty_atom);
+  bkfont::CaseMap case_map(bkfont::g_empty_atom);
   EXPECT_TRUE(Equal(
       case_map.ToLower(StringImpl::Create(base::span_from_cstring("LINK")))
           .Impl(),
@@ -136,7 +136,7 @@ TEST(StringImplTest, UpperASCII) {
       test_string_impl.get(),
       StringImpl::Create(base::span_from_cstring("lInk"))->UpperASCII().get()));
 
-  blink::CaseMap case_map(blink::g_empty_atom);
+  bkfont::CaseMap case_map(bkfont::g_empty_atom);
   EXPECT_TRUE(Equal(
       case_map.ToUpper(StringImpl::Create(base::span_from_cstring("LINK")))
           .Impl(),
@@ -204,4 +204,4 @@ TEST(StringImplTest, WtfReverseFind) {
   EXPECT_EQ(kNotFound, ReverseFind(text, 'd', 2u));
 }
 
-} // namespace blink
+} // namespace bkfont

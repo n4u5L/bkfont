@@ -47,7 +47,7 @@
 #include <memory>
 #include <span>
 namespace {
-using namespace blink;
+using namespace bkfont;
 
 constexpr uint32_t kOpszTag = HB_TAG('o', 'p', 's', 'z');
 constexpr uint32_t kSlntTag = HB_TAG('s', 'l', 'n', 't');
@@ -62,7 +62,7 @@ std::optional<FontVariationParameter> RetrieveVariationDesignParametersByTag(std
 
 } // namespace
 
-namespace blink {
+namespace bkfont {
 
 FontCustomPlatformData::FontCustomPlatformData(std::shared_ptr<FontFace> face, size_t data_size)
     : base_typeface_(std::move(face)),
@@ -277,4 +277,4 @@ std::shared_ptr<FontCustomPlatformData> FontCustomPlatformData::Create(
       data_size);
 }
 
-} // namespace blink
+} // namespace bkfont

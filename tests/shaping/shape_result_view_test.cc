@@ -22,7 +22,7 @@
 #include "support/font_test_helpers.h"
 #include "support/font_test_helpers.h"
 
-namespace blink {
+namespace bkfont {
 
 class ShapeResultViewTest : public FontTestBase {
 protected:
@@ -216,8 +216,8 @@ TEST_F(ShapeResultViewTest, PreviousSafeToBreak) {
       51,
       131,
       USCRIPT_HEBREW,
-      blink::OrientationIterator::kOrientationKeep,
-      blink::FontFallbackPriority::kText};
+      bkfont::OrientationIterator::kOrientationKeep,
+      bkfont::FontFallbackPriority::kText};
   std::shared_ptr<const ShapeResult> shape_result =
       shaper.Shape(font.get(), direction, 51, 131, range);
 
@@ -560,4 +560,4 @@ TEST_F(ShapeResultViewTest, PreviousSafeOffsetInsideView) {
   EXPECT_EQ(view2->PreviousSafeToBreakOffset(24), 24u);
 }
 
-} // namespace blink
+} // namespace bkfont

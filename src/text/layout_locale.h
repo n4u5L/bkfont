@@ -20,7 +20,7 @@
 
 struct hb_language_impl_t;
 
-namespace blink {
+namespace bkfont {
 
 // A Unicode Line Break Style Identifier (key "lb".)
 // https://www.unicode.org/reports/tr35/#UnicodeLineBreakStyleIdentifier
@@ -125,4 +125,4 @@ private:
   mutable unsigned is_macrolanguage_chinese_ : 1 = false;
 };
 
-} // namespace blink
+} // namespace bkfont

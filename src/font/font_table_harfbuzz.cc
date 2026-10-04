@@ -1,7 +1,7 @@
 // Copyright 2016 The Chromium Authors
 // BSD-style license; derived from shaping/harfbuzz_face_from_typeface.cc.
 #include "font_table_harfbuzz.h"
-namespace blink {
+namespace bkfont {
 namespace {
 hb_blob_t* ReferenceTable(hb_face_t*, hb_tag_t tag, void* data) {
   const auto& face = *static_cast<std::shared_ptr<FontFace>*>(data);
@@ -19,4 +19,4 @@ hb_face_t* HbFaceFromFontFace(std::shared_ptr<FontFace> face) {
   hb_face_set_index(result, (*owner)->CollectionIndex());
   return result;
 }
-} // namespace blink
+} // namespace bkfont

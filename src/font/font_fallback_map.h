@@ -15,7 +15,7 @@
 #include <span>
 #include "base/vector.h"
 #include "base/hash_map.h"
-namespace blink {
+namespace bkfont {
 
 class FontSelector;
 
@@ -54,4 +54,4 @@ private:
       fallback_list_for_description_;
 };
 
-} // namespace blink
+} // namespace bkfont

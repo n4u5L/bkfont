@@ -47,7 +47,7 @@
 
 using testing::ElementsAre;
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -127,27 +127,27 @@ protected:
 
   std::shared_ptr<Font> CreateAhem(float size) {
     FontDescription::VariantLigatures ligatures;
-    return blink::test::CreateTestFont(
+    return bkfont::test::CreateTestFont(
         AtomicString("Ahem"),
-        blink::test::PlatformTestDataPath("Ahem.woff"),
+        bkfont::test::PlatformTestDataPath("Ahem.woff"),
         size,
         &ligatures);
   }
 
   std::shared_ptr<Font> CreateNotoColorEmoji(
       FontVariantEmoji variant_emoji = kNormalVariantEmoji) {
-    return blink::test::CreateTestFont(
+    return bkfont::test::CreateTestFont(
         AtomicString("NotoColorEmoji"),
-        blink::test::BlinkWebTestsDir() + "/third_party/NotoColorEmoji/NotoColorEmoji.ttf",
+        bkfont::test::BlinkWebTestsDir() + "/third_party/NotoColorEmoji/NotoColorEmoji.ttf",
         12,
         nullptr,
         variant_emoji);
   }
 
   std::shared_ptr<Font> CreateNotoEmoji(FontVariantEmoji variant_emoji = kNormalVariantEmoji) {
-    return blink::test::CreateTestFont(
+    return bkfont::test::CreateTestFont(
         AtomicString("NotoEmoji"),
-        blink::test::BlinkWebTestsDir() + "/third_party/NotoEmoji/NotoEmoji-Regular.subset.ttf",
+        bkfont::test::BlinkWebTestsDir() + "/third_party/NotoEmoji/NotoEmoji-Regular.subset.ttf",
         12,
         nullptr,
         variant_emoji);
@@ -925,9 +925,9 @@ TEST_F(HarfBuzzShaperTest, VSOverrideFontVariantEmoji) {
       true);
 
   String text(u"\u2603\u2614\ufe0e\u2603\ufe0f");
-  std::shared_ptr<Font> font = blink::test::CreateTestFont(
+  std::shared_ptr<Font> font = bkfont::test::CreateTestFont(
       AtomicString("Ahem"),
-      blink::test::PlatformTestDataPath("Ahem.woff"),
+      bkfont::test::PlatformTestDataPath("Ahem.woff"),
       12,
       nullptr,
       kEmojiVariantEmoji);
@@ -1647,9 +1647,9 @@ TEST_F(HarfBuzzShaperTest, SafeToBreakLatinCommonLigatures) {
   ligatures.common = FontDescription::kEnabledLigaturesState;
 
   // MEgalopolis Extra has a lot of ligatures which this test relies on.
-  std::shared_ptr<Font> font = blink::test::CreateTestFont(
+  std::shared_ptr<Font> font = bkfont::test::CreateTestFont(
       AtomicString("MEgalopolis"),
-      blink::test::PlatformTestDataPath(
+      bkfont::test::PlatformTestDataPath(
           "third_party/MEgalopolis/MEgalopolisExtra.woff"),
       16,
       &ligatures);
@@ -1687,9 +1687,9 @@ TEST_F(HarfBuzzShaperTest, SafeToBreakPreviousLatinCommonLigatures) {
   ligatures.common = FontDescription::kEnabledLigaturesState;
 
   // MEgalopolis Extra has a lot of ligatures which this test relies on.
-  std::shared_ptr<Font> font = blink::test::CreateTestFont(
+  std::shared_ptr<Font> font = bkfont::test::CreateTestFont(
       AtomicString("MEgalopolis"),
-      blink::test::PlatformTestDataPath(
+      bkfont::test::PlatformTestDataPath(
           "third_party/MEgalopolis/MEgalopolisExtra.woff"),
       16,
       &ligatures);
@@ -1728,9 +1728,9 @@ TEST_F(HarfBuzzShaperTest, SafeToBreakLatinDiscretionaryLigatures) {
   ligatures.discretionary = FontDescription::kEnabledLigaturesState;
 
   // MEgalopolis Extra has a lot of ligatures which this test relies on.
-  std::shared_ptr<Font> font = blink::test::CreateTestFont(
+  std::shared_ptr<Font> font = bkfont::test::CreateTestFont(
       AtomicString("MEgalopolis"),
-      blink::test::PlatformTestDataPath(
+      bkfont::test::PlatformTestDataPath(
           "third_party/MEgalopolis/MEgalopolisExtra.woff"),
       16,
       &ligatures);
@@ -2287,4 +2287,4 @@ TEST_F(HarfBuzzShaperTest, UnorderedClusterIndex) {
   EXPECT_GE(runs.size(), 1u);
 }
 
-} // namespace blink
+} // namespace bkfont

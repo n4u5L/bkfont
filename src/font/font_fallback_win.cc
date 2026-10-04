@@ -49,7 +49,7 @@
 #include "base/text/string_hash.h"
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -78,7 +78,7 @@ struct FontMapping {
   const char* FirstAvailableFont(const FontManager& font_manager) {
     if (!candidate_family_names.empty()) {
       family_name =
-          blink::FirstAvailableFont(candidate_family_names, font_manager);
+          bkfont::FirstAvailableFont(candidate_family_names, font_manager);
       candidate_family_names = {};
     }
     return family_name;
@@ -666,4 +666,4 @@ const AtomicString& GetFallbackFamily(
   return kLastResort;
 }
 
-} // namespace blink
+} // namespace bkfont

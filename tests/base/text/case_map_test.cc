@@ -13,7 +13,7 @@
 
 using testing::ElementsAreArray;
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -522,4 +522,4 @@ TEST(CaseMapTest, ToTitleWithPreviousCharacter) {
   EXPECT_EQ(result6, String::FromUTF8("ja"));
 }
 
-} // namespace blink
+} // namespace bkfont

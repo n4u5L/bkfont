@@ -5,6 +5,18 @@ set(BUILD_GMOCK ON CACHE BOOL "" FORCE)
 set(GTEST_HAS_ABSL OFF CACHE BOOL "" FORCE)
 add_subdirectory("${BLINK_FONTS_CHROMIUM_ROOT}/third_party/googletest/src"
                  "${CMAKE_CURRENT_BINARY_DIR}/googletest" EXCLUDE_FROM_ALL)
+# GoogleTest hard-codes exception flags on its libraries. Build them without
+# exceptions like the rest of the project; mixed _HAS_EXCEPTIONS values would
+# also redefine the macro under GoogleTest's -WX.
+foreach(_gtest_target gtest gtest_main gmock gmock_main)
+  get_target_property(_gtest_flags ${_gtest_target} COMPILE_FLAGS)
+  string(REPLACE "-EHsc -D_HAS_EXCEPTIONS=1" "-EHs-c- -D_HAS_EXCEPTIONS=0"
+         _gtest_flags "${_gtest_flags}")
+  if(NOT _gtest_flags MATCHES "-EHs-c- -D_HAS_EXCEPTIONS=0")
+    message(FATAL_ERROR "Cannot disable exceptions for ${_gtest_target}")
+  endif()
+  set_target_properties(${_gtest_target} PROPERTIES COMPILE_FLAGS "${_gtest_flags}")
+endforeach()
 
 add_executable(blink_fonts_tests)
 target_sources(blink_fonts_tests PRIVATE
@@ -20,8 +32,7 @@ target_sources(blink_fonts_tests PRIVATE
   font/font_selection_types_test.cc
   font/font_size_adjust_test.cc
   font/font_test.cc
-  font/font_test_utilities.cc
-  font/font_test_utilities.h
+  font/font_test_utilities.h font/font_test_utilities.cc
   font/generic_font_family_settings_test.cc
   font/palette_interpolation_test.cc
   font/typesetting_features_test.cc
@@ -44,8 +55,7 @@ target_sources(blink_fonts_tests PRIVATE
   shaping/shape_result_run_test.cc
   shaping/shape_result_spacing_test.cc
   shaping/shape_result_test.cc
-  shaping/shape_result_test_info.cc
-  shaping/shape_result_test_info.h
+  shaping/shape_result_test_info.h shaping/shape_result_test_info.cc
   shaping/shape_result_view_test.cc
   shaping/small_caps_iterator_test.cc
   shaping/symbols_iterator_test.cc
@@ -53,12 +63,10 @@ target_sources(blink_fonts_tests PRIVATE
   shaping/opentype/open_type_baseline_metrics_test.cc
   shaping/opentype/open_type_vertical_data_test.cc
   support/font_test_base.h
-  support/font_test_helpers.cc
-  support/font_test_helpers.h
+  support/font_test_helpers.h support/font_test_helpers.cc
   support/runtime_enabled_features_test_helpers.h
   support/test_main.cc
-  support/wtf_test_helper.cc
-  support/wtf_test_helper.h
+  support/wtf_test_helper.h support/wtf_test_helper.cc
   text/bidi_paragraph_test.cc
   text/character_test.cc
   text/icu_error_test.cc

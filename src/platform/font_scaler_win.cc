@@ -22,7 +22,7 @@
 #include <cmath>
 #include <optional>
 
-namespace blink {
+namespace bkfont {
 namespace {
 
 struct Bounds {
@@ -844,4 +844,4 @@ PlatformFontMetrics FontFace::GetFontMetrics(float size,
   return scaler.FontMetrics();
 }
 
-} // namespace blink
+} // namespace bkfont

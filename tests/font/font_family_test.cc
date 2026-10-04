@@ -7,7 +7,7 @@
 
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(FontFamilyTest, ToString) {
   {
@@ -34,4 +34,4 @@ TEST(FontFamilyTest, ToString) {
   }
 }
 
-} // namespace blink
+} // namespace bkfont

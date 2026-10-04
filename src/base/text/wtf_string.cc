@@ -52,7 +52,7 @@
 #include "base/text/utf8.h"
 #include "base/vector.h"
 
-namespace blink {
+namespace bkfont {
 
 ;
 
@@ -133,7 +133,7 @@ String String::Substring(unsigned pos, unsigned len) const {
 String String::DeprecatedLower() const {
   if (!impl_)
     return String();
-  return blink::CaseMap::FastToLowerInvariant(impl_.get());
+  return bkfont::CaseMap::FastToLowerInvariant(impl_.get());
 }
 
 String String::LowerASCII() const {
@@ -470,7 +470,7 @@ String String::FromUTF8(base::span<const uint8_t> bytes) {
   if (!length)
     return g_empty_string;
 
-  blink::AsciiStringAttributes attributes = blink::CharacterAttributes(bytes);
+  bkfont::AsciiStringAttributes attributes = bkfont::CharacterAttributes(bytes);
   if (attributes.contains_only_ascii)
     return StringImpl::Create(bytes, attributes);
 
@@ -482,9 +482,9 @@ String String::FromUTF8(base::span<const uint8_t> bytes) {
       heap_buffer ? heap_buffer.get() : stack_buffer.data(),
       length);
 
-  blink::unicode::ConversionResult result =
-      blink::unicode::ConvertUtf8ToUtf16(bytes, buffer);
-  if (result.status != blink::unicode::kConversionOK) {
+  bkfont::unicode::ConversionResult result =
+      bkfont::unicode::ConvertUtf8ToUtf16(bytes, buffer);
+  if (result.status != bkfont::unicode::kConversionOK) {
     return String();
   }
 
@@ -514,4 +514,4 @@ void String::Show() const {
 }
 #endif
 
-} // namespace blink
+} // namespace bkfont

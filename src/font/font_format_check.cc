@@ -16,7 +16,7 @@
 #include <span>
 
 #include "platform/font_face.h"
-namespace blink {
+namespace bkfont {
 
 namespace {
 bool ContainsTableTag(std::span<const uint32_t> tags, uint32_t tag) {
@@ -137,4 +137,4 @@ FontFormatCheck::VariableFontSubType FontFormatCheck::ProbeVariableFont(
   return VariableFontSubType::kVariableTrueType;
 }
 
-} // namespace blink
+} // namespace bkfont

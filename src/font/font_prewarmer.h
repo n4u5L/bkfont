@@ -5,9 +5,9 @@
 // The native boundary uses WTF String instead of the public WebString wrapper.
 #pragma once
 #include "base/text/wtf_string.h"
-namespace blink {
+namespace bkfont {
 class FontPrewarmer {
 public:
   virtual void PrewarmFamily(const String& family_name) = 0;
 };
-} // namespace blink
+} // namespace bkfont

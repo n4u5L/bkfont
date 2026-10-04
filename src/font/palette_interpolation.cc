@@ -10,7 +10,7 @@
 
 #include "platform/font_face.h"
 #include "font_table_harfbuzz.h"
-namespace blink {
+namespace bkfont {
 
 Vector<FontPalette::FontPaletteOverride> PaletteInterpolation::MixColorRecords(
     Vector<FontPalette::FontPaletteOverride>&& start_color_records,
@@ -127,4 +127,4 @@ PaletteInterpolation::ComputeInterpolableFontPalette(
   return result_color_records;
 }
 
-} // namespace blink
+} // namespace bkfont

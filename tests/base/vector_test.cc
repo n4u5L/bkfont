@@ -41,7 +41,7 @@
 #include "base/text/wtf_string.h"
 #include "support/wtf_test_helper.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -439,11 +439,11 @@ void Compare() {
 TEST(VectorTest, Compare) {
   Compare<int>();
   Compare<Comparable>();
-  Compare<blink::String>();
+  Compare<bkfont::String>();
 }
 
 TEST(VectorTest, AppendFirst) {
-  Vector<blink::String> vector;
+  Vector<bkfont::String> vector;
   vector.push_back("string");
   // Test passes if it does not crash (reallocation did not make
   // the input reference stale).
@@ -453,7 +453,7 @@ TEST(VectorTest, AppendFirst) {
 
   limit = vector.capacity() + 1;
   for (size_t i = 0; i < limit; i++)
-    vector.push_back(const_cast<const blink::String&>(vector.front()));
+    vector.push_back(const_cast<const bkfont::String&>(vector.front()));
 }
 
 // The test below is for the following issue:
@@ -770,13 +770,13 @@ TEST(VectorTest, IteratorMultipleInsertion) {
 
 TEST(VectorTest, BlinkErase) {
   Vector<int> v = {1, 2, 3, 3, 5, 3};
-  blink::Erase(v, 3);
+  bkfont::Erase(v, 3);
   EXPECT_THAT(v, testing::ElementsAre(1, 2, 5));
 }
 
 TEST(VectorTest, BlinkEraseIf) {
   Vector<int> v = {1, 2, 3, 4, 5, 6};
-  blink::EraseIf(v, [](int x) { return x % 2 == 0; });
+  bkfont::EraseIf(v, [](int x) { return x % 2 == 0; });
   EXPECT_THAT(v, testing::ElementsAre(1, 3, 5));
 }
 
@@ -863,4 +863,4 @@ static_assert(!IsTraceable<Vector<int>>::value,
 
 } // anonymous namespace
 
-} // namespace blink
+} // namespace bkfont

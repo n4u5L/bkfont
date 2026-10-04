@@ -3,7 +3,7 @@
 #pragma once
 #include "platform/font_face.h"
 #include <hb.h>
-namespace blink {
+namespace bkfont {
 // The returned face owns a shared reference to the source FontFace.
 hb_face_t* HbFaceFromFontFace(std::shared_ptr<FontFace>);
-} // namespace blink
+} // namespace bkfont

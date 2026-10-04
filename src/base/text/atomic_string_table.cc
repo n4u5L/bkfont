@@ -19,8 +19,9 @@
 #include "base/text/convert_to_8bit_hash_reader.h"
 #include "base/text/string_hash.h"
 #include "base/text/utf8.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -80,7 +81,7 @@ public:
     case AtomicStringUCharEncoding::kIs16Bit:
       return StringImpl::Create({characters_, length_});
     }
-    std::unreachable();
+    NOTREACHED();
   }
 
 private:
@@ -96,7 +97,7 @@ struct UCharBufferTranslator {
   }
 
   static bool Equal(StringImpl* const& str, const UCharBuffer& buf) {
-    return blink::Equal(str, buf.characters());
+    return bkfont::Equal(str, buf.characters());
   }
 
   static void Store(StringImpl*& location,
@@ -387,7 +388,7 @@ struct LCharBufferTranslator {
   }
 
   static bool Equal(StringImpl* const& str, const LCharBuffer& buf) {
-    return blink::Equal(str, buf.characters());
+    return bkfont::Equal(str, buf.characters());
   }
 
   static void Store(StringImpl*& location,
@@ -470,7 +471,7 @@ scoped_refptr<StringImpl> AtomicStringTable::AddUTF8(
   bool seen_non_ascii = false;
   bool seen_non_latin1 = false;
 
-  unsigned utf16_length = blink::unicode::CalculateStringLengthFromUtf8(
+  unsigned utf16_length = bkfont::unicode::CalculateStringLengthFromUtf8(
       characters_span,
       seen_non_ascii,
       seen_non_latin1);
@@ -479,7 +480,7 @@ scoped_refptr<StringImpl> AtomicStringTable::AddUTF8(
   }
 
   auto utf16_buf = base::HeapArray<UChar>::Uninit(utf16_length);
-  if (blink::unicode::ConvertUtf8ToUtf16(characters_span, utf16_buf).status != blink::unicode::kConversionOK) {
+  if (bkfont::unicode::ConvertUtf8ToUtf16(characters_span, utf16_buf).status != bkfont::unicode::kConversionOK) {
     ;
   }
 
@@ -527,4 +528,4 @@ bool AtomicStringTable::ReleaseAndRemoveIfNeeded(StringImpl* string) {
   return true;
 }
 
-} // namespace blink
+} // namespace bkfont

@@ -11,10 +11,22 @@
 #include <memory>
 #include <span>
 
+#include "base/once.h"
 #include "base/text/wtf_string.h"
 #include "base/vector.h"
 
-namespace blink {
+namespace bkfont {
+
+class FreeTypeFaceRec;
+
+// The SkStreamAsset subset FreeType opens a face from.
+class FontFileStream {
+public:
+  virtual ~FontFileStream() = default;
+  virtual std::size_t GetLength() const = 0;
+  // Returns null if the whole file cannot be mapped.
+  virtual const void* GetMemoryBase() = 0;
+};
 
 enum class FontSlant {
   kNormal,
@@ -195,11 +207,25 @@ public:
   Vector<std::uint32_t> PaletteColors() const;
   std::uint16_t RequestedPaletteIndex() const;
 
+  // DWriteFontTypeface::onOpenStream. Returns null unless the face comes from
+  // exactly one file.
+  std::unique_ptr<FontFileStream> OpenStream(int* ttc_index) const;
+  // SkTypeface_FreeType::getFaceRec. Caller must lock FreeTypeMutex() before
+  // calling this function.
+  FreeTypeFaceRec* GetFaceRec() const;
+  // SkTypeface_FreeType::onGlyphMaskNeedsCurrentColor.
+  bool GlyphMaskNeedsCurrentColor() const;
+
 private:
   friend class FontManager;
   struct Impl;
   explicit FontFace(std::unique_ptr<Impl> implementation);
   std::unique_ptr<Impl> impl_;
+
+  mutable Once face_rec_once_;
+  mutable std::unique_ptr<FreeTypeFaceRec> face_rec_;
+  mutable Once glyph_masks_may_need_current_color_once_;
+  mutable bool glyph_masks_may_need_current_color_ = false;
 };
 
-} // namespace blink
+} // namespace bkfont

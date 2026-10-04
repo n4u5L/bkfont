@@ -15,7 +15,7 @@
 #include "base/text/wtf_string.h"
 #include "base/threading.h"
 
-namespace blink {
+namespace bkfont {
 
 struct ScriptTestRun {
   const char* const text;
@@ -850,4 +850,4 @@ TEST_F(ScriptRunIteratorICUDataTest, CommonHaveNoMoreThanOneExtension) {
 // in. HarfBuzz needs to be able to use it as context and shape each
 // neighboring character appropriately no matter what run it got assigned to.
 
-} // namespace blink
+} // namespace bkfont

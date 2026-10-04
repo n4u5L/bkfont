@@ -33,7 +33,7 @@
 
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(AtomicStringTest, Number) {
   int16_t int_value = 1234;
@@ -76,4 +76,4 @@ TEST(AtomicStringTest, ImplEquality) {
   EXPECT_NE(bar.Impl(), baz.Impl());
 }
 
-} // namespace blink
+} // namespace bkfont

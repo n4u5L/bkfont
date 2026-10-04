@@ -10,7 +10,7 @@
 #include "base/text/case_map.h"
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(TextOffsetMapTest, MergeConstructor) {
   using Entry = TextOffsetMap::Entry;
@@ -115,4 +115,4 @@ TEST(TextOffsetMapTest, CreateLengthMapCombiningMark) {
   EXPECT_EQ(1000u, length_map[0]);
 }
 
-} // namespace blink
+} // namespace bkfont

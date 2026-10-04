@@ -10,7 +10,7 @@
 #include "base/allocator/partitions.h"
 #include "base/wtf.h"
 
-namespace blink {
+namespace bkfont {
 
 void InitializeFonts() {
   Partitions::Initialize();
@@ -20,4 +20,4 @@ void InitializeFonts() {
   InitializePlatformLanguage();
 }
 
-} // namespace blink
+} // namespace bkfont

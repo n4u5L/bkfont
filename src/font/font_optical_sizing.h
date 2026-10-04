@@ -10,11 +10,11 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 enum OpticalSizing {
   kAutoOpticalSizing,
   kNoneOpticalSizing
 };
 
 String ToString(OpticalSizing);
-} // namespace blink
+} // namespace bkfont

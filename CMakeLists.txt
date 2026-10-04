@@ -10,7 +10,7 @@ if(NOT WIN32 OR NOT MSVC OR NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
   message(FATAL_ERROR "The font port currently requires MSVC for Windows x64")
 endif()
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
@@ -19,9 +19,10 @@ set(BLINK_FONTS_PACKAGES_ROOT "D:/MyPackages" CACHE PATH "Prebuilt MSVC x64 depe
 get_filename_component(_chromium_default "${CMAKE_CURRENT_SOURCE_DIR}/../../../qt5/qtwebengine/src/3rdparty/chromium" ABSOLUTE)
 set(BLINK_FONTS_CHROMIUM_ROOT "${_chromium_default}" CACHE PATH "Source Chromium checkout")
 
-add_compile_options(/utf-8 /Zc:__cplusplus /permissive- /bigobj /EHsc)
+add_compile_options(/utf-8 /Zc:__cplusplus /permissive- /bigobj)
 add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN _CRT_SECURE_NO_WARNINGS)
 
+include(cmake/NoExceptions.cmake)
 include(cmake/FontPackages.cmake)
 include(cmake/FontSanitizer.cmake)
 add_subdirectory(tools/character_data)
@@ -30,393 +31,299 @@ add_library(blink_fonts STATIC)
 add_library(blink_fonts::blink_fonts ALIAS blink_fonts)
 add_dependencies(blink_fonts generate_character_data)
 target_sources(blink_fonts PRIVATE
-  include/base/base_export.h
-  include/base/bit_cast.h
-  include/base/compiler_specific.h
-  include/base/gtest_prod_util.h
-  include/base/containers/adapters.h
-  include/base/containers/adapters_internal.h
-  include/base/containers/flat_map.h
-  include/base/containers/flat_tree.h
-  include/base/containers/heap_array.h
-  include/base/containers/span.h
-  include/base/containers/span_forward_internal.h
-  include/base/functional/callback.h
-  include/base/functional/callback_forward.h
-  include/base/functional/function_ref.h
-  include/base/hash/hash.h
-  include/base/i18n/base_i18n_export.h
-  include/base/i18n/rtl.h
-  include/base/i18n/string_search.h
-  include/base/memory/ptr_util.h
-  include/base/memory/raw_ptr.h
-  include/base/memory/raw_ptr_exclusion.h
-  include/base/memory/raw_span.h
-  include/base/memory/ref_counted.h
-  include/base/memory/scoped_refptr.h
-  include/base/memory/stack_allocated.h
-  include/base/memory/values_equivalent.h
-  include/base/numerics/angle_conversions.h
-  include/base/numerics/basic_ops_impl.h
-  include/base/numerics/byte_conversions.h
-  include/base/numerics/checked_math.h
-  include/base/numerics/checked_math_impl.h
-  include/base/numerics/clamped_math.h
-  include/base/numerics/clamped_math_impl.h
-  include/base/numerics/integral_constant_like.h
-  include/base/numerics/safe_conversions.h
-  include/base/numerics/safe_conversions_arm_impl.h
-  include/base/numerics/safe_conversions_impl.h
-  include/base/numerics/safe_math_arm_impl.h
-  include/base/numerics/safe_math_clang_gcc_impl.h
-  include/base/numerics/safe_math_shared_impl.h
-  include/base/strings/span_printf.h
-  include/base/strings/string_util.h
-  include/base/strings/string_util_internal.h
-  include/base/strings/string_util_posix.h
-  include/base/strings/string_util_win.h
-  include/base/strings/string_view_util.h
-  include/base/synchronization/lock.h
-  include/base/third_party/cityhash/city.h
-  include/base/third_party/double_conversion/double-conversion/bignum.h
-  include/base/third_party/double_conversion/double-conversion/bignum-dtoa.h
-  include/base/third_party/double_conversion/double-conversion/cached-powers.h
-  include/base/third_party/double_conversion/double-conversion/diy-fp.h
-  include/base/third_party/double_conversion/double-conversion/double-conversion.h
-  include/base/third_party/double_conversion/double-conversion/double-to-string.h
-  include/base/third_party/double_conversion/double-conversion/fast-dtoa.h
-  include/base/third_party/double_conversion/double-conversion/fixed-dtoa.h
-  include/base/third_party/double_conversion/double-conversion/ieee.h
-  include/base/third_party/double_conversion/double-conversion/string-to-double.h
-  include/base/third_party/double_conversion/double-conversion/strtod.h
-  include/base/third_party/double_conversion/double-conversion/utils.h
-  include/base/threading/platform_thread.h
-  include/base/threading/thread_local_storage.h
-  include/base/types/pass_key.h
-  include/base/types/strong_alias.h
-  include/base/types/supports_ostream_operator.h
-  include/base/types/to_address.h
-  include/base/types/zip.h
-  include/base/casting.h
-  include/base/deque.h
-  include/base/dtoa.h
-  include/base/dynamic_annotations.h
-  include/base/forward.h
-  include/base/get_ptr.h
-  include/base/hash_functions.h
-  include/base/hash_map.h
-  include/base/hash_set.h
-  include/base/hash_table.h
-  include/base/hash_table_deleted_value_type.h
-  include/base/hash_traits.h
-  include/base/key_value_pair.h
-  include/base/leak_annotations.h
-  include/base/linked_hash_set.h
-  include/base/math_extras.h
-  include/base/ref_counted.h
-  include/base/sanitizers.h
-  include/base/stack_util.h
-  include/base/static_constructors.h
-  include/base/std_lib_extras.h
-  include/base/thread_safe_ref_counted.h
-  include/base/thread_specific.h
-  include/base/threading.h
-  include/base/type_traits.h
-  include/base/vector.h
-  include/base/vector_backed_linked_list.h
-  include/base/vector_traits.h
-  include/base/wtf.h
-  include/base/wtf_size_t.h
-  include/base/allocator/allocator.h
-  include/base/allocator/partition_allocator.h
-  include/base/allocator/partitions.h
-  include/base/text/ascii_ctype.h
-  include/base/text/ascii_fast_path.h
-  include/base/text/atomic_string.h
-  include/base/text/atomic_string_encoding.h
-  include/base/text/atomic_string_hash.h
-  include/base/text/atomic_string_table.h
-  include/base/text/case_folding_hash.h
-  include/base/text/case_map.h
-  include/base/text/character_names.h
-  include/base/text/character_visitor.h
-  include/base/text/code_point_iterator.h
-  include/base/text/convert_to_8bit_hash_reader.h
-  include/base/text/copy_lchars_from_uchar_source.h
-  include/base/text/integer_to_string_conversion.h
-  include/base/text/number_parsing_options.h
-  include/base/text/strcat.h
-  include/base/text/string_buffer.h
-  include/base/text/string_builder.h
-  include/base/text/string_concatenate.h
-  include/base/text/string_hash.h
-  include/base/text/string_hasher.h
-  include/base/text/string_impl.h
-  include/base/text/string_operators.h
-  include/base/text/string_operators_atomic.h
-  include/base/text/string_statics.h
-  include/base/text/string_to_number.h
-  include/base/text/string_utf8_adaptor.h
-  include/base/text/string_view.h
-  include/base/text/text_offset_map.h
-  include/base/text/unicode.h
-  include/base/text/unicode_string.h
-  include/base/text/utf16.h
-  include/base/text/utf8.h
-  include/base/text/wtf_string.h
-  include/base/text/wtf_uchar.h
-  include/build/build_config.h
-  include/third_party/rapidhash/rapidhash.h
+  src/base/base_export.h
+  src/base/bit_cast.h
+  src/base/compiler_specific.h
+  src/base/gtest_prod_util.h
+  src/base/immediate_crash.h
+  src/base/containers/adapters.h
+  src/base/containers/adapters_internal.h
+  src/base/containers/flat_map.h
+  src/base/containers/flat_tree.h
+  src/base/containers/heap_array.h
+  src/base/containers/span.h
+  src/base/containers/span_forward_internal.h
+  src/base/functional/callback.h
+  src/base/functional/callback_forward.h
+  src/base/functional/function_ref.h
+  src/base/hash/hash.h src/base/hash/hash.cc
+  src/base/i18n/base_i18n_export.h
+  src/base/i18n/rtl.h
+  src/base/i18n/string_search.h src/base/i18n/string_search.cc
+  src/base/memory/ptr_util.h
+  src/base/memory/raw_ptr.h
+  src/base/memory/raw_ptr_exclusion.h
+  src/base/memory/raw_span.h
+  src/base/memory/ref_counted.h
+  src/base/memory/scoped_refptr.h
+  src/base/memory/stack_allocated.h
+  src/base/memory/values_equivalent.h
+  src/base/numerics/angle_conversions.h
+  src/base/numerics/basic_ops_impl.h
+  src/base/numerics/byte_conversions.h
+  src/base/numerics/checked_math.h
+  src/base/numerics/checked_math_impl.h
+  src/base/numerics/clamped_math.h
+  src/base/numerics/clamped_math_impl.h
+  src/base/numerics/integral_constant_like.h
+  src/base/numerics/safe_conversions.h
+  src/base/numerics/safe_conversions_arm_impl.h
+  src/base/numerics/safe_conversions_impl.h
+  src/base/numerics/safe_math_arm_impl.h
+  src/base/numerics/safe_math_clang_gcc_impl.h
+  src/base/numerics/safe_math_shared_impl.h
+  src/base/strings/span_printf.h
+  src/base/strings/string_util.h
+  src/base/strings/string_util_internal.h
+  src/base/strings/string_util_posix.h
+  src/base/strings/string_util_win.h
+  src/base/strings/string_view_util.h
+  src/base/synchronization/lock.h
+  src/base/third_party/cityhash/city.h src/base/third_party/cityhash/city.cc
+  src/base/third_party/double_conversion/double-conversion/bignum.h src/base/third_party/double_conversion/double-conversion/bignum.cc
+  src/base/third_party/double_conversion/double-conversion/bignum-dtoa.h src/base/third_party/double_conversion/double-conversion/bignum-dtoa.cc
+  src/base/third_party/double_conversion/double-conversion/cached-powers.h src/base/third_party/double_conversion/double-conversion/cached-powers.cc
+  src/base/third_party/double_conversion/double-conversion/diy-fp.h
+  src/base/third_party/double_conversion/double-conversion/double-conversion.h
+  src/base/third_party/double_conversion/double-conversion/double-to-string.h src/base/third_party/double_conversion/double-conversion/double-to-string.cc
+  src/base/third_party/double_conversion/double-conversion/fast-dtoa.h src/base/third_party/double_conversion/double-conversion/fast-dtoa.cc
+  src/base/third_party/double_conversion/double-conversion/fixed-dtoa.h src/base/third_party/double_conversion/double-conversion/fixed-dtoa.cc
+  src/base/third_party/double_conversion/double-conversion/ieee.h
+  src/base/third_party/double_conversion/double-conversion/string-to-double.h src/base/third_party/double_conversion/double-conversion/string-to-double.cc
+  src/base/third_party/double_conversion/double-conversion/strtod.h src/base/third_party/double_conversion/double-conversion/strtod.cc
+  src/base/third_party/double_conversion/double-conversion/utils.h
+  src/base/threading/platform_thread.h
+  src/base/threading/thread_local_storage.h
+  src/base/types/pass_key.h
+  src/base/types/strong_alias.h
+  src/base/types/supports_ostream_operator.h
+  src/base/types/to_address.h
+  src/base/types/zip.h
+  src/base/casting.h
+  src/base/deque.h
+  src/base/dtoa.h src/base/dtoa.cc
+  src/base/dynamic_annotations.h src/base/dynamic_annotations.cc
+  src/base/forward.h
+  src/base/get_ptr.h
+  src/base/hash_functions.h
+  src/base/hash_map.h
+  src/base/hash_set.h
+  src/base/hash_table.h
+  src/base/hash_table_deleted_value_type.h
+  src/base/hash_traits.h
+  src/base/key_value_pair.h
+  src/base/leak_annotations.h
+  src/base/lean_windows.h
+  src/base/linked_hash_set.h
+  src/base/math_extras.h
+  src/base/mutex.h
+  src/base/notreached.h src/base/notreached.cc
+  src/base/once.h
+  src/base/ref_counted.h
+  src/base/sanitizers.h
+  src/base/semaphore.h src/base/semaphore.cc
+  src/base/stack_util.h src/base/stack_util.cc
+  src/base/static_constructors.h
+  src/base/std_lib_extras.h
+  src/base/thread_safe_ref_counted.h
+  src/base/thread_id.h src/base/thread_id.cc
+  src/base/thread_specific.h
+  src/base/threading.h src/base/threading.cc
+  src/base/type_traits.h
+  src/base/vector.h
+  src/base/vector_backed_linked_list.h
+  src/base/vector_traits.h
+  src/base/wtf.h src/base/wtf.cc
+  src/base/wtf_size_t.h
+  src/base/allocator/allocator.h
+  src/base/allocator/partition_allocator.h src/base/allocator/partition_allocator.cc
+  src/base/allocator/partitions.h src/base/allocator/partitions.cc
+  src/base/text/ascii_ctype.h
+  src/base/text/ascii_fast_path.h
+  src/base/text/atomic_string.h src/base/text/atomic_string.cc
+  src/base/text/atomic_string_encoding.h
+  src/base/text/atomic_string_hash.h
+  src/base/text/atomic_string_table.h src/base/text/atomic_string_table.cc
+  src/base/text/case_folding_hash.h
+  src/base/text/case_map.h src/base/text/case_map.cc
+  src/base/text/character_names.h
+  src/base/text/character_visitor.h
+  src/base/text/code_point_iterator.h
+  src/base/text/convert_to_8bit_hash_reader.h
+  src/base/text/copy_lchars_from_uchar_source.h
+  src/base/text/integer_to_string_conversion.h
+  src/base/text/number_parsing_options.h
+  src/base/text/strcat.h src/base/text/strcat.cc
+  src/base/text/string_buffer.h
+  src/base/text/string_builder.h src/base/text/string_builder.cc
+  src/base/text/string_concatenate.h src/base/text/string_concatenate.cc
+  src/base/text/string_hash.h
+  src/base/text/string_hasher.h
+  src/base/text/string_impl.h src/base/text/string_impl.cc
+  src/base/text/string_operators.h
+  src/base/text/string_operators_atomic.h
+  src/base/text/string_statics.h src/base/text/string_statics.cc
+  src/base/text/string_to_number.h src/base/text/string_to_number.cc
+  src/base/text/string_utf8_adaptor.h src/base/text/string_utf8_adaptor.cc
+  src/base/text/string_view.h src/base/text/string_view.cc
+  src/base/text/text_offset_map.h src/base/text/text_offset_map.cc
+  src/base/text/unicode.h
+  src/base/text/unicode_string.h
+  src/base/text/utf16.h
+  src/base/text/utf8.h src/base/text/utf8.cc
+  src/base/text/wtf_string.h src/base/text/wtf_string.cc
+  src/base/text/wtf_uchar.h
+  src/build/build_config.h
+  src/third_party/rapidhash/rapidhash.h
   src/fonts.h
-  src/initialize.cc
-  src/initialize.h
-  src/language.cc
-  src/language.h
+  src/initialize.h src/initialize.cc
+  src/language.h src/language.cc
   src/platform_export.h
   src/runtime_enabled_features.h
-  src/base/hash/hash.cc
-  src/base/i18n/string_search.cc
-  src/base/third_party/cityhash/city.cc
-  src/base/third_party/double_conversion/double-conversion/bignum.cc
-  src/base/third_party/double_conversion/double-conversion/bignum-dtoa.cc
-  src/base/third_party/double_conversion/double-conversion/cached-powers.cc
-  src/base/third_party/double_conversion/double-conversion/double-to-string.cc
-  src/base/third_party/double_conversion/double-conversion/fast-dtoa.cc
-  src/base/third_party/double_conversion/double-conversion/fixed-dtoa.cc
-  src/base/third_party/double_conversion/double-conversion/string-to-double.cc
-  src/base/third_party/double_conversion/double-conversion/strtod.cc
   src/base/third_party/superfasthash/superfasthash.cc
-  src/base/dtoa.cc
-  src/base/dynamic_annotations.cc
-  src/base/stack_util.cc
-  src/base/threading.cc
-  src/base/wtf.cc
-  src/base/allocator/partition_allocator.cc
-  src/base/allocator/partitions.cc
-  src/base/text/atomic_string.cc
-  src/base/text/atomic_string_table.cc
-  src/base/text/case_map.cc
-  src/base/text/strcat.cc
-  src/base/text/string_builder.cc
-  src/base/text/string_concatenate.cc
-  src/base/text/string_impl.cc
-  src/base/text/string_statics.cc
-  src/base/text/string_to_number.cc
-  src/base/text/string_utf8_adaptor.cc
-  src/base/text/string_view.cc
-  src/base/text/text_offset_map.cc
-  src/base/text/utf8.cc
-  src/base/text/wtf_string.cc
   src/font/alternate_font_family.h
   src/font/canvas_rotation_in_vertical.h
   src/font/character_range.h
   src/font/custom_font_data.h
   src/font/fallback_list_composite_key.h
-  src/font/font.cc
-  src/font/font.h
+  src/font/font.h src/font/font.cc
   src/font/font_baseline.h
-  src/font/font_cache.cc
-  src/font/font_cache.h
+  src/font/font_cache.h src/font/font_cache.cc
   src/font/font_cache_client.h
   src/font/font_cache_key.h
-  src/font/font_custom_platform_data.cc
-  src/font/font_custom_platform_data.h
+  src/font/font_custom_platform_data.h src/font/font_custom_platform_data.cc
   src/font/font_data.h
-  src/font/font_data_cache.cc
-  src/font/font_data_cache.h
-  src/font/font_data_for_range_set.cc
-  src/font/font_data_for_range_set.h
-  src/font/font_description.cc
-  src/font/font_description.h
+  src/font/font_data_cache.h src/font/font_data_cache.cc
+  src/font/font_data_for_range_set.h src/font/font_data_for_range_set.cc
+  src/font/font_description.h src/font/font_description.cc
   src/font/font_face_creation_params.h
-  src/font/font_fallback_iterator.cc
-  src/font/font_fallback_iterator.h
-  src/font/font_fallback_list.cc
-  src/font/font_fallback_list.h
-  src/font/font_fallback_map.cc
-  src/font/font_fallback_map.h
+  src/font/font_fallback_iterator.h src/font/font_fallback_iterator.cc
+  src/font/font_fallback_list.h src/font/font_fallback_list.cc
+  src/font/font_fallback_map.h src/font/font_fallback_map.cc
   src/font/font_fallback_priority.h
-  src/font/font_fallback_win.cc
-  src/font/font_fallback_win.h
-  src/font/font_family.cc
-  src/font/font_family.h
-  src/font/font_family_names.cc
-  src/font/font_family_names.h
-  src/font/font_format_check.cc
-  src/font/font_format_check.h
-  src/font/font_height.cc
-  src/font/font_height.h
+  src/font/font_fallback_win.h src/font/font_fallback_win.cc
+  src/font/font_family.h src/font/font_family.cc
+  src/font/font_family_names.h src/font/font_family_names.cc
+  src/font/font_format_check.h src/font/font_format_check.cc
+  src/font/font_height.h src/font/font_height.cc
   src/font/font_invalidation_reason.h
-  src/font/font_metrics.cc
-  src/font/font_metrics.h
+  src/font/font_metrics.h src/font/font_metrics.cc
   src/font/font_metrics_override.h
-  src/font/font_optical_sizing.cc
-  src/font/font_optical_sizing.h
-  src/font/font_orientation.cc
-  src/font/font_orientation.h
-  src/font/font_palette.cc
-  src/font/font_palette.h
-  src/font/font_platform_data.cc
-  src/font/font_platform_data.h
-  src/font/font_platform_data_cache.cc
-  src/font/font_platform_data_cache.h
+  src/font/font_optical_sizing.h src/font/font_optical_sizing.cc
+  src/font/font_orientation.h src/font/font_orientation.cc
+  src/font/font_palette.h src/font/font_palette.cc
+  src/font/font_platform_data.h src/font/font_platform_data.cc
+  src/font/font_platform_data_cache.h src/font/font_platform_data_cache.cc
   src/font/font_prewarmer.h
-  src/font/font_selection_algorithm.cc
-  src/font/font_selection_algorithm.h
-  src/font/font_selection_types.cc
-  src/font/font_selection_types.h
-  src/font/font_selector.cc
-  src/font/font_selector.h
+  src/font/font_selection_algorithm.h src/font/font_selection_algorithm.cc
+  src/font/font_selection_types.h src/font/font_selection_types.cc
+  src/font/font_selector.h src/font/font_selector.cc
   src/font/font_selector_client.h
-  src/font/font_settings.cc
-  src/font/font_settings.h
-  src/font/font_size_adjust.cc
-  src/font/font_size_adjust.h
-  src/font/font_smoothing_mode.cc
-  src/font/font_smoothing_mode.h
-  src/font/font_table_harfbuzz.cc
-  src/font/font_table_harfbuzz.h
-  src/font/font_variant_alternates.cc
-  src/font/font_variant_alternates.h
-  src/font/font_variant_east_asian.cc
-  src/font/font_variant_east_asian.h
-  src/font/font_variant_emoji.cc
-  src/font/font_variant_emoji.h
-  src/font/font_variant_numeric.cc
-  src/font/font_variant_numeric.h
+  src/font/font_settings.h src/font/font_settings.cc
+  src/font/font_size_adjust.h src/font/font_size_adjust.cc
+  src/font/font_smoothing_mode.h src/font/font_smoothing_mode.cc
+  src/font/font_table_harfbuzz.h src/font/font_table_harfbuzz.cc
+  src/font/font_variant_alternates.h src/font/font_variant_alternates.cc
+  src/font/font_variant_east_asian.h src/font/font_variant_east_asian.cc
+  src/font/font_variant_emoji.h src/font/font_variant_emoji.cc
+  src/font/font_variant_numeric.h src/font/font_variant_numeric.cc
   src/font/font_vertical_position_type.h
-  src/font/font_width_variant.cc
-  src/font/font_width_variant.h
-  src/font/generic_font_family_settings.cc
-  src/font/generic_font_family_settings.h
+  src/font/font_width_variant.h src/font/font_width_variant.cc
+  src/font/generic_font_family_settings.h src/font/generic_font_family_settings.cc
   src/font/glyph.h
-  src/font/open_type_cpal_lookup.cc
-  src/font/open_type_cpal_lookup.h
-  src/font/palette_interpolation.cc
-  src/font/palette_interpolation.h
-  src/font/resolved_font_features.cc
-  src/font/resolved_font_features.h
-  src/font/segmented_font_data.cc
-  src/font/segmented_font_data.h
-  src/font/simple_font_data.cc
-  src/font/simple_font_data.h
+  src/font/open_type_cpal_lookup.h src/font/open_type_cpal_lookup.cc
+  src/font/palette_interpolation.h src/font/palette_interpolation.cc
+  src/font/resolved_font_features.h src/font/resolved_font_features.cc
+  src/font/segmented_font_data.h src/font/segmented_font_data.cc
+  src/font/simple_font_data.h src/font/simple_font_data.cc
   src/font/target_platform.h
-  src/font/text_rendering_mode.cc
-  src/font/text_rendering_mode.h
-  src/font/typesetting_features.cc
-  src/font/typesetting_features.h
-  src/font/unicode_range_set.cc
-  src/font/unicode_range_set.h
+  src/font/text_metrics.h src/font/text_metrics.cc
+  src/font/text_rendering_mode.h src/font/text_rendering_mode.cc
+  src/font/typesetting_features.h src/font/typesetting_features.cc
+  src/font/unicode_range_set.h src/font/unicode_range_set.cc
   src/font/value_equivalent.h
-  src/font/variable_axes_names.cc
-  src/font/variable_axes_names.h
-  src/font/web_font_decoder.cc
-  src/font/web_font_decoder.h
+  src/font/variable_axes_names.h src/font/variable_axes_names.cc
+  src/font/web_font_decoder.h src/font/web_font_decoder.cc
   src/geometry/blend.h
-  src/geometry/calculation_expression_node.cc
-  src/geometry/calculation_expression_node.h
-  src/geometry/calculation_value.cc
-  src/geometry/calculation_value.h
+  src/geometry/calculation_expression_node.h src/geometry/calculation_expression_node.cc
+  src/geometry/calculation_value.h src/geometry/calculation_value.cc
   src/geometry/color_channel_keyword.h
   src/geometry/evaluation_input.h
-  src/geometry/length.cc
-  src/geometry/length.h
-  src/geometry/length_functions.cc
-  src/geometry/length_functions.h
+  src/geometry/length.h src/geometry/length.cc
+  src/geometry/length_functions.h src/geometry/length_functions.cc
   src/geometry/length_point.h
   src/geometry/length_size.h
   src/geometry/math_functions.h
-  src/graphics/color.cc
-  src/graphics/color.h
-  src/graphics/color_conversions.cc
-  src/graphics/color_conversions.h
+  src/graphics/color.h src/graphics/color.cc
+  src/graphics/color_conversions.h src/graphics/color_conversions.cc
   src/graphics/color_float.h
-  src/graphics/color_math.cc
-  src/graphics/color_math.h
+  src/graphics/color_math.h src/graphics/color_math.cc
   src/graphics/color_names.cc
   src/graphics/sin_cos_degrees.h
   src/platform/dwrite_internal.h
   src/platform/font_face.h
   src/platform/font_face_win.cc
+  src/platform/font_host_freetype.h src/platform/font_host_freetype.cc
+  src/platform/font_host_freetype_common.h src/platform/font_host_freetype_common.cc
   src/platform/font_manager.h
   src/platform/font_manager_win.cc
   src/platform/font_scaler_win.cc
+  src/platform/matrix.h src/platform/matrix.cc
   src/platform/opentype_name.cc
-  src/shaping/caching_word_shape_iterator.cc
-  src/shaping/caching_word_shape_iterator.h
-  src/shaping/caching_word_shaper.cc
-  src/shaping/caching_word_shaper.h
-  src/shaping/case_mapping_harfbuzz_buffer_filler.cc
-  src/shaping/case_mapping_harfbuzz_buffer_filler.h
+  src/platform/platform_font.h src/platform/platform_font.cc
+  src/platform/platform_glyph.h
+  src/platform/rect.h
+  src/platform/scalar.h
+  src/platform/scaler_context.h src/platform/scaler_context.cc
+  src/platform/strike.h src/platform/strike.cc
+  src/platform/strike_cache.h src/platform/strike_cache.cc
+  src/platform/strike_spec.h src/platform/strike_spec.cc
+  src/shaping/caching_word_shape_iterator.h src/shaping/caching_word_shape_iterator.cc
+  src/shaping/caching_word_shaper.h src/shaping/caching_word_shaper.cc
+  src/shaping/case_mapping_harfbuzz_buffer_filler.h src/shaping/case_mapping_harfbuzz_buffer_filler.cc
   src/shaping/emoji_presentation_scanner.c
-  src/shaping/font_features.cc
-  src/shaping/font_features.h
+  src/shaping/font_features.h src/shaping/font_features.cc
   src/shaping/glyph_bounds_accumulator.h
   src/shaping/glyph_data.h
-  src/shaping/glyph_data_range.cc
-  src/shaping/glyph_data_range.h
+  src/shaping/glyph_data_range.h src/shaping/glyph_data_range.cc
   src/shaping/glyph_index_result.h
   src/shaping/glyph_offset_iterator.h
-  src/shaping/han_kerning.cc
-  src/shaping/han_kerning.h
-  src/shaping/harfbuzz_face.cc
-  src/shaping/harfbuzz_face.h
-  src/shaping/harfbuzz_font_cache.cc
-  src/shaping/harfbuzz_font_cache.h
+  src/shaping/han_kerning.h src/shaping/han_kerning.cc
+  src/shaping/harfbuzz_face.h src/shaping/harfbuzz_face.cc
+  src/shaping/harfbuzz_font_cache.h src/shaping/harfbuzz_font_cache.cc
   src/shaping/harfbuzz_font_data.h
-  src/shaping/harfbuzz_shaper.cc
-  src/shaping/harfbuzz_shaper.h
+  src/shaping/harfbuzz_shaper.h src/shaping/harfbuzz_shaper.cc
   src/shaping/ng_shape_cache.h
-  src/shaping/orientation_iterator.cc
-  src/shaping/orientation_iterator.h
-  src/shaping/run_segmenter.cc
-  src/shaping/run_segmenter.h
-  src/shaping/script_run_iterator.cc
-  src/shaping/script_run_iterator.h
+  src/shaping/orientation_iterator.h src/shaping/orientation_iterator.cc
+  src/shaping/run_segmenter.h src/shaping/run_segmenter.cc
+  src/shaping/script_run_iterator.h src/shaping/script_run_iterator.cc
   src/shaping/shape_cache.h
   src/shaping/shape_options.h
-  src/shaping/shape_result.cc
-  src/shaping/shape_result.h
-  src/shaping/shape_result_buffer.cc
-  src/shaping/shape_result_buffer.h
-  src/shaping/shape_result_cursor.cc
-  src/shaping/shape_result_cursor.h
+  src/shaping/shape_result.h src/shaping/shape_result.cc
+  src/shaping/shape_result_buffer.h src/shaping/shape_result_buffer.cc
+  src/shaping/shape_result_cursor.h src/shaping/shape_result_cursor.cc
   src/shaping/shape_result_run.h
-  src/shaping/shape_result_spacing.cc
-  src/shaping/shape_result_spacing.h
-  src/shaping/shape_result_view.cc
-  src/shaping/shape_result_view.h
-  src/shaping/small_caps_iterator.cc
-  src/shaping/small_caps_iterator.h
-  src/shaping/symbols_iterator.cc
-  src/shaping/symbols_iterator.h
+  src/shaping/shape_result_spacing.h src/shaping/shape_result_spacing.cc
+  src/shaping/shape_result_view.h src/shaping/shape_result_view.cc
+  src/shaping/small_caps_iterator.h src/shaping/small_caps_iterator.cc
+  src/shaping/symbols_iterator.h src/shaping/symbols_iterator.cc
   src/shaping/text_spacing_trim.h
   src/shaping/utf16_ragel_iterator.h
-  src/shaping/utf16_text_iterator.cc
-  src/shaping/utf16_text_iterator.h
-  src/shaping/variation_selector_mode.cc
-  src/shaping/variation_selector_mode.h
-  src/shaping/opentype/open_type_baseline_metrics.cc
-  src/shaping/opentype/open_type_baseline_metrics.h
-  src/shaping/opentype/open_type_caps_support.cc
-  src/shaping/opentype/open_type_caps_support.h
+  src/shaping/utf16_text_iterator.h src/shaping/utf16_text_iterator.cc
+  src/shaping/variation_selector_mode.h src/shaping/variation_selector_mode.cc
+  src/shaping/opentype/open_type_baseline_metrics.h src/shaping/opentype/open_type_baseline_metrics.cc
+  src/shaping/opentype/open_type_caps_support.h src/shaping/opentype/open_type_caps_support.cc
   src/shaping/opentype/open_type_caps_support_mpl.cc
-  src/shaping/opentype/open_type_features.cc
-  src/shaping/opentype/open_type_features.h
+  src/shaping/opentype/open_type_features.h src/shaping/opentype/open_type_features.cc
   src/shaping/opentype/open_type_math_stretch_data.h
   src/shaping/opentype/open_type_types.h
-  src/shaping/opentype/open_type_vertical_data.cc
-  src/shaping/opentype/open_type_vertical_data.h
-  src/shaping/support/layout_unit.cc
-  src/shaping/support/layout_unit.h
+  src/shaping/opentype/open_type_vertical_data.h src/shaping/opentype/open_type_vertical_data.cc
+  src/shaping/support/layout_unit.h src/shaping/support/layout_unit.cc
   src/shaping/support/gfx/geometry.h
   src/shaping/support/gfx/geometry/rect_f.h
-  src/text/bidi_paragraph.cc
-  src/text/bidi_paragraph.h
-  src/text/character.cc
-  src/text/character.h
-  src/text/character_break_iterator.cc
-  src/text/character_break_iterator.h
+  src/text/bidi_paragraph.h src/text/bidi_paragraph.cc
+  src/text/character.h src/text/character.cc
+  src/text/character_break_iterator.h src/text/character_break_iterator.cc
   src/text/character_emoji.cc
   src/text/character_property.h
   src/text/character_property_data.h
@@ -425,34 +332,25 @@ target_sources(blink_fonts PRIVATE
   src/text/emoji_segmentation_category.h
   src/text/emoji_segmentation_category_inline_header.h
   src/text/han_kerning_char_type.h
-  src/text/icu_error.cc
-  src/text/icu_error.h
-  src/text/layout_locale.cc
-  src/text/layout_locale.h
-  src/text/locale_to_script_mapping.cc
-  src/text/locale_to_script_mapping.h
-  src/text/quotes_data.cc
-  src/text/quotes_data.h
+  src/text/icu_error.h src/text/icu_error.cc
+  src/text/layout_locale.h src/text/layout_locale.cc
+  src/text/locale_to_script_mapping.h src/text/locale_to_script_mapping.cc
+  src/text/quotes_data.h src/text/quotes_data.cc
   src/text/tab_size.h
-  src/text/text_break_iterator.cc
-  src/text/text_break_iterator.h
+  src/text/text_break_iterator.h src/text/text_break_iterator.cc
   src/text/text_break_iterator_icu.cc
-  src/text/text_break_iterator_internal_icu.cc
-  src/text/text_break_iterator_internal_icu.h
-  src/text/text_direction.cc
-  src/text/text_direction.h
-  src/text/text_run.cc
-  src/text/text_run.h
+  src/text/text_break_iterator_internal_icu.h src/text/text_break_iterator_internal_icu.cc
+  src/text/text_direction.h src/text/text_direction.cc
+  src/text/text_run.h src/text/text_run.cc
   "${GENERATED_CHARACTER_DATA}")
 # Ragel output textually included by symbols_iterator.cc.
 set_source_files_properties(src/shaping/emoji_presentation_scanner.c
   PROPERTIES HEADER_FILE_ONLY ON)
 target_include_directories(blink_fonts
-  PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
-         "${CMAKE_CURRENT_SOURCE_DIR}/src"
+  PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src"
   PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/tools/character_data/generated"
-          "${CMAKE_CURRENT_SOURCE_DIR}/include/base/third_party/double_conversion/double-conversion")
-target_compile_features(blink_fonts PUBLIC cxx_std_23)
+          "${CMAKE_CURRENT_SOURCE_DIR}/src/base/third_party/double_conversion/double-conversion")
+target_compile_features(blink_fonts PUBLIC cxx_std_20)
 target_compile_definitions(blink_fonts PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN)
 target_link_libraries(blink_fonts
   PUBLIC harfbuzz::harfbuzz ICU::i18n ICU::uc

@@ -12,7 +12,7 @@
 #include "base/deque.h"
 #include "base/vector.h"
 
-namespace blink {
+namespace bkfont {
 
 class ScriptData;
 
@@ -117,4 +117,4 @@ public:
   PairedBracketType GetPairedBracketType(UChar32) const override;
 };
 
-} // namespace blink
+} // namespace bkfont

@@ -10,7 +10,7 @@
 #include "base/text/string_builder.h"
 #include "base/vector.h"
 
-namespace blink {
+namespace bkfont {
 
 uint32_t AtomicStringToFourByteTag(const AtomicString& tag);
 AtomicString FourByteTagToAtomicString(uint32_t tag);
@@ -154,4 +154,4 @@ private:
   FontVariationSettings() = default;
 };
 
-} // namespace blink
+} // namespace bkfont

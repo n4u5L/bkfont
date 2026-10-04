@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-namespace blink {
+namespace bkfont {
 
 //
 // Character types for the `HanKerning` class.
@@ -43,4 +43,4 @@ enum class HanKerningCharType : uint8_t {
   // `kInvalid`.
 };
 
-} // namespace blink
+} // namespace bkfont

@@ -29,7 +29,7 @@
 #include "base/text/character_names.h"
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 class UTF16TextIterator {
 
@@ -90,4 +90,4 @@ private:
   unsigned current_glyph_length_ = 0;
 };
 
-} // namespace blink
+} // namespace bkfont

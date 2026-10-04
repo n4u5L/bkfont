@@ -30,7 +30,7 @@
 #include "font_cache.h"
 #include "base/text/string_builder.h"
 
-namespace blink {
+namespace bkfont {
 
 bool operator==(const FontFamily& a, const FontFamily& b) {
   if (a.FamilyIsGeneric() != b.FamilyIsGeneric() || a.FamilyName() != b.FamilyName())
@@ -66,4 +66,4 @@ String FontFamily::ToString() const {
              : Type::kFamilyName;
 }
 
-} // namespace blink
+} // namespace bkfont

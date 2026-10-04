@@ -7,7 +7,7 @@
 
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(WeakResultTest, BasicOperations) {
   AtomicStringTable::WeakResult null;
@@ -80,4 +80,4 @@ TEST(WeakResultTest, UTF8) {
   EXPECT_TRUE(result_unicode.IsNull());
 }
 
-} // namespace blink
+} // namespace bkfont

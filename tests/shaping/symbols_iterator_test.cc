@@ -14,7 +14,7 @@
 #include "base/text/wtf_string.h"
 #include "base/vector.h"
 
-namespace blink {
+namespace bkfont {
 
 struct FallbackTestRun {
   std::string text;
@@ -542,4 +542,4 @@ TEST_P(SymbolsIteratorWithFontVariantEmojiParamTest, Emoji11Additions) {
         FontFallbackPriority::kEmojiEmoji}});
 }
 
-} // namespace blink
+} // namespace bkfont

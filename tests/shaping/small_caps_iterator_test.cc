@@ -9,7 +9,7 @@
 
 #include "base/text/string_builder.h"
 
-namespace blink {
+namespace bkfont {
 
 struct SmallCapsTestRun {
   const char* const text;
@@ -113,4 +113,4 @@ TEST_F(SmallCapsIteratorTest, CombiningCharacterSequence) {
   CHECK_SMALL_CAPS_RUN({{"èü", SmallCapsIterator::kSmallCapsUppercaseNeeded}});
 }
 
-} // namespace blink
+} // namespace bkfont

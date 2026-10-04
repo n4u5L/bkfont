@@ -7,7 +7,7 @@
 
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(TextRunTest, IndexOfSubRun) {
   TextRun run("1234567890");
@@ -28,4 +28,4 @@ TEST(TextRunTest, IndexOfSubRun) {
   EXPECT_EQ(kNotSubRun, run16.IndexOfSubRun(TextRun(StringView(u"1"))));
 }
 
-} // namespace blink
+} // namespace bkfont

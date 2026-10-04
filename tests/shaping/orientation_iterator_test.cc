@@ -9,7 +9,7 @@
 
 #include "base/text/string_builder.h"
 
-namespace blink {
+namespace bkfont {
 
 struct OrientationTestRun {
   const char* const text;
@@ -168,4 +168,4 @@ TEST_F(OrientationIteratorTest, JapaneseMahjonggMixed) {
       {{"いろはに🀤ほへと", OrientationIterator::kOrientationKeep}});
 }
 
-} // namespace blink
+} // namespace bkfont

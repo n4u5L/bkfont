@@ -38,8 +38,9 @@
 #include "base/text/atomic_string_hash.h"
 #include "base/text/wtf_string.h"
 #include "base/thread_specific.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -228,7 +229,7 @@ int32_t TextExtract(UText*,
   // In the present context, this text provider is used only with ICU functions
   // that do not perform an extract operation.
   ;
-  std::unreachable();
+  NOTREACHED();
 }
 
 void TextClose(UText* text) {
@@ -1026,4 +1027,4 @@ TextBreakIterator* CursorMovementIterator(base::span<const UChar> string) {
   return iterator.get();
 }
 
-} // namespace blink
+} // namespace bkfont

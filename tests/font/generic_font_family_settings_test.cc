@@ -7,7 +7,7 @@
 
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(GenericFontFamilySettingsTest, FirstAvailableFontFamily) {
   GenericFontFamilySettings settings;
@@ -179,4 +179,4 @@ TEST(GenericFontFamilySettingsTest, TestFontListNotChanged) {
   EXPECT_TRUE(settings.UpdateFixed(AtomicString(",not exist, Arial")));
 }
 
-} // namespace blink
+} // namespace bkfont

@@ -16,7 +16,7 @@
 
 #include <span>
 #include <cerrno>
-#include <stdexcept>
+#include <cstdlib>
 #include <string>
 #include <system_error>
 #include <cstring>
@@ -33,12 +33,33 @@
 #include "han_kerning_char_type.h"
 #include "character_names.h"
 
-namespace blink {
+namespace bkfont {
 namespace {
 
-void ThrowIfIcuError(UErrorCode error, const char* operation) {
+// The output being written, removed on failure so the build never consumes a
+// partial file. The file is null once it has been closed.
+FILE* g_output_file = nullptr;
+const char* g_output_path = nullptr;
+
+[[noreturn]] void Fail(const std::string& message) {
+  if (g_output_file) {
+    fclose(g_output_file);
+  }
+  if (g_output_path) {
+    std::error_code ignored;
+    std::filesystem::remove(g_output_path, ignored);
+  }
+  fprintf(stderr, "character_data_generator: %s\n", message.c_str());
+  std::exit(1);
+}
+
+[[noreturn]] void FailWithErrno(const std::string& message, int error) {
+  Fail(message + ": " + std::generic_category().message(error));
+}
+
+void FailIfIcuError(UErrorCode error, const char* operation) {
   if (U_FAILURE(error)) {
-    throw std::runtime_error(std::string(operation) + ": " + u_errorName(error));
+    Fail(std::string(operation) + ": " + u_errorName(error));
   }
 }
 
@@ -48,7 +69,7 @@ void CheckIcuDataResources() {
   UErrorCode error = U_ZERO_ERROR;
   UVersionInfo version;
   ulocdata_getCLDRVersion(version, &error);
-  ThrowIfIcuError(error, "ulocdata_getCLDRVersion");
+  FailIfIcuError(error, "ulocdata_getCLDRVersion");
 }
 
 //
@@ -74,11 +95,11 @@ void InitializeIcu(const char* exec_path) {
             std::istreambuf_iterator<char>(),
             std::back_inserter(icu_data));
   if (data_ifstream.bad() || icu_data.empty()) {
-    throw std::runtime_error("Cannot read ICU data: " + path.string());
+    Fail("Cannot read ICU data: " + path.string());
   }
   UErrorCode error = U_ZERO_ERROR;
   udata_setCommonData(icu_data.data(), &error);
-  ThrowIfIcuError(error, "udata_setCommonData");
+  FailIfIcuError(error, "udata_setCommonData");
 
   CheckIcuDataResources();
 }
@@ -155,7 +176,7 @@ private:
 
     icu::UnicodeSet unassigned(icu::UnicodeString("[:General_Category=Cn:]"),
                                error);
-    ThrowIfIcuError(error, "UnicodeSet");
+    FailIfIcuError(error, "UnicodeSet");
 
     // 1. Set for the "Wide" property
     //
@@ -168,7 +189,7 @@ private:
             "Katakana:][:sc=Khitan_Small_Script:][:sc=Nushu:][:sc=Tangut:][:sc="
             "Yi:]]"),
         error);
-    ThrowIfIcuError(error, "UnicodeSet");
+    FailIfIcuError(error, "UnicodeSet");
 
     {
       // 1.2. Include if the Script_Extensions property is one of the values
@@ -181,7 +202,7 @@ private:
               "scx=Yiii:]]-[:East_Asian_Width=Narrow:]-[:East_"
               "Asian_Width=Neutral:]]"),
           error);
-      ThrowIfIcuError(error, "UnicodeSet");
+      FailIfIcuError(error, "UnicodeSet");
 
       ideographs.addAll(temp_set);
     }
@@ -198,7 +219,7 @@ private:
               "General_Category=No:]"
               "[[:General_Category=S:]-[:General_Category=Sk:]]]"),
           error);
-      ThrowIfIcuError(error, "UnicodeSet");
+      FailIfIcuError(error, "UnicodeSet");
 
       ideographs.removeAll(temp_set);
     }
@@ -218,7 +239,7 @@ private:
         icu::UnicodeString("[[:General_Category=Po:]-[:East_Asian_Width=F:]-[:"
                            "East_Asian_Width=H:]-[:East_Asian_Width=W:]]"),
         error);
-    ThrowIfIcuError(error, "UnicodeSet");
+    FailIfIcuError(error, "UnicodeSet");
 
     // 2.3 Exclude the following code points: U+0022 QUOTATION MARK U+0027
     // APOSTROPHE U+002A ASTERISK U+002F SOLIDUS U+00B7 MIDDLE DOT U+2020 DAGGER
@@ -248,7 +269,7 @@ private:
             "General_Category=Nd:]-[:East_Asian_Width=F:]-[:"
             "East_Asian_Width=H:]-[:East_Asian_Width=W:]]"),
         error);
-    ThrowIfIcuError(error, "UnicodeSet");
+    FailIfIcuError(error, "UnicodeSet");
 
     // The intersection set of kWide and kConditional is not empty, so remove
     // the chars which have been assigned the kWide property from narrow.
@@ -302,7 +323,7 @@ private:
                             CharacterProperty mask) {
     UErrorCode error = U_ZERO_ERROR;
     icu::UnicodeSet set(icu::UnicodeString(pattern), error);
-    ThrowIfIcuError(error, pattern);
+    FailIfIcuError(error, pattern);
 
     SetForUnicodeSet(set, value, mask);
   }
@@ -344,7 +365,7 @@ static void GenerateUTrieSerialized(FILE* fp,
                                     std::span<uint8_t> array) {
   fprintf(fp,
           "#include <cstdint>\n\n"
-          "namespace blink {\n\n"
+          "namespace bkfont {\n\n"
           "extern const int32_t kSerializedCharacterDataSize = %zu;\n"
           // The utrie2_openFromSerialized function requires character data to
           // be aligned to 4 bytes.
@@ -358,7 +379,7 @@ static void GenerateUTrieSerialized(FILE* fp,
   }
   fprintf(fp,
           "\n};\n\n"
-          "} // namespace blink\n");
+          "} // namespace bkfont\n");
 }
 
 static void GenerateCharacterPropertyData(FILE* fp) {
@@ -370,9 +391,9 @@ static void GenerateCharacterPropertyData(FILE* fp) {
   std::unique_ptr<UMutableCPTrie, decltype(&umutablecptrie_close)> trie(
       umutablecptrie_open(0, 0, &error),
       umutablecptrie_close);
-  ThrowIfIcuError(error, "umutablecptrie_open");
+  FailIfIcuError(error, "umutablecptrie_open");
   if (!trie) {
-    throw std::runtime_error("umutablecptrie_open returned no trie");
+    Fail("umutablecptrie_open returned no trie");
   }
 
   UChar32 start = 0;
@@ -383,7 +404,7 @@ static void GenerateCharacterPropertyData(FILE* fp) {
     }
     if (static_cast<uint32_t>(value)) {
       umutablecptrie_setRange(trie.get(), start, c - 1, static_cast<uint32_t>(value), &error);
-      ThrowIfIcuError(error, "umutablecptrie_setRange");
+      FailIfIcuError(error, "umutablecptrie_setRange");
     }
     if (c >= CharacterPropertyValues::kSize) {
       break;
@@ -396,18 +417,18 @@ static void GenerateCharacterPropertyData(FILE* fp) {
   std::unique_ptr<UCPTrie, decltype(&ucptrie_close)> immutable_trie(
       umutablecptrie_buildImmutable(trie.get(), UCPTrieType::UCPTRIE_TYPE_FAST, UCPTrieValueWidth::UCPTRIE_VALUE_BITS_16, &error),
       ucptrie_close);
-  ThrowIfIcuError(error, "umutablecptrie_buildImmutable");
+  FailIfIcuError(error, "umutablecptrie_buildImmutable");
   if (!immutable_trie) {
-    throw std::runtime_error("umutablecptrie_buildImmutable returned no trie");
+    Fail("umutablecptrie_buildImmutable returned no trie");
   }
 
   int32_t serialized_size =
       ucptrie_toBinary(immutable_trie.get(), nullptr, 0, &error);
   if (error != U_BUFFER_OVERFLOW_ERROR) {
-    ThrowIfIcuError(error, "ucptrie_toBinary preflight");
+    FailIfIcuError(error, "ucptrie_toBinary preflight");
   }
   if (serialized_size <= 0) {
-    throw std::runtime_error("ucptrie_toBinary returned an invalid size");
+    Fail("ucptrie_toBinary returned an invalid size");
   }
 
   error = U_ZERO_ERROR;
@@ -417,9 +438,9 @@ static void GenerateCharacterPropertyData(FILE* fp) {
   // Array new provides the 32-bit alignment required by ucptrie_toBinary.
 
   serialized_size = ucptrie_toBinary(immutable_trie.get(), serialized.get(), serialized_size, &error);
-  ThrowIfIcuError(error, "ucptrie_toBinary");
+  FailIfIcuError(error, "ucptrie_toBinary");
   if (serialized_size <= 0 || static_cast<size_t>(serialized_size) > serialized_capacity) {
-    throw std::runtime_error("ucptrie_toBinary returned an invalid size");
+    Fail("ucptrie_toBinary returned an invalid size");
   }
 
   GenerateUTrieSerialized(fp, static_cast<size_t>(serialized_size), std::span<uint8_t>(serialized.get(), serialized_capacity));
@@ -448,9 +469,9 @@ private:
     const icu::Locale locale("en");
     std::unique_ptr<icu::BreakIterator> break_iterator(
         icu::BreakIterator::createLineInstance(locale, status));
-    ThrowIfIcuError(status, "BreakIterator::createLineInstance");
+    FailIfIcuError(status, "BreakIterator::createLineInstance");
     if (!break_iterator) {
-      throw std::runtime_error("BreakIterator::createLineInstance returned null");
+      Fail("BreakIterator::createLineInstance returned null");
     }
 
     for (UChar ch = kMinChar; ch <= kMaxChar; ++ch) {
@@ -605,42 +626,36 @@ void InvokeGenerator(int index,
   if (UNSAFE_TODO(strcmp(path, "-")) == 0) {
     (*generator)(stdout);
     if (ferror(stdout) || fflush(stdout) != 0) {
-      throw std::runtime_error("Cannot write generated data to stdout");
+      Fail("Cannot write generated data to stdout");
     }
     return;
   }
 
-  std::unique_ptr<FILE, decltype(&fclose)> file(fopen(path, "wb"), fclose);
+  FILE* file = fopen(path, "wb");
   if (!file) {
-    throw std::system_error(errno, std::generic_category(), std::string("Cannot open output: ") + path);
+    const int error = errno;
+    FailWithErrno(std::string("Cannot open output: ") + path, error);
   }
-  try {
-    (*generator)(file.get());
-    if (ferror(file.get())) {
-      throw std::runtime_error(std::string("Cannot write output: ") + path);
-    }
-    if (fclose(file.release()) != 0) {
-      throw std::system_error(errno, std::generic_category(), std::string("Cannot close output: ") + path);
-    }
-  } catch (...) {
-    file.reset();
-    std::error_code ignored;
-    std::filesystem::remove(path, ignored);
-    throw;
+  g_output_file = file;
+  g_output_path = path;
+  (*generator)(file);
+  if (ferror(file)) {
+    Fail(std::string("Cannot write output: ") + path);
   }
+  g_output_file = nullptr;
+  if (fclose(file) != 0) {
+    const int error = errno;
+    FailWithErrno(std::string("Cannot close output: ") + path, error);
+  }
+  g_output_path = nullptr;
 }
 
 } // namespace
-} // namespace blink
+} // namespace bkfont
 
 int main(int argc, char** argv) {
-  try {
-    blink::InitializeIcu(argv[0]);
-    blink::InvokeGenerator(1, argc, argv, blink::GenerateCharacterPropertyData);
-    blink::InvokeGenerator(2, argc, argv, blink::LineBreakData::Generate);
-    return 0;
-  } catch (const std::exception& error) {
-    fprintf(stderr, "character_data_generator: %s\n", error.what());
-    return 1;
-  }
+  bkfont::InitializeIcu(argv[0]);
+  bkfont::InvokeGenerator(1, argc, argv, bkfont::GenerateCharacterPropertyData);
+  bkfont::InvokeGenerator(2, argc, argv, bkfont::LineBreakData::Generate);
+  return 0;
 }

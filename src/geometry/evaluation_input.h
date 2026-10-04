@@ -13,7 +13,7 @@
 #include "color_channel_keyword.h"
 #include "shaping/support/layout_unit.h"
 
-namespace blink {
+namespace bkfont {
 
 class Length;
 
@@ -26,7 +26,7 @@ enum class CalcSizeKeywordBehavior {
 
 struct EvaluationInput {
 
-  using IntrinsicLengthEvaluator = base::FunctionRef<blink::LayoutUnit(const blink::Length&)>;
+  using IntrinsicLengthEvaluator = base::FunctionRef<bkfont::LayoutUnit(const bkfont::Length&)>;
 
 public:
   std::optional<float> size_keyword_basis = std::nullopt;
@@ -35,4 +35,4 @@ public:
       CalcSizeKeywordBehavior::kAsSpecified;
   base::flat_map<ColorChannelKeyword, float> color_channel_keyword_values;
 };
-} // namespace blink
+} // namespace bkfont

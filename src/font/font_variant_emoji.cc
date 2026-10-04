@@ -4,10 +4,11 @@
 // found in the LICENSE file.
 
 #include "font_variant_emoji.h"
+#include "base/notreached.h"
 
 #include <utility>
 
-namespace blink {
+namespace bkfont {
 
 String ToString(FontVariantEmoji variant_emoji) {
   switch (variant_emoji) {
@@ -20,7 +21,7 @@ String ToString(FontVariantEmoji variant_emoji) {
   case FontVariantEmoji::kUnicodeVariantEmoji:
     return "Unicode";
   }
-  std::unreachable();
+  NOTREACHED();
 }
 
-} // namespace blink
+} // namespace bkfont

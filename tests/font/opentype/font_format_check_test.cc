@@ -8,7 +8,7 @@
 #include "gtest/gtest.h"
 #include "support/font_test_helpers.h"
 
-namespace blink {
+namespace bkfont {
 
 class FontFormatCheckTest : public testing::Test {
 protected:
@@ -43,4 +43,4 @@ TEST_F(FontFormatCheckTest, COLRV0) {
   ASSERT_FALSE(format_check.IsColrCpalColorFontV1());
 }
 
-} // namespace blink
+} // namespace bkfont

@@ -22,8 +22,9 @@
 #include "font/font.h"
 #include "glyph_bounds_accumulator.h"
 #include "shape_result_run.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 ShapeResultView::RunInfoPart::RunInfoPart(const ShapeResultRun* run,
                                           GlyphDataRange range,
@@ -107,7 +108,7 @@ public:
 
       PopulateFromShapeResult(*first_segment.view);
     } else {
-      std::unreachable();
+      NOTREACHED();
     }
 
     // Compute start index offset for the overall run. This is added to the
@@ -134,7 +135,7 @@ public:
 
         ProcessShapeResult(*segment.view, segment);
       } else {
-        std::unreachable();
+        NOTREACHED();
       }
     }
   }
@@ -144,10 +145,10 @@ private:
     return direction;
   }
   bool IsLtr() const {
-    return blink::IsLtr(Direction());
+    return bkfont::IsLtr(Direction());
   }
   bool IsRtl() const {
-    return blink::IsRtl(Direction());
+    return bkfont::IsRtl(Direction());
   }
 
   template <typename ShapeResultType>
@@ -290,7 +291,7 @@ void ShapeResultView::PopulateRunInfoParts(const Segment& segment) {
 
     PopulateRunInfoParts(*segment.view, segment);
   } else {
-    std::unreachable();
+    NOTREACHED();
   }
 }
 
@@ -685,4 +686,4 @@ void ShapeResultView::ExpandRangeToIncludePartialGlyphs(unsigned* from,
   }
 }
 
-} // namespace blink
+} // namespace bkfont

@@ -13,7 +13,7 @@
 
 #include "base/numerics/angle_conversions.h"
 
-namespace gfx {
+namespace bkfont::gfx {
 
 struct SinCos {
   double sin;
@@ -110,4 +110,4 @@ inline SinCos SinCosDegrees(double degrees) {
   return SinCos{std::sin(rad), std::cos(rad)};
 }
 
-} // namespace gfx
+} // namespace bkfont::gfx

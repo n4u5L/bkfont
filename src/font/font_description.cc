@@ -39,13 +39,14 @@
 #include "base/text/atomic_string_hash.h"
 #include "base/text/string_hash.h"
 #include "base/text/string_hasher.h"
+#include "base/notreached.h"
 
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_ANDROID)
 #include "font_cache.h"
 #endif
 
 #include <span>
-namespace blink {
+namespace bkfont {
 
 bool FontDescription::use_subpixel_text_positioning_ = false;
 
@@ -167,7 +168,7 @@ float FontDescription::LetterSpacing() const {
     return letter_spacing_.NonNanCalculatedValue(LayoutUnit(computed_size_),
                                                  {});
   default:
-    std::unreachable();
+    NOTREACHED();
   }
 }
 
@@ -181,7 +182,7 @@ float FontDescription::WordSpacing() const {
     return word_spacing_.NonNanCalculatedValue(LayoutUnit(computed_size_),
                                                {});
   default:
-    std::unreachable();
+    NOTREACHED();
   }
 }
 
@@ -294,20 +295,20 @@ void FontDescription::UpdateTypesettingFeatures() {
   case kAutoTextRendering:
     break;
   case kOptimizeSpeed:
-    fields_.typesetting_features_ &= ~(blink::kKerning | kLigatures);
+    fields_.typesetting_features_ &= ~(bkfont::kKerning | kLigatures);
     break;
   case kGeometricPrecision:
   case kOptimizeLegibility:
-    fields_.typesetting_features_ |= blink::kKerning | kLigatures;
+    fields_.typesetting_features_ |= bkfont::kKerning | kLigatures;
     break;
   }
 
   switch (GetKerning()) {
   case FontDescription::kNoneKerning:
-    fields_.typesetting_features_ &= ~blink::kKerning;
+    fields_.typesetting_features_ &= ~bkfont::kKerning;
     break;
   case FontDescription::kNormalKerning:
-    fields_.typesetting_features_ |= blink::kKerning;
+    fields_.typesetting_features_ |= bkfont::kKerning;
     break;
   case FontDescription::kAutoKerning:
     break;
@@ -320,22 +321,22 @@ void FontDescription::UpdateTypesettingFeatures() {
   if (letter_spacing_.IsZero()) {
     switch (CommonLigaturesState()) {
     case FontDescription::kDisabledLigaturesState:
-      fields_.typesetting_features_ &= ~blink::kLigatures;
+      fields_.typesetting_features_ &= ~bkfont::kLigatures;
       break;
     case FontDescription::kEnabledLigaturesState:
-      fields_.typesetting_features_ |= blink::kLigatures;
+      fields_.typesetting_features_ |= bkfont::kLigatures;
       break;
     case FontDescription::kNormalLigaturesState:
       break;
     }
 
     if (DiscretionaryLigaturesState() == FontDescription::kEnabledLigaturesState || HistoricalLigaturesState() == FontDescription::kEnabledLigaturesState || ContextualLigaturesState() == FontDescription::kEnabledLigaturesState) {
-      fields_.typesetting_features_ |= blink::kLigatures;
+      fields_.typesetting_features_ |= bkfont::kLigatures;
     }
   }
 
   if (VariantCaps() != kCapsNormal)
-    fields_.typesetting_features_ |= blink::kCaps;
+    fields_.typesetting_features_ |= bkfont::kCaps;
 }
 
 unsigned FontDescription::StyleHashWithoutFamilyList() const {
@@ -382,7 +383,7 @@ unsigned FontDescription::GetHash() const {
     if (family->FamilyName().empty())
       continue;
     AddIntToHash(hash, family->FamilyIsGeneric());
-    AddIntToHash(hash, blink::GetHash(family->FamilyName()));
+    AddIntToHash(hash, bkfont::GetHash(family->FamilyName()));
   }
   return hash;
 }
@@ -768,32 +769,32 @@ String FontDescription::ToString() const {
       LetterSpacing(),
       WordSpacing(),
       font_selection_request_.ToString().Ascii().c_str(),
-      blink::ToString(
+      bkfont::ToString(
           static_cast<TypesettingFeatures>(fields_.typesetting_features_))
           .Ascii()
           .data(),
-      blink::ToString(Orientation()).Ascii().c_str(),
-      blink::ToString(WidthVariant()).Ascii().c_str(),
+      bkfont::ToString(Orientation()).Ascii().c_str(),
+      bkfont::ToString(WidthVariant()).Ascii().c_str(),
       FontDescription::ToString(VariantCaps()).Ascii().c_str(),
       (IsAbsoluteSize() ? "true" : "false"),
       FontDescription::ToString(GenericFamily()).Ascii().c_str(),
       FontDescription::ToString(Kerning()).Ascii().c_str(),
       GetVariantLigatures().ToString().Ascii().c_str(),
       KeywordSize(),
-      blink::ToString(FontSmoothing()).Ascii().c_str(),
-      blink::ToString(TextRendering()).Ascii().c_str(),
+      bkfont::ToString(FontSmoothing()).Ascii().c_str(),
+      bkfont::ToString(TextRendering()).Ascii().c_str(),
       (IsSyntheticBold() ? "true" : "false"),
       (IsSyntheticItalic() ? "true" : "false"),
       (UseSubpixelPositioning() ? "true" : "false"),
       (SubpixelAscentDescent() ? "true" : "false"),
       VariantNumeric().ToString().Ascii().c_str(),
       VariantEastAsian().ToString().Ascii().c_str(),
-      blink::ToString(FontOpticalSizing()).Ascii().c_str(),
+      bkfont::ToString(FontOpticalSizing()).Ascii().c_str(),
       FontDescription::ToString(GetFontSynthesisWeight()).Ascii().c_str(),
       FontDescription::ToString(GetFontSynthesisStyle()).Ascii().c_str(),
       FontDescription::ToString(GetFontSynthesisSmallCaps()).Ascii().c_str(),
       FontDescription::ToString(VariantPosition()).Ascii().c_str(),
-      blink::ToString(VariantEmoji()).Ascii().c_str());
+      bkfont::ToString(VariantEmoji()).Ascii().c_str());
 }
 
-} // namespace blink
+} // namespace bkfont

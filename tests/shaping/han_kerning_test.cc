@@ -14,12 +14,12 @@
 #include "support/font_test_helpers.h"
 #include "support/font_test_helpers.h"
 
-namespace blink {
+namespace bkfont {
 
 std::shared_ptr<Font> CreateNotoCjk() {
-  return blink::test::CreateTestFont(
+  return bkfont::test::CreateTestFont(
       AtomicString("Noto Sans CJK"),
-      blink::test::BlinkWebTestsFontsTestDataPath(
+      bkfont::test::BlinkWebTestsFontsTestDataPath(
           "noto/cjk/NotoSansCJKjp-Regular-subset-halt.otf"),
       16.0);
 }
@@ -199,4 +199,4 @@ TEST_F(HanKerningTest, ResetFeatures) {
   EXPECT_EQ(features.size(), 1u);
 }
 
-} // namespace blink
+} // namespace bkfont

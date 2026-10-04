@@ -35,7 +35,7 @@
 #include "base/hash_map.h"
 #include "base/vector.h"
 
-namespace blink {
+namespace bkfont {
 
 class FontDescriptionTest : public FontTestBase {};
 
@@ -67,7 +67,7 @@ TEST_F(FontDescriptionTest, TestHashCollision) {
       std::to_array<FontSelectionValue>({kNormalSlopeValue, kItalicSlopeValue});
 
   FontDescription source;
-  blink::Vector<unsigned> hashes;
+  bkfont::Vector<unsigned> hashes;
   for (size_t i = 0; i < std::size(weights); i++) {
     source.SetWeight(weights[i]);
     for (size_t j = 0; j < std::size(stretches); j++) {
@@ -685,4 +685,4 @@ TEST_F(FontDescriptionTest, WordSpacing) {
   EXPECT_EQ(description.WordSpacing(), 23.0);
 }
 
-} // namespace blink
+} // namespace bkfont

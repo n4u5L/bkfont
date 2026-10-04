@@ -13,7 +13,7 @@
 
 #include "platform/font_face.h"
 #include "font_table_harfbuzz.h"
-namespace blink {
+namespace bkfont {
 
 Vector<VariationAxis> VariableAxesNames::GetVariationAxes(
     std::shared_ptr<FontFace> typeface) {
@@ -59,4 +59,4 @@ Vector<VariationAxis> VariableAxesNames::GetVariationAxes(
   return output;
 }
 
-} // namespace blink
+} // namespace bkfont

@@ -11,7 +11,7 @@
 #include "base/text/strcat.h"
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -59,4 +59,4 @@ INSTANTIATE(6, int32_t);
 INSTANTIATE(16, int32_t);
 INSTANTIATE(16, int64_t);
 
-} // namespace blink
+} // namespace bkfont

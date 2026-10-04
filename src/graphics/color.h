@@ -41,7 +41,7 @@
 #include "color_float.h"
 #include <cstdint>
 
-namespace blink {
+namespace bkfont {
 
 typedef unsigned RGBA32; // RGBA quadruplet
 
@@ -114,7 +114,7 @@ public:
   };
 
   // For testing purposes and for serializer.
-  static blink::String ColorSpaceToString(Color::ColorSpace color_space);
+  static bkfont::String ColorSpaceToString(Color::ColorSpace color_space);
 
   // https://www.w3.org/TR/css-color-4/#predefined
   static bool IsPredefinedColorSpace(ColorSpace color_space) {
@@ -150,7 +150,7 @@ public:
   }
 
   // TODO(crbug.com/ 1333988): We have to reevaluate how we input int RGB and
-  // RGBA values into blink::color. We should remove the int inputs in the
+  // RGBA values into bkfont::color. We should remove the int inputs in the
   // interface, to avoid callers to have the double values and convert them to
   // int for then being converted again internally to float. We should deprecate
   // FromRGB, FromRGBA and FromRGBAFloat methods, to only allow for
@@ -269,28 +269,28 @@ public:
   // Host configuration replacing the Chromium feature (default disabled).
   static void SetBakedGamutMappingEnabled(bool);
 
-  blink::String SerializeInternal() const;
+  bkfont::String SerializeInternal() const;
   // Returns the color serialized according to HTML5:
   // http://www.whatwg.org/specs/web-apps/current-work/#serialization-of-a-color
-  blink::String SerializeAsCSSColor() const;
+  bkfont::String SerializeAsCSSColor() const;
   // Canvas colors are serialized somewhat differently:
   // https://html.spec.whatwg.org/multipage/canvas.html#serialisation-of-a-color
-  blink::String SerializeAsCanvasColor() const;
+  bkfont::String SerializeAsCanvasColor() const;
   // For appending color interpolation spaces and hue interpolation methods to
   // the serialization of gradients and color-mix functions.
-  static blink::String SerializeInterpolationSpace(
+  static bkfont::String SerializeInterpolationSpace(
       Color::ColorSpace color_space,
       Color::HueInterpolationMethod hue_interpolation_method =
           Color::HueInterpolationMethod::kShorter);
 
   // Returns the color serialized as either #RRGGBB or #RRGGBBAA. The latter
   // format is not a valid CSS color, and should only be seen in DRT dumps.
-  blink::String NameForLayoutTreeAsText() const;
+  bkfont::String NameForLayoutTreeAsText() const;
 
   // Returns whether parsing succeeded. The resulting Color is arbitrary
   // if parsing fails.
-  bool SetFromString(const blink::String&);
-  bool SetNamedColor(const blink::String&);
+  bool SetFromString(const bkfont::String&);
+  bool SetNamedColor(const bkfont::String&);
 
   bool IsFullyTransparent() const {
     return Alpha() <= 0.0f;
@@ -411,7 +411,7 @@ public:
   void ResolveNonFiniteValues();
 
 private:
-  blink::String SerializeLegacyColorAsCSSColor() const;
+  bkfont::String SerializeLegacyColorAsCSSColor() const;
   constexpr explicit Color(RGBA32 color)
       : param0_is_none_(0),
         param1_is_none_(0),
@@ -498,4 +498,4 @@ std::ostream& operator<<(std::ostream& os, const Color& color);
 
 int DifferenceSquared(const Color&, const Color&);
 
-} // namespace blink
+} // namespace bkfont

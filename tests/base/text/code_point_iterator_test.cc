@@ -10,7 +10,7 @@
 #include "base/text/string_view.h"
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -110,4 +110,4 @@ TEST(CodePointIteratorTest, Equality) {
 
 } // namespace
 
-} // namespace blink
+} // namespace bkfont

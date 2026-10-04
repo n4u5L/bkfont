@@ -9,8 +9,9 @@
 #include "font/font.h"
 #include "font/font_description.h"
 #include "text/text_run.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 template <typename TextContainerType>
 bool ShapeResultSpacing<TextContainerType>::SetSpacing(
@@ -52,7 +53,7 @@ template <typename TextContainerType>
 void ShapeResultSpacing<TextContainerType>::SetSpacingAndExpansion(
     const FontDescription& font_description) {
   // Available only for TextRun since it has expansion data.
-  std::unreachable();
+  NOTREACHED();
 }
 
 template <>
@@ -108,7 +109,7 @@ void ShapeResultSpacing<TextContainerType>::ComputeExpansion(
 template <typename TextContainerType>
 TextRunLayoutUnit ShapeResultSpacing<TextContainerType>::NextExpansion() {
   if (!expansion_opportunity_count_) {
-    std::unreachable();
+    NOTREACHED();
   }
 
   is_after_expansion_ = true;
@@ -194,4 +195,4 @@ TextRunLayoutUnit ShapeResultSpacing<TextContainerType>::ComputeSpacing(
 template class ShapeResultSpacing<TextRun>;
 template class ShapeResultSpacing<String>;
 
-} // namespace blink
+} // namespace bkfont

@@ -11,8 +11,9 @@
 #include "base/text/character_names.h"
 #include "base/text/string_builder.h"
 #include "base/text/wtf_string.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 bool BidiParagraph::SetParagraph(const String& text,
                                  std::optional<TextDirection> base_direction) {
@@ -32,7 +33,7 @@ bool BidiParagraph::SetParagraph(const String& text,
   ICUError error;
   ubidi_setPara(ubidi_.get(), text.Span16().data(), text.length(), para_level, nullptr, &error);
   if (U_FAILURE(error)) {
-    std::unreachable();
+    NOTREACHED();
   }
 
   if (!base_direction) {
@@ -161,4 +162,4 @@ void BidiParagraph::IndicesInVisualOrder(
   ubidi_reorderVisual(levels.data(), levels.size(), indices_in_visual_order_out.data());
 }
 
-} // namespace blink
+} // namespace bkfont

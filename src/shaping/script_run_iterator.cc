@@ -8,8 +8,9 @@
 #include "runtime_enabled_features.h"
 #include "text/character.h"
 #include "base/text/character_names.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -53,7 +54,7 @@ ScriptRunIterator::UScriptCodeList GetHanScriptExtensions() {
     list.resize(count);
     return list;
   }
-  std::unreachable();
+  NOTREACHED();
 }
 
 // This function updates the script list to the Han ideographic-based scripts if
@@ -93,7 +94,7 @@ void FixScriptsByEastAsianWidth(UChar32 ch,
     if (han_scripts.empty()) [[unlikely]] {
       // When |GetHanScriptExtensions| returns an empty list, replacing with it
       // will crash later, which makes the analysis complicated.
-      std::unreachable();
+      NOTREACHED();
     }
     set->Shrink(0);
     set->AppendVector(han_scripts);
@@ -310,7 +311,7 @@ void ScriptRunIterator::CloseBracket(UChar32 ch) {
         // And pop stack to this point.
         int num_popped =
             static_cast<int>(std::distance(brackets_.rbegin(), it));
-        // TODO: No resize operation in blink::Deque?
+        // TODO: No resize operation in bkfont::Deque?
         for (int i = 0; i < num_popped; ++i)
           brackets_.pop_back();
         brackets_fixup_depth_ = static_cast<wtf_size_t>(
@@ -498,4 +499,4 @@ UScriptCode ScriptRunIterator::ResolveCurrentScript() const {
   return result == USCRIPT_COMMON ? common_preferred_ : result;
 }
 
-} // namespace blink
+} // namespace bkfont

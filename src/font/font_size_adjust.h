@@ -10,7 +10,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 class FontSizeAdjust {
 public:
@@ -77,4 +77,4 @@ private:
   ValueType type_{ValueType::kNumber};
 };
 
-} // namespace blink
+} // namespace bkfont

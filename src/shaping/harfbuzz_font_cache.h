@@ -7,7 +7,7 @@
 #include "base/hash_map.h"
 #include "base/hash_traits.h"
 
-namespace blink {
+namespace bkfont {
 class FontPlatformData;
 struct HarfBuzzFontData;
 
@@ -24,4 +24,4 @@ private:
           IntWithZeroKeyHashTraits<uint64_t>>
       font_map_;
 };
-} // namespace blink
+} // namespace bkfont

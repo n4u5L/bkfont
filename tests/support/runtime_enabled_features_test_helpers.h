@@ -2,7 +2,7 @@
 // Save and restore each existing runtime feature around an official test.
 #pragma once
 #include "runtime_enabled_features.h"
-namespace blink {
+namespace bkfont {
 template <bool (*Getter)(), void (*Setter)(bool)>
 class ScopedRuntimeFeatureForTest {
 public:
@@ -37,4 +37,4 @@ using ScopedTabSizeWithSpacingForTest = ScopedRuntimeFeatureForTest<&RuntimeEnab
 using ScopedTabWidthNegativePositionForTest = ScopedRuntimeFeatureForTest<&RuntimeEnabledFeatures::TabWidthNegativePositionEnabled, &RuntimeEnabledFeatures::SetTabWidthNegativePositionEnabled>;
 using ScopedTextSpacingTrimFallbackForTest = ScopedRuntimeFeatureForTest<&RuntimeEnabledFeatures::TextSpacingTrimFallbackEnabled, &RuntimeEnabledFeatures::SetTextSpacingTrimFallbackEnabled>;
 using ScopedTextSpacingTrimFallback2ForTest = ScopedRuntimeFeatureForTest<&RuntimeEnabledFeatures::TextSpacingTrimFallback2Enabled, &RuntimeEnabledFeatures::SetTextSpacingTrimFallback2Enabled>;
-} // namespace blink
+} // namespace bkfont

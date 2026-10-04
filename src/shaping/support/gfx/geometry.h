@@ -8,7 +8,7 @@
 #include <limits>
 #include <string>
 
-namespace gfx {
+namespace bkfont::gfx {
 // Extracted from ui/gfx/geometry/{insets_outsets_f_base,insets_f,outsets_f}.h.
 // This is the base template class of InsetsF and OutsetsF.
 template <typename T>
@@ -463,4 +463,4 @@ inline RectF operator-(RectF rect, const Vector2dF& offset) {
   rect -= offset;
   return rect;
 }
-} // namespace gfx
+} // namespace bkfont::gfx

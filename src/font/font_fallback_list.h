@@ -35,7 +35,7 @@
 #include <span>
 #include "base/vector.h"
 #include "base/hash_map.h"
-namespace blink {
+namespace bkfont {
 
 class FontDescription;
 class FontFallbackMap;
@@ -172,4 +172,4 @@ private:
   std::shared_ptr<ShapeCache> shape_cache_;
 };
 
-} // namespace blink
+} // namespace bkfont

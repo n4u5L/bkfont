@@ -9,7 +9,7 @@
 #include "shape_result.h"
 #include "shaping/support/gfx/geometry.h"
 
-namespace blink {
+namespace bkfont {
 
 std::shared_ptr<const ShapeResult> CachingWordShapeIterator::ShapeWordWithoutSpacing(
     const TextRun& word_run,
@@ -64,4 +64,4 @@ std::shared_ptr<const ShapeResult> CachingWordShapeIterator::ShapeWord(const Tex
   return spacing_result;
 }
 
-} // namespace blink
+} // namespace bkfont

@@ -13,8 +13,9 @@
 #include <utility>
 
 #include "graphics/sin_cos_degrees.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -140,7 +141,7 @@ ValueType EvaluateTrigonometricFunction(
     return value;
   }
   default:
-    std::unreachable();
+    NOTREACHED();
   }
 }
 
@@ -263,7 +264,7 @@ ValueType EvaluateSteppedValueFunction(OperatorType op,
     return std::fmod(a, b);
   }
   default:
-    std::unreachable();
+    NOTREACHED();
   }
 }
 
@@ -273,4 +274,4 @@ ValueType EvaluateSignFunction(ValueType v) {
   return (v == 0 || std::isnan(v)) ? v : ((v > 0) ? 1 : -1);
 }
 
-} // namespace blink
+} // namespace bkfont

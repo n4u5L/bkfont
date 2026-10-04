@@ -36,7 +36,7 @@
 
 #include "base/text/character_names.h"
 
-namespace blink {
+namespace bkfont {
 
 ShapeCache* CachingWordShaper::GetShapeCache() const {
   return font_.GetShapeCache();
@@ -117,4 +117,4 @@ GlyphData CachingWordShaper::EmphasisMarkGlyphData(
   return buffer.EmphasisMarkGlyphData(font_.GetFontDescription());
 }
 
-} // namespace blink
+} // namespace bkfont

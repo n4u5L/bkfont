@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-namespace blink {
+namespace bkfont {
 
 // Must match the categories defined in
 // `third-party/emoji-segmenter/src/emoji_presentation_scanner.rl`.
@@ -59,4 +59,4 @@ inline bool IsEmojiPresentationCategory(EmojiSegmentationCategory emoji) {
   return emoji != EmojiSegmentationCategory::kMaxCategory && emoji != EmojiSegmentationCategory::KEYCAP_BASE && emoji != EmojiSegmentationCategory::EMOJI_TEXT_PRESENTATION && emoji != EmojiSegmentationCategory::VS15;
 }
 
-} // namespace blink
+} // namespace bkfont

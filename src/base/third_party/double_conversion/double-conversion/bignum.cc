@@ -31,7 +31,7 @@
 #include "bignum.h"
 #include "utils.h"
 
-namespace double_conversion {
+namespace bkfont::double_conversion {
 
 Bignum::Chunk& Bignum::RawBigit(const int index) {
   (void)0;
@@ -351,7 +351,7 @@ void Bignum::Square() {
   // Assert that the additional number of bits in a DoubleChunk are enough to
   // sum up used_digits of Bigit*Bigit.
   if ((1 << (2 * (kChunkSize - kBigitSize))) <= used_bigits_) {
-    std::unreachable();
+    DOUBLE_CONVERSION_UNIMPLEMENTED();
   }
   DoubleChunk accumulator = 0;
   // First shift the digits so we don't overwrite them.
@@ -760,4 +760,4 @@ void Bignum::SubtractTimes(const Bignum& other, const int factor) {
   Clamp();
 }
 
-} // namespace double_conversion
+} // namespace bkfont::double_conversion

@@ -13,7 +13,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 /* FontPalette stores CSS font-palette information in a
  * FontDescription. It's used for representing the computed style
@@ -252,4 +252,4 @@ private:
   std::optional<Color::HueInterpolationMethod> hue_interpolation_method_;
 };
 
-} // namespace blink
+} // namespace bkfont

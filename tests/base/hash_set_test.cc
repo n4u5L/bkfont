@@ -37,7 +37,7 @@
 #include "base/ref_counted.h"
 #include "support/wtf_test_helper.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -499,4 +499,4 @@ static_assert(!IsTraceableV<HashSet<int>>,
 
 } // anonymous namespace
 
-} // namespace blink
+} // namespace bkfont

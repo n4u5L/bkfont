@@ -11,7 +11,7 @@
 
 #include "font/font_description.h"
 
-namespace blink {
+namespace bkfont {
 class HarfBuzzFace;
 
 class OpenTypeBaselineMetrics {
@@ -35,4 +35,4 @@ private:
   hb_direction_t hb_dir_;
 };
 
-} // namespace blink
+} // namespace bkfont

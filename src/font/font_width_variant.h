@@ -31,7 +31,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 enum FontWidthVariant {
   kRegularWidth,
@@ -45,4 +45,4 @@ const unsigned kFontWidthVariantWidth = 2;
 
 String ToString(FontWidthVariant);
 
-} // namespace blink
+} // namespace bkfont

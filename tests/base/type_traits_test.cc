@@ -28,7 +28,7 @@
 
 // No gtest tests; only static_assert checks.
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -301,4 +301,4 @@ static_assert(!std::is_convertible<Wrapper<TestBaseClass<int>>,
 
 } // anonymous namespace
 
-} // namespace blink
+} // namespace bkfont

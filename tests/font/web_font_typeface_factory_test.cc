@@ -15,7 +15,7 @@
 #include "third_party/blink/renderer/platform/fonts/win/dwrite_font_format_support.h"
 #endif
 
-namespace blink {
+namespace bkfont {
 
 using ::testing::AtLeast;
 using ::testing::Return;
@@ -203,6 +203,6 @@ TEST(WebFontTypefaceFactoryTest, MAYBE_VariationsWinFallbackIfNeeded) {
                                          mock_font_format_check, expectation);
 }
 
-}  // namespace blink
+}  // namespace bkfont
 
 #endif

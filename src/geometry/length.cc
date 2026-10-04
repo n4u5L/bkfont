@@ -37,8 +37,9 @@
 #include "base/static_constructors.h"
 #include "base/text/string_builder.h"
 #include "base/wtf.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 DEFINE_GLOBAL(, Length, g_auto_length);
 DEFINE_GLOBAL(, Length, g_fill_available_length);
@@ -159,7 +160,7 @@ Length Length::BlendSameTypes(const Length& from,
     result_type = from.GetType();
 
   float blended_value =
-      blink::Blend(from.GetFloatValue(), GetFloatValue(), progress);
+      bkfont::Blend(from.GetFloatValue(), GetFloatValue(), progress);
   if (range == ValueRange::kNonNegative)
     blended_value = ClampTo<float>(blended_value, 0);
   return Length(blended_value, result_type);
@@ -175,7 +176,7 @@ PixelsAndPercent Length::GetPixelsAndPercent() const {
   case kCalculated:
     return GetCalculationValue().GetPixelsAndPercent();
   default:
-    std::unreachable();
+    NOTREACHED();
   }
 }
 
@@ -365,4 +366,4 @@ struct SameSizeAsLength {
 };
 ;
 
-} // namespace blink
+} // namespace bkfont

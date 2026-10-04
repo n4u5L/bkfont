@@ -39,7 +39,7 @@
 #include "font_prewarmer.h"
 #include "base/hash_set.h"
 #include <unicode/uscript.h>
-namespace blink {
+namespace bkfont {
 const char kColorEmojiLocale[] = "und-Zsye";
 const char kMonoEmojiLocale[] = "und-Zsym";
 static const char kChineseSimplified[] = "zh-Hant";
@@ -57,7 +57,7 @@ FontCache& FontCache::Get() {
   return cache;
 }
 FontCache::FontCache()
-    : font_manager_(blink::FontManager::Create()) {
+    : font_manager_(bkfont::FontManager::Create()) {
 }
 FontCache::~FontCache() = default;
 std::shared_ptr<const FontPlatformData> FontCache::GetFontPlatformData(const FontDescription& description,
@@ -630,9 +630,9 @@ bool FontCache::IsPlatformFontUniqueNameMatchAvailable(
                                                AlternateFontName::kLocalUniqueFace));
 }
 
-} // namespace blink
+} // namespace bkfont
 
-namespace blink {
+namespace bkfont {
 void FontCache::PrewarmFamily(const AtomicString& family) {
   if (!prewarmer_) return;
   static HashSet<AtomicString> prewarmed_families;
@@ -640,9 +640,9 @@ void FontCache::PrewarmFamily(const AtomicString& family) {
   if (!result.is_new_entry) return;
   prewarmer_->PrewarmFamily(family.GetString());
 }
-} // namespace blink
+} // namespace bkfont
 
-namespace blink {
+namespace bkfont {
 // Source: ui/gfx/font_list.cc::FirstAvailableOrFirst. The source trims only
 // ASCII whitespace and drops empty comma-separated entries before matching.
 String FontCache::FirstAvailableOrFirst(const String& font_name_list) {
@@ -667,4 +667,4 @@ String FontCache::FirstAvailableOrFirst(const String& font_name_list) {
   }
   return families[0];
 }
-} // namespace blink
+} // namespace bkfont

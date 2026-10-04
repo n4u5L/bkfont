@@ -24,7 +24,7 @@
 
 #include "character_break_iterator.h"
 
-namespace blink {
+namespace bkfont {
 
 unsigned NumGraphemeClusters(const String& string) {
   unsigned string_length = string.length();
@@ -94,4 +94,4 @@ unsigned LengthOfGraphemeCluster(const String& string, unsigned offset) {
   return it.Current() - offset;
 }
 
-} // namespace blink
+} // namespace bkfont

@@ -16,7 +16,7 @@
 #include "font/simple_font_data.h"
 #include "support/font_test_base.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
@@ -226,4 +226,4 @@ TEST_F(FontCacheTest, Locale) {
 }
 #endif // BUILDFLAG(IS_ANDROID)
 
-} // namespace blink
+} // namespace bkfont

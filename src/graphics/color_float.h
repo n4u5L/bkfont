@@ -9,7 +9,7 @@
 #pragma once
 #include <cstdint>
 
-namespace blink {
+namespace bkfont {
 struct ColorFloat4 {
   float fR, fG, fB, fA;
 
@@ -36,4 +36,4 @@ struct ColorFloat4 {
     return channel(fA) << 24 | channel(fR) << 16 | channel(fG) << 8 | channel(fB);
   }
 };
-} // namespace blink
+} // namespace bkfont

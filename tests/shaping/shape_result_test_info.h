@@ -11,7 +11,7 @@
 
 #include "hb.h"
 
-namespace blink {
+namespace bkfont {
 
 class ShapeResultTestInfo : public ShapeResult {
 public:
@@ -57,4 +57,4 @@ CompareResultGlyphs(const Vector<ShapeResultTestGlyphInfo>& test,
                     unsigned reference_start,
                     unsigned num_glyphs);
 
-} // namespace blink
+} // namespace bkfont

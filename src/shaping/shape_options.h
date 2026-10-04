@@ -5,7 +5,7 @@
 
 #pragma once
 
-namespace blink {
+namespace bkfont {
 
 //
 // Options when shaping by `HarfBuzzShaper`.
@@ -16,4 +16,4 @@ struct ShapeOptions {
   bool han_kerning_end = false;
 };
 
-} // namespace blink
+} // namespace bkfont

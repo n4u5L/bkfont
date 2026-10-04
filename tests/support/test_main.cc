@@ -20,8 +20,8 @@ int main(int argc, char** argv) {
     return 1;
   }
   const HRESULT com_result = ::CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-  blink::InitializeFonts();
-  blink::OverrideUserPreferredLanguagesForTesting({blink::AtomicString("en-US")});
+  bkfont::InitializeFonts();
+  bkfont::OverrideUserPreferredLanguagesForTesting({bkfont::AtomicString("en-US")});
   // Parameter generators construct Blink objects during GoogleTest
   // registration, so WTF and the font environment must already be initialized.
   ::testing::InitGoogleTest(&argc, argv);

@@ -37,7 +37,7 @@
 #include "ieee.h"
 #include "utils.h"
 
-namespace double_conversion {
+namespace bkfont::double_conversion {
 
 const DoubleToStringConverter& DoubleToStringConverter::EcmaScriptConverter() {
   int flags = UNIQUE_ZERO | EMIT_POSITIVE_EXPONENT_SIGN;
@@ -349,7 +349,7 @@ static BignumDtoaMode DtoaToBignumDtoaMode(
   case DoubleToStringConverter::PRECISION:
     return BIGNUM_DTOA_PRECISION;
   default:
-    std::unreachable();
+    DOUBLE_CONVERSION_UNREACHABLE();
   }
 }
 
@@ -402,7 +402,7 @@ void DoubleToStringConverter::DoubleToAscii(double v,
     break;
   default:
     fast_worked = false;
-    std::unreachable();
+    DOUBLE_CONVERSION_UNREACHABLE();
   }
   if (fast_worked) return;
 
@@ -412,4 +412,4 @@ void DoubleToStringConverter::DoubleToAscii(double v,
   vector[*length] = '\0';
 }
 
-} // namespace double_conversion
+} // namespace bkfont::double_conversion

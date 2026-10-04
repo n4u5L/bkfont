@@ -14,9 +14,9 @@
 #include <numeric>
 #include <tuple>
 
-namespace gfx {
-using namespace blink::color_math;
-using blink::ColorFloat4;
+namespace bkfont::gfx {
+using namespace bkfont::color_math;
+using bkfont::ColorFloat4;
 
 // Namespace containing some of the helper methods for color conversions.
 namespace {
@@ -746,4 +746,4 @@ ColorFloat4 HWBToColorFloat4(float h, float w, float b, float alpha) {
   auto [red, green, blue] = HWBToSRGB(h, w, b);
   return ColorFloat4{red, green, blue, alpha};
 }
-} // namespace gfx
+} // namespace bkfont::gfx

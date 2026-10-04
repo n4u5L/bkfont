@@ -8,7 +8,7 @@
 #include "gtest/gtest.h"
 #include "font/font_family_names.h"
 
-namespace blink {
+namespace bkfont {
 
 class FallbackListCompositeKeyTest : public ::testing::Test {};
 
@@ -305,4 +305,4 @@ TEST_F(FallbackListCompositeKeyTest, GenericVsFamily) {
   EXPECT_NE(key_a, key_b);
 }
 
-} // namespace blink
+} // namespace bkfont

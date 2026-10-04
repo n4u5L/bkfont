@@ -10,10 +10,10 @@
 
 #include "color_float.h"
 
-namespace gfx {
-using blink::ColorFloat4;
+namespace bkfont::gfx {
+using bkfont::ColorFloat4;
 
-// All the methods below are exposed for blink::color conversions.
+// All the methods below are exposed for bkfont::color conversions.
 
 std::tuple<float, float, float> LabToXYZD50(float l, float a, float b);
 
@@ -99,4 +99,4 @@ ColorFloat4 HSLToColorFloat4(float h, float s, float l, float alpha);
 
 ColorFloat4 HWBToColorFloat4(float h, float w, float b, float alpha);
 
-} // namespace gfx
+} // namespace bkfont::gfx

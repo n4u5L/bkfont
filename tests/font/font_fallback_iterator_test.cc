@@ -11,9 +11,9 @@
 #include "support/font_test_base.h"
 #include "support/font_test_helpers.h"
 
-using blink::test::CreateTestFont;
+using bkfont::test::CreateTestFont;
 
-namespace blink {
+namespace bkfont {
 
 const FontFallbackPriority FallbackPriorities[] = {
     FontFallbackPriority::kText,
@@ -48,4 +48,4 @@ TEST_P(TestReset, TestResetWithFallbackPriority) {
   EXPECT_EQ(fallback_iterator_reset, fallback_iterator);
 }
 
-} // namespace blink
+} // namespace bkfont

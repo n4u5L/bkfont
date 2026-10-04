@@ -32,7 +32,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 class SharedFontFamily;
 
@@ -141,4 +141,4 @@ inline std::shared_ptr<SharedFontFamily> FontFamily::ReleaseNext() {
   return std::move(next_);
 }
 
-} // namespace blink
+} // namespace bkfont

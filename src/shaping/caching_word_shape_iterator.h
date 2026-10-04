@@ -32,7 +32,7 @@
 #include "font/simple_font_data.h"
 #include "base/text/character_names.h"
 
-namespace blink {
+namespace bkfont {
 
 class CachingWordShapeIterator final {
 
@@ -182,4 +182,4 @@ private:
   unsigned shape_by_word_ : 1;
 };
 
-} // namespace blink
+} // namespace bkfont

@@ -39,7 +39,7 @@
 #include "base/text/wtf_string.h"
 
 #include "platform/font_manager.h"
-namespace blink {
+namespace bkfont {
 
 // Return a font family that can render |character| based on what script
 // that characters belong to based on hard-coded tables that have been curated
@@ -53,4 +53,4 @@ const AtomicString& GetFallbackFamily(
     const FontManager& font_manager,
     UScriptCode& script_out);
 
-} // namespace blink
+} // namespace bkfont

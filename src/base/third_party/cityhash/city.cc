@@ -94,7 +94,7 @@ using std::pair;
 
 #endif
 
-namespace base {
+namespace bkfont::base {
 namespace internal {
 namespace cityhash_v111 {
 
@@ -536,4 +536,4 @@ uint128 CityHash128(const char* s, size_t len) {
 
 } // namespace cityhash_v111
 } // namespace internal
-} // namespace base
+} // namespace bkfont::base

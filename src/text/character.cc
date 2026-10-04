@@ -45,7 +45,7 @@
 #include "base/text/string_builder.h"
 #include "base/text/unicode.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -81,7 +81,7 @@ void Character::ApplyPatternAndFreezeIfEmpty(icu::UnicodeSet* unicodeSet,
   if (!unicodeSet->isEmpty()) {
     return;
   }
-  blink::ICUError err;
+  bkfont::ICUError err;
   // Use ICU's invariant-character initialization method.
   unicodeSet->applyPattern(icu::UnicodeString(pattern, -1, US_INV), err);
   unicodeSet->freeze();
@@ -418,4 +418,4 @@ bool Character::IsVerticalMathCharacter(UChar32 text_content) {
   return text_content != uchar::kArabicMathematicalOperatorMeemWithHahWithTatweel && text_content != uchar::kArabicMathematicalOperatorHahWithDal && !std::binary_search(stretchy_operator_with_inline_axis, UNSAFE_TODO(stretchy_operator_with_inline_axis + std::size(stretchy_operator_with_inline_axis)), text_content);
 }
 
-} // namespace blink
+} // namespace bkfont

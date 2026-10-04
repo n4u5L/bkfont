@@ -7,7 +7,7 @@
 
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(StringBufferTest, Initial) {
   StringBuffer<LChar> buf1;
@@ -37,4 +37,4 @@ TEST(StringBufferTest, shrink) {
   EXPECT_EQ(0u, buf.length());
 }
 
-} // namespace blink
+} // namespace bkfont

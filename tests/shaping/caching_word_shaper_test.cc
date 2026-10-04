@@ -14,7 +14,7 @@
 #include "shape_result_test_info.h"
 #include "support/font_test_base.h"
 
-namespace blink {
+namespace bkfont {
 
 class CachingWordShaperTest : public FontTestBase {
 protected:
@@ -381,4 +381,4 @@ TEST_F(CachingWordShaperTest, GlyphBoundsWithSpaces) {
             periods_glyph_bounds.width());
 }
 
-} // namespace blink
+} // namespace bkfont

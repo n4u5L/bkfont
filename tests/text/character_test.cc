@@ -16,7 +16,7 @@
 #include "base/text/character_names.h"
 #include "base/text/string_builder.h"
 
-namespace blink {
+namespace bkfont {
 
 testing::AssertionResult IsCJKIdeographOrSymbolWithMessage(UChar32 codepoint) {
   const size_t kFormatBufferSize = 10;
@@ -959,4 +959,4 @@ TEST(CharacterTest, TestEastAsianSpacingPropertyRule) {
   }
 }
 
-} // namespace blink
+} // namespace bkfont

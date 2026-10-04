@@ -9,7 +9,7 @@
 #include <unicode/utypes.h>
 #include <memory>
 
-namespace blink {
+namespace bkfont {
 
 SmallCapsIterator::SmallCapsIterator(base::span<const UChar> buffer)
     : utf16_iterator_(buffer),
@@ -48,4 +48,4 @@ bool SmallCapsIterator::Consume(unsigned* caps_limit,
   return true;
 }
 
-} // namespace blink
+} // namespace bkfont

@@ -11,7 +11,7 @@
 #include "font/font_prewarmer.h"
 #include "base/vector.h"
 
-namespace blink::test {
+namespace bkfont::test {
 std::shared_ptr<Font> CreateTestFont(
     const AtomicString& family_name, const String& font_path, float size,
     const FontDescription::VariantLigatures* ligatures = nullptr,
@@ -52,4 +52,4 @@ private:
   TestFontPrewarmer current_;
   FontPrewarmer* saved_;
 };
-} // namespace blink::test
+} // namespace bkfont::test

@@ -15,7 +15,7 @@
 #include "runtime_enabled_features.h"
 #include "text/character.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 using emoji_text_iter_t = UTF16RagelIterator;
@@ -73,4 +73,4 @@ bool SymbolsIterator::Consume(unsigned* symbols_limit,
   return true;
 }
 
-} // namespace blink
+} // namespace bkfont

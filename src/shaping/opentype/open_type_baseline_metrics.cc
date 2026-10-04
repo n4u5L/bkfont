@@ -21,7 +21,7 @@ float HarfBuzzUnitsToFloat(hb_position_t value) {
 
 } // namespace
 
-namespace blink {
+namespace bkfont {
 OpenTypeBaselineMetrics::OpenTypeBaselineMetrics(HarfBuzzFace* harf_buzz_face,
                                                  FontOrientation orientation) {
   hb_dir_ =
@@ -68,4 +68,4 @@ std::optional<float> OpenTypeBaselineMetrics::OpenTypeIdeographicBaseline() {
   return result;
 }
 
-} // namespace blink
+} // namespace bkfont

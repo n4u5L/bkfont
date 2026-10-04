@@ -28,12 +28,12 @@
 #include "length.h"
 #include "platform_export.h"
 
-namespace gfx {
+namespace bkfont::gfx {
 class PointF;
 class SizeF;
-} // namespace gfx
+} // namespace bkfont::gfx
 
-namespace blink {
+namespace bkfont {
 
 class Length;
 class LengthSize;
@@ -67,4 +67,4 @@ gfx::SizeF SizeForLengthSize(const LengthSize&,
 gfx::PointF PointForLengthPoint(const LengthPoint&,
                                 const gfx::SizeF& box_size);
 
-} // namespace blink
+} // namespace bkfont

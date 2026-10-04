@@ -4,13 +4,13 @@
 
 // Source: platform/wtf/allocator/partitions.cc. CRT allocation is the selected
 // native boundary. Chromium's partitions, heap profiling and OOM crash reporting
-// are not required here; allocation failure uses the C++ allocation exception.
+// are not required here; allocation failure crashes like Chromium's OOM_CRASH.
 #include "base/allocator/partitions.h"
 
 #include <cstdlib>
-#include <new>
+#include "base/immediate_crash.h"
 
-namespace blink {
+namespace bkfont {
 
 void Partitions::Initialize() {
   // The CRT heap needs no explicit initialization.
@@ -19,7 +19,7 @@ void Partitions::Initialize() {
 std::size_t Partitions::ComputeAllocationSize(std::size_t count,
                                               std::size_t element_size) {
   if (element_size && count > kMaxBackingSize / element_size)
-    throw std::bad_array_new_length();
+    base::ImmediateCrash();
   return count * element_size;
 }
 
@@ -34,7 +34,7 @@ void* Partitions::BufferTryMalloc(std::size_t size, const char*) {
 void* Partitions::BufferMalloc(std::size_t size, const char* type_name) {
   if (void* result = BufferTryMalloc(size, type_name))
     return result;
-  throw std::bad_alloc();
+  base::ImmediateCrash();
 }
 
 void* Partitions::BufferTryRealloc(void* address,
@@ -59,7 +59,7 @@ void* Partitions::BufferRealloc(void* address,
   void* result = BufferTryRealloc(address, size, type_name);
   if (result || (address && !size))
     return result;
-  throw std::bad_alloc();
+  base::ImmediateCrash();
 }
 
 void Partitions::BufferFree(void* address) {
@@ -68,7 +68,7 @@ void Partitions::BufferFree(void* address) {
 
 std::size_t Partitions::BufferPotentialCapacity(std::size_t size) {
   if (size > kMaxBackingSize)
-    throw std::bad_array_new_length();
+    base::ImmediateCrash();
   return size;
 }
 
@@ -85,11 +85,11 @@ void* Partitions::FastZeroedMalloc(std::size_t size, const char*) {
     if (void* result = std::calloc(size ? size : 1, 1))
       return result;
   }
-  throw std::bad_alloc();
+  base::ImmediateCrash();
 }
 
 void Partitions::FastFree(void* address) {
   std::free(address);
 }
 
-} // namespace blink
+} // namespace bkfont

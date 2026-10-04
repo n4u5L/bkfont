@@ -37,11 +37,11 @@
 #include "font_cache.h"
 #include "runtime_enabled_features.h"
 
-namespace blink {
+namespace bkfont {
 
 FontPlatformDataCache::FontPlatformDataCache()
     : font_size_limit_(std::nextafter(
-          (static_cast<float>(std::numeric_limits<unsigned>::max()) - 2.f) / static_cast<float>(blink::FontCacheKey::PrecisionMultiplier()),
+          (static_cast<float>(std::numeric_limits<unsigned>::max()) - 2.f) / static_cast<float>(bkfont::FontCacheKey::PrecisionMultiplier()),
           0.f)) {
 }
 
@@ -108,4 +108,4 @@ std::shared_ptr<const FontPlatformData> FontPlatformDataCache::GetOrCreateFontPl
   return nullptr;
 }
 
-} // namespace blink
+} // namespace bkfont

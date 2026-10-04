@@ -23,7 +23,7 @@
 
 #include <memory>
 
-namespace blink {
+namespace bkfont {
 
 // The `CustomFontData` provides an interface of loadable font resource and
 // lifetime management. `SimpleFontData` owns its instance.
@@ -53,4 +53,4 @@ public:
   }
 };
 
-} // namespace blink
+} // namespace bkfont

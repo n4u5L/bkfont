@@ -37,8 +37,9 @@
 #include "text_rendering_mode.h"
 #include "typesetting_features.h"
 #include "platform/font_face.h"
+#include "platform/platform_font.h"
 #include "base/hash_table_deleted_value_type.h"
-namespace blink {
+namespace bkfont {
 class HarfBuzzFace;
 class FontDescription;
 class FontPlatformData {
@@ -63,6 +64,9 @@ public:
     return text_size_;
   }
   FontRenderOptions RenderOptions() const;
+  // CreateSkFont (win/font_platform_data_win.cc). Named CreatePlatformFont
+  // because wingdi.h defines CreateFont as a macro.
+  PlatformFont CreatePlatformFont(const FontDescription* = nullptr) const;
   bool MeasureGlyph(uint16_t glyph, PlatformGlyphMetrics* metrics) const;
   PlatformFontMetrics GetFontMetrics() const;
   bool ShouldSubpixelPosition() const {
@@ -91,10 +95,10 @@ public:
     return resolved_font_features_;
   }
   bool IsVerticalAnyUpright() const {
-    return blink::IsVerticalAnyUpright(orientation_);
+    return bkfont::IsVerticalAnyUpright(orientation_);
   }
   bool IsVerticalNonCJKUpright() const {
-    return blink::IsVerticalNonCJKUpright(orientation_);
+    return bkfont::IsVerticalNonCJKUpright(orientation_);
   }
   void SetOrientation(FontOrientation value) {
     orientation_ = value;
@@ -136,4 +140,4 @@ private:
   bool use_anti_alias_ = false;
   bool use_subpixel_rendering_ = false;
 };
-} // namespace blink
+} // namespace bkfont

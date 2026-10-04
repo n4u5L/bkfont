@@ -28,7 +28,7 @@
 
 #include "wtf_uchar.h"
 
-namespace blink::uchar {
+namespace bkfont::uchar {
 
 // Names here are taken from the Unicode standard.
 //
@@ -239,4 +239,4 @@ const UChar32 kCancelTag = 0xE007F;
 
 const UChar32 kMaxCodepoint = 0x10ffff;
 
-} // namespace blink::uchar
+} // namespace bkfont::uchar

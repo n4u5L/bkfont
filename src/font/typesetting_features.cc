@@ -10,7 +10,7 @@
 #include "base/text/string_builder.h"
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -34,4 +34,4 @@ String ToString(TypesettingFeatures features) {
   return builder.ToString();
 }
 
-} // namespace blink
+} // namespace bkfont

@@ -12,7 +12,7 @@
 
 #include "open_type_caps_support.h"
 
-namespace blink {
+namespace bkfont {
 
 bool OpenTypeCapsSupport::SupportsOpenTypeFeature(hb_script_t script,
                                                   uint32_t tag) const {
@@ -43,4 +43,4 @@ bool OpenTypeCapsSupport::SupportsOpenTypeFeature(hb_script_t script,
   return false;
 }
 
-} // namespace blink
+} // namespace bkfont

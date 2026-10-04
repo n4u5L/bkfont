@@ -10,7 +10,7 @@
 #include "glyph_data.h"
 #include "glyph_data_range.h"
 
-namespace blink {
+namespace bkfont {
 
 // An iterator for `ShapeResultRun::offsets_`.
 //
@@ -74,4 +74,4 @@ struct GlyphOffsetIterator<false> final {
   }
 };
 
-} // namespace blink
+} // namespace bkfont

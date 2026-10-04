@@ -7,7 +7,7 @@
 
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 String ToString(FontSmoothingMode mode) {
   switch (mode) {
@@ -23,4 +23,4 @@ String ToString(FontSmoothingMode mode) {
   return "Unknown";
 }
 
-} // namespace blink
+} // namespace bkfont

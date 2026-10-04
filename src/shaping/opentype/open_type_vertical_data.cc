@@ -37,7 +37,7 @@
 #include "platform/font_face.h"
 #include "font/simple_font_data.h"
 
-namespace blink {
+namespace bkfont {
 class FontPlatformData;
 class FontFace;
 namespace open_type {
@@ -330,4 +330,4 @@ void OpenTypeVerticalData::GetVerticalTranslationsForGlyphs(
   }
 }
 
-} // namespace blink
+} // namespace bkfont

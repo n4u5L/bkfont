@@ -7,8 +7,9 @@
 
 #include <utility>
 #include "base/text/wtf_string.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 unsigned FontSizeAdjust::GetHash() const {
   unsigned computed_hash = 0;
@@ -31,7 +32,7 @@ String FontSizeAdjust::ToString(Metric metric) const {
   case Metric::kExHeight:
     return "ex-height";
   }
-  std::unreachable();
+  NOTREACHED();
 }
 
 String FontSizeAdjust::ToString() const {
@@ -50,4 +51,4 @@ String FontSizeAdjust::ToString() const {
              : String::Format("%s %s", ToString(metric_).Ascii().c_str(), String::Number(value_).Ascii().c_str());
 }
 
-} // namespace blink
+} // namespace bkfont

@@ -20,16 +20,16 @@ namespace {
 
 constexpr double kMaxAlphaDifference = 0.01;
 
-blink::String pathToColorPalettesTestFont() {
-  return blink::test::BlinkWebTestsDir() + "/external/wpt/css/css-fonts/resources/COLR-palettes-test-font.ttf";
+bkfont::String pathToColorPalettesTestFont() {
+  return bkfont::test::BlinkWebTestsDir() + "/external/wpt/css/css-fonts/resources/COLR-palettes-test-font.ttf";
 }
-blink::String pathToNonColorTestFont() {
-  return blink::test::BlinkWebTestsFontsTestDataPath("Ahem.ttf");
+bkfont::String pathToNonColorTestFont() {
+  return bkfont::test::BlinkWebTestsFontsTestDataPath("Ahem.ttf");
 }
 
 } // namespace
 
-namespace blink {
+namespace bkfont {
 
 class PaletteInterpolationTest : public FontTestBase {
 protected:
@@ -37,7 +37,7 @@ protected:
     if (!test::ReadFromFile(path))
       return nullptr;
     FontDescription::VariantLigatures ligatures;
-    auto font = blink::test::CreateTestFont(AtomicString("Ahem"), path, 16, &ligatures);
+    auto font = bkfont::test::CreateTestFont(AtomicString("Ahem"), path, 16, &ligatures);
     return font->PrimaryFont()->PlatformData().GetFontFace();
   }
 
@@ -323,4 +323,4 @@ TEST_F(PaletteInterpolationTest, MixCustomPalettesInSRGB) {
   ExpectColorsEqualInSRGB(actual_color_records, expected_color_records);
 }
 
-} // namespace blink
+} // namespace bkfont

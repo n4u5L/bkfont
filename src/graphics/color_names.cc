@@ -2,7 +2,7 @@
 // Copyright The Chromium Authors. BSD-style license, see LICENSE.
 #include "color.h"
 
-namespace blink {
+namespace bkfont {
 namespace {
 // The upstream gperf word list, in its original order and with unchanged values.
 constexpr NamedColor kNamedColors[] = {
@@ -167,4 +167,4 @@ const NamedColor* FindColor(std::string_view str) {
   }
   return nullptr;
 }
-} // namespace blink
+} // namespace bkfont

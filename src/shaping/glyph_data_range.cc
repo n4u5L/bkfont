@@ -10,7 +10,7 @@
 
 #include "shape_result_run.h"
 
-namespace blink {
+namespace bkfont {
 
 GlyphDataRange::GlyphDataRange(const ShapeResultRun& run)
     : run_(run.shared_from_this()),
@@ -91,4 +91,4 @@ GlyphDataRange GlyphDataRange::FindGlyphDataRange(
   return {*this, start_glyph, end_glyph};
 }
 
-} // namespace blink
+} // namespace bkfont

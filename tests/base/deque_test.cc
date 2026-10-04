@@ -31,7 +31,7 @@
 #include "base/hash_set.h"
 #include "support/wtf_test_helper.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -588,4 +588,4 @@ static_assert(!IsTraceableV<Deque<int>>, "Deque<int> must not be traceable.");
 #endif
 
 } // anonymous namespace
-} // namespace blink
+} // namespace bkfont

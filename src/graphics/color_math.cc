@@ -13,7 +13,7 @@
 #include <climits>
 #include <limits>
 
-namespace blink::color_math {
+namespace bkfont::color_math {
 constexpr float INFINITY_ = std::numeric_limits<float>::infinity();
 // Source: modules/skcms/src/skcms_internals.h.
 static inline float floorf_(float x) {
@@ -498,4 +498,4 @@ bool skcms_TransferFunction_invert(const skcms_TransferFunction* src, skcms_Tran
   return classify(*dst) == skcms_TFType_sRGBish;
 }
 
-} // namespace blink::color_math
+} // namespace bkfont::color_math

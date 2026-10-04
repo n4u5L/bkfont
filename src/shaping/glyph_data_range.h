@@ -10,7 +10,7 @@
 #include "base/forward.h"
 #include "glyph_data.h"
 
-namespace blink {
+namespace bkfont {
 
 struct ShapeResultRun;
 
@@ -56,4 +56,4 @@ private:
   wtf_size_t size_ = 0;
 };
 
-} // namespace blink
+} // namespace bkfont

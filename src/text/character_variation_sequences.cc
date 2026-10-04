@@ -8,7 +8,7 @@
 #include "character.h"
 #include "base/text/unicode.h"
 
-namespace blink {
+namespace bkfont {
 
 // Codepoints pair from unicode standardized variation sequences spec, compare:
 // https://www.unicode.org/Public/UNIDATA/StandardizedVariants.txt
@@ -484,4 +484,4 @@ bool Character::IsVariationSequence(UChar32 ch, UChar32 vs) {
   return IsEmojiVariationSequence(ch, vs) || IsStandardizedVariationSequence(ch, vs) || IsIdeographicVariationSequence(ch, vs);
 }
 
-} // namespace blink
+} // namespace bkfont

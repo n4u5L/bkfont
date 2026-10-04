@@ -10,7 +10,7 @@
 #include "base/text/wtf_string.h"
 #include "support/wtf_test_helper.h"
 
-namespace blink {
+namespace bkfont {
 
 // Port exclusion: Oilpan traceability traits were removed with GC.
 #if 0
@@ -227,7 +227,7 @@ TEST(LinkedHashSetTest, MoveConstructAndAssignString) {
 }
 
 struct CustomHashTraitsForInt
-    : public blink::IntHashTraits<int, INT_MAX, INT_MIN> {};
+    : public bkfont::IntHashTraits<int, INT_MAX, INT_MIN> {};
 
 TEST(LinkedHashSetTest, BeginEnd) {
   using Set = LinkedHashSet<int, CustomHashTraitsForInt>;
@@ -1054,7 +1054,7 @@ struct Complicated {
   }
 };
 
-struct ComplicatedHashTraits : blink::GenericHashTraits<Complicated> {
+struct ComplicatedHashTraits : bkfont::GenericHashTraits<Complicated> {
   static unsigned GetHash(const Complicated& key) {
     return key.simple_.value_;
   }
@@ -1157,4 +1157,4 @@ TEST(LinkedHashSetEmptyTest, EmptyString) {
   set.insert(EmptyString());
 }
 
-} // namespace blink
+} // namespace bkfont

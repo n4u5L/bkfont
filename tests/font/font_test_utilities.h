@@ -7,6 +7,6 @@
 
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 String To16Bit(std::string_view text);
-} // namespace blink
+} // namespace bkfont

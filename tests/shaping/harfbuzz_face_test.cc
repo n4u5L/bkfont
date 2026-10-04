@@ -17,7 +17,7 @@
 #include "support/font_test_helpers.h"
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -71,7 +71,7 @@ hb_codepoint_t GetGlyphForStandardizedVSFromFontWithBaseCharOnly() {
   UChar32 variation_selector = uchar::kMongolianFreeVariationSelectorTwo;
 
   std::shared_ptr<Font> font = test::CreateTestFont(AtomicString("Noto Sans Mongolian"),
-                                                    blink::test::BlinkWebTestsFontsTestDataPath(
+                                                    bkfont::test::BlinkWebTestsFontsTestDataPath(
                                                         "noto/NotoSansMongolian-regular.woff2"),
                                                     11);
   return GetGlyphForVariationSequenceFromFont(font, character, variation_selector);
@@ -83,7 +83,7 @@ hb_codepoint_t GetGlyphForCJKVSFromFontWithVS() {
 
   std::shared_ptr<Font> font = test::CreateTestFont(
       AtomicString("Noto Sans CJK JP"),
-      blink::test::BlinkWebTestsFontsTestDataPath(
+      bkfont::test::BlinkWebTestsFontsTestDataPath(
           "noto/cjk/NotoSansCJKjp-Regular-subset-chws.otf"),
       11);
   return GetGlyphForVariationSequenceFromFont(font, character, variation_selector);
@@ -313,4 +313,4 @@ TEST(HarfBuzzFaceTest, HarfBuzzGetNominalGlyph_TestSystemFallbackEmojiVS) {
 }
 #endif
 
-} // namespace blink
+} // namespace bkfont

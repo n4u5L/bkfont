@@ -37,7 +37,7 @@
 #include "base/forward.h"
 #include "base/math_extras.h"
 
-namespace blink {
+namespace bkfont {
 
 struct PixelsAndPercent {
 
@@ -469,7 +469,7 @@ public:
 
   static wtf_size_t GetCalcHandleMapSizeForTest();
 
-  blink::String ToString() const;
+  bkfont::String ToString() const;
 
   unsigned GetHash() const;
 
@@ -504,4 +504,4 @@ private:
 
 std::ostream& operator<<(std::ostream&, const Length&);
 
-} // namespace blink
+} // namespace bkfont

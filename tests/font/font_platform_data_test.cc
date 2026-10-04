@@ -38,9 +38,9 @@
 #include "support/font_test_base.h"
 #include "support/font_test_helpers.h"
 
-using blink::test::CreateTestFont;
+using bkfont::test::CreateTestFont;
 
-namespace blink {
+namespace bkfont {
 
 class FontPlatformDataTest : public FontTestBase {};
 
@@ -165,4 +165,4 @@ TEST_F(FontPlatformDataTest, GeometricPrecision) {
 }
 #endif
 
-} // namespace blink
+} // namespace bkfont

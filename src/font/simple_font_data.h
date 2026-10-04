@@ -49,7 +49,7 @@
 #include "font/glyph_metrics_map.h"
 #endif
 
-namespace blink {
+namespace bkfont {
 
 class NGShapeCache;
 
@@ -286,4 +286,4 @@ struct DowncastTraits<SimpleFontData> {
   }
 };
 
-} // namespace blink
+} // namespace bkfont

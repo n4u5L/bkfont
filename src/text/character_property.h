@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-namespace blink {
+namespace bkfont {
 
 using CharacterPropertyType = uint16_t;
 
@@ -49,4 +49,4 @@ inline CharacterProperty operator|=(CharacterProperty& a, CharacterProperty b) {
   return a;
 }
 
-} // namespace blink
+} // namespace bkfont

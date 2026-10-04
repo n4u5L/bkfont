@@ -5,8 +5,9 @@
 
 #include <utility>
 #include "variation_selector_mode.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 bool ShouldIgnoreVariationSelector(VariationSelectorMode mode) {
   return mode == kIgnoreVariationSelector;
@@ -28,7 +29,7 @@ VariationSelectorMode GetVariationSelectorModeFromFontVariantEmoji(
   case kUnicodeVariantEmoji:
     return kUseUnicodeDefaultPresentation;
   }
-  std::unreachable();
+  NOTREACHED();
 }
 
-} // namespace blink
+} // namespace bkfont

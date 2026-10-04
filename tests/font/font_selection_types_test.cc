@@ -8,7 +8,7 @@
 #include "gtest/gtest.h"
 #include "base/hash_set.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(FontSelectionTypesTest, HashCollisions) {
   Vector<int> weights = {100, 200, 300, 400, 500, 600, 700, 800, 900};
@@ -52,4 +52,4 @@ TEST(FontSelectionTypesTest, RequestToString) {
             request.ToString());
 }
 
-} // namespace blink
+} // namespace bkfont

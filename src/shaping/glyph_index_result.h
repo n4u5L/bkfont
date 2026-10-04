@@ -5,7 +5,7 @@
 
 #pragma once
 
-namespace blink {
+namespace bkfont {
 
 struct GlyphIndexResult {
 
@@ -21,4 +21,4 @@ public:
   float advance = 0;
 };
 
-} // namespace blink
+} // namespace bkfont

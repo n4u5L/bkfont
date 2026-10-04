@@ -40,7 +40,7 @@
 #include "base/text/character_names.h"
 #include "base/text/wtf_uchar.h"
 
-namespace blink {
+namespace bkfont {
 
 FontFallbackList::FontFallbackList(std::shared_ptr<FontSelector> font_selector)
     : font_selector_(font_selector),
@@ -261,4 +261,4 @@ bool FontFallbackList::CanShapeWordByWord(
   return can_shape_word_by_word_;
 }
 
-} // namespace blink
+} // namespace bkfont

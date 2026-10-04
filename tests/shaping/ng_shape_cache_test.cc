@@ -12,7 +12,7 @@
 #include "support/font_test_helpers.h"
 #include "text/text_direction.h"
 
-namespace blink {
+namespace bkfont {
 
 class NGShapeCacheTest : public FontTestBase {
 protected:
@@ -62,4 +62,4 @@ TEST_F(NGShapeCacheTest, AddEntriesAndCacheHits) {
             entry_A_RTL);
 }
 
-} // namespace blink
+} // namespace bkfont

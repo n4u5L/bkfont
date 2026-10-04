@@ -36,7 +36,7 @@
 #include "font_fallback_priority.h"
 #include "platform/font_manager.h"
 #include "base/hash_map.h"
-namespace blink {
+namespace bkfont {
 class ShapeCache;
 class FontPrewarmer;
 class FontFallbackMap;
@@ -113,7 +113,7 @@ public:
   static int32_t StatusFontHeight() {
     return status_font_height_;
   }
-  std::shared_ptr<blink::FontManager> GetFontManager() const {
+  std::shared_ptr<bkfont::FontManager> GetFontManager() const {
     return font_manager_;
   }
   std::shared_ptr<const SimpleFontData> GetFallbackFamilyNameFromHardcodedChoices(const FontDescription&, UChar32, FontFallbackPriority);
@@ -124,7 +124,7 @@ private:
   std::shared_ptr<FontFace> CreateTypefaceFromUniqueName(const FontFaceCreationParams&);
   std::shared_ptr<const SimpleFontData> FallbackOnStandardFontStyle(const FontDescription&, UChar32);
   std::shared_ptr<const SimpleFontData> PlatformFallbackFontForCharacter(const FontDescription&, UChar32, std::shared_ptr<const SimpleFontData>, FontFallbackPriority);
-  std::shared_ptr<blink::FontManager> font_manager_;
+  std::shared_ptr<bkfont::FontManager> font_manager_;
   FontPlatformDataCache font_platform_data_cache_;
   FontDataCache font_data_cache_;
   HashMap<FallbackListCompositeKey, std::weak_ptr<ShapeCache>, FallbackListCompositeKeyTraits> fallback_list_shaper_cache_;
@@ -142,4 +142,4 @@ private:
   static int32_t small_caption_font_height_;
   static int32_t status_font_height_;
 };
-} // namespace blink
+} // namespace bkfont

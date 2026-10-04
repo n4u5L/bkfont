@@ -7,7 +7,7 @@
 
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(ASCIICTypeTest, ASCIICaseFoldTable) {
   LChar symbol = 0xff;
@@ -25,4 +25,4 @@ TEST(ASCIICTypeTest, IsASCIISpaceWHATWG) {
   } while (c--);
 }
 
-} // namespace blink
+} // namespace bkfont

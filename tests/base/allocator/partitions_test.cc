@@ -15,7 +15,7 @@
 #include "partition_alloc/memory_reclaimer.h"
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 // Otherwise, PartitionAlloc doesn't allocate any memory, and the tests are
 // meaningless.
@@ -81,6 +81,6 @@ TEST_F(PartitionsTest, Decommit) {
 
 #endif // !defined(MEMORY_TOOL_REPLACES_ALLOCATOR)
 
-}  // namespace blink
+}  // namespace bkfont
 
 #endif

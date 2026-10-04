@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(LayoutLocaleTest, Get) {
   LayoutLocale::ClearForTesting();
@@ -290,4 +290,4 @@ TEST(LayoutLocaleTest, AcceptLanguagesChanged) {
   }
 }
 
-} // namespace blink
+} // namespace bkfont

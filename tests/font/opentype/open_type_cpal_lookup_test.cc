@@ -14,15 +14,15 @@
 #include <vector>
 
 namespace {
-blink::String pathToColrPalettesTestFont() {
-  return blink::test::BlinkWebTestsDir() + "/external/wpt/css/css-fonts/resources/COLR-palettes-test-font.ttf";
+bkfont::String pathToColrPalettesTestFont() {
+  return bkfont::test::BlinkWebTestsDir() + "/external/wpt/css/css-fonts/resources/COLR-palettes-test-font.ttf";
 }
-blink::String pathToNonColrTestFont() {
-  return blink::test::BlinkWebTestsFontsTestDataPath("Ahem.ttf");
+bkfont::String pathToNonColrTestFont() {
+  return bkfont::test::BlinkWebTestsFontsTestDataPath("Ahem.ttf");
 }
 } // namespace
 
-namespace blink {
+namespace bkfont {
 
 class OpenTypeCpalLookupTest : public FontTestBase {
 protected:
@@ -30,7 +30,7 @@ protected:
     if (!test::ReadFromFile(path))
       return nullptr;
     FontDescription::VariantLigatures ligatures;
-    auto font = blink::test::CreateTestFont(AtomicString("Ahem"), path, 16, &ligatures);
+    auto font = bkfont::test::CreateTestFont(AtomicString("Ahem"), path, 16, &ligatures);
     return font->PrimaryFont()->PlatformData().GetFontFace();
   }
 
@@ -104,4 +104,4 @@ TEST_F(OpenTypeCpalLookupTest, RetrieveColorRecordsFromNonExistingPalette) {
   EXPECT_EQ(actual_color_records.size(), 0u);
 }
 
-} // namespace blink
+} // namespace bkfont

@@ -14,7 +14,7 @@
 #include "font_family.h"
 #include "generic_font_family_settings.h"
 
-namespace blink {
+namespace bkfont {
 
 AtomicString FontSelector::FamilyNameFromSettings(
     const GenericFontFamilySettings& settings,
@@ -95,4 +95,4 @@ FontFallbackMap& FontSelector::GetFontFallbackMap() {
   return *font_fallback_map_;
 }
 
-} // namespace blink
+} // namespace bkfont

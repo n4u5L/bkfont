@@ -18,17 +18,17 @@ struct StackAllocatedType {
   STACK_ALLOCATED();
 };
 
-static_assert(!blink::IsStackAllocatedTypeV<Empty>,
+static_assert(!bkfont::IsStackAllocatedTypeV<Empty>,
               "Failed to detect STACK_ALLOCATED macro.");
-static_assert(blink::IsStackAllocatedTypeV<StackAllocatedType>,
+static_assert(bkfont::IsStackAllocatedTypeV<StackAllocatedType>,
               "Failed to detect STACK_ALLOCATED macro.");
 
-static_assert(blink::IsStackAllocatedTypeV<std::pair<int, StackAllocatedType>>,
+static_assert(bkfont::IsStackAllocatedTypeV<std::pair<int, StackAllocatedType>>,
               "Failed to detect STACK_ALLOCATED macro.");
-static_assert(blink::IsStackAllocatedTypeV<std::optional<StackAllocatedType>>,
+static_assert(bkfont::IsStackAllocatedTypeV<std::optional<StackAllocatedType>>,
               "Failed to detect STACK_ALLOCATED macro.");
 static_assert(
-    blink::IsStackAllocatedTypeV<std::variant<int, StackAllocatedType>>,
+    bkfont::IsStackAllocatedTypeV<std::variant<int, StackAllocatedType>>,
     "Failed to detect STACK_ALLOCATED macro.");
 
 }  // namespace

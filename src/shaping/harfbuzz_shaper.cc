@@ -65,8 +65,9 @@
 #include "base/math_extras.h"
 #include "base/text/string_builder.h"
 #include "base/text/unicode.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -436,7 +437,7 @@ HarfBuzzShaper::FallbackFontStage ChangeStageToVS(
     return fallback_stage;
   default:
     // We should not call this function on the second fallback pass.
-    std::unreachable();
+    NOTREACHED();
   }
 }
 
@@ -741,8 +742,8 @@ namespace {
 
 void SplitUntilNextCaseChange(
     const String& text,
-    Deque<blink::ReshapeQueueItem>* queue,
-    blink::ReshapeQueueItem& current_queue_item,
+    Deque<bkfont::ReshapeQueueItem>* queue,
+    bkfont::ReshapeQueueItem& current_queue_item,
     SmallCapsIterator::SmallCapsBehavior& small_caps_behavior) {
   // TODO(layout-dev): Add support for latin-1 to SmallCapsIterator.
   base::span<const UChar> normalized_buffer;
@@ -762,8 +763,8 @@ void SplitUntilNextCaseChange(
   small_caps_iterator.Consume(&num_characters_until_case_change,
                               &small_caps_behavior);
   if (num_characters_until_case_change > 0 && num_characters_until_case_change < current_queue_item.num_characters_) {
-    queue->push_front(blink::ReshapeQueueItem(
-        blink::ReshapeQueueItemAction::kReshapeQueueRange,
+    queue->push_front(bkfont::ReshapeQueueItem(
+        bkfont::ReshapeQueueItemAction::kReshapeQueueRange,
         current_queue_item.start_index_ + num_characters_until_case_change,
         current_queue_item.num_characters_ - num_characters_until_case_change));
     current_queue_item.num_characters_ = num_characters_until_case_change;
@@ -1121,7 +1122,7 @@ void HarfBuzzShaper::GetGlyphData(const SimpleFontData& font_data,
   hb_buffer_set_script(hb_buffer, ICUScriptToHBScript(script));
   hb_buffer_set_direction(
       hb_buffer,
-      is_horizontal ? (blink::IsLtr(direction) ? HB_DIRECTION_LTR
+      is_horizontal ? (bkfont::IsLtr(direction) ? HB_DIRECTION_LTR
                                                : HB_DIRECTION_RTL)
                     : HB_DIRECTION_TTB);
   if (text_.Is8Bit()) {
@@ -1163,4 +1164,4 @@ void HarfBuzzShaper::GetGlyphData(const SimpleFontData& font_data,
   }
 }
 
-} // namespace blink
+} // namespace bkfont

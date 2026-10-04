@@ -38,7 +38,7 @@
 #include "base/text/wtf_uchar.h"
 #include "base/wtf.h"
 
-namespace blink {
+namespace bkfont {
 
 DEFINE_GLOBAL(, AtomicString, g_null_atom);
 DEFINE_GLOBAL(, AtomicString, g_empty_atom);
@@ -76,7 +76,7 @@ void NewlineThenWhitespaceStringsTable::Init() {
     auto* string_impl =
         StringImpl::CreateStatic(base::span(whitespace_buffer).first(length));
     new (base::NotNullTag::kNotNull, (void*)(&g_table_[length]))
-        String(blink::AtomicString(string_impl).GetString());
+        String(bkfont::AtomicString(string_impl).GetString());
   }
 }
 
@@ -166,4 +166,4 @@ void InitStringStatics() {
   NewlineThenWhitespaceStringsTable::Init();
 }
 
-} // namespace blink
+} // namespace bkfont

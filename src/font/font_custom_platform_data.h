@@ -44,7 +44,7 @@
 
 #include <span>
 #include "platform/font_face.h"
-namespace blink {
+namespace bkfont {
 
 class FontPlatformData;
 class FontVariationSettings;
@@ -93,4 +93,4 @@ private:
   size_t data_size_;
 };
 
-} // namespace blink
+} // namespace bkfont

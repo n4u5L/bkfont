@@ -7,7 +7,7 @@
 
 #include "font_face.h"
 
-namespace blink {
+namespace bkfont {
 
 class FontManager final {
 public:
@@ -41,4 +41,4 @@ private:
   std::unique_ptr<Impl> impl_;
 };
 
-} // namespace blink
+} // namespace bkfont

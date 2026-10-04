@@ -7,10 +7,10 @@
 
 #include <ostream>
 
-namespace blink {
+namespace bkfont {
 
 std::ostream& operator<<(std::ostream& ostream, TextDirection direction) {
   return ostream << (IsLtr(direction) ? "LTR" : "RTL");
 }
 
-} // namespace blink
+} // namespace bkfont

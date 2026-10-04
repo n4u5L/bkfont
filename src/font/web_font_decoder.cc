@@ -39,7 +39,7 @@
 #include "base/text/wtf_string.h"
 #include <ots-memory-stream.h>
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -210,4 +210,4 @@ std::shared_ptr<FontFace> WebFontDecoder::Decode(std::span<const uint8_t> buffer
   return new_typeface;
 }
 
-} // namespace blink
+} // namespace bkfont

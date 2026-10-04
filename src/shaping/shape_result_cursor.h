@@ -10,7 +10,7 @@
 #include "shape_result.h"
 #include "shape_result_run.h"
 
-namespace blink {
+namespace bkfont {
 
 //
 // This class keeps a pointer to a glyph in a `ShapeResult`, move it, and
@@ -91,4 +91,4 @@ private:
   wtf_size_t glyph_index_ = 0;
 };
 
-} // namespace blink
+} // namespace bkfont

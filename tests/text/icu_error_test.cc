@@ -7,7 +7,7 @@
 
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 const UErrorCode kTestErrorCode = U_INVALID_FORMAT_ERROR;
 
@@ -22,4 +22,4 @@ TEST(ICUErrorTest, assignToAutomaticReference) {
   EXPECT_EQ(icu_error, kTestErrorCode);
 }
 
-} // namespace blink
+} // namespace bkfont

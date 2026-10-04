@@ -7,7 +7,7 @@
  */
 #include "dwrite_internal.h"
 
-namespace blink {
+namespace bkfont {
 namespace {
 
 template <typename Interface>
@@ -780,4 +780,4 @@ std::shared_ptr<FontFace> FontManager::CreateFromFile(
                         collection_index);
 }
 
-} // namespace blink
+} // namespace bkfont

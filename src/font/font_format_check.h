@@ -9,7 +9,7 @@
 #include <span>
 
 #include "platform/font_face.h"
-namespace blink {
+namespace bkfont {
 
 class FontFormatCheck {
 
@@ -54,4 +54,4 @@ private:
   COLRVersion colr_version_ = COLRVersion::kNoCOLR;
 };
 
-} // namespace blink
+} // namespace bkfont

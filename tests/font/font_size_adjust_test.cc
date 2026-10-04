@@ -8,7 +8,7 @@
 #include "gtest/gtest.h"
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(FontSizeAdjustTest, HashingAndComparison) {
   EXPECT_EQ(FontSizeAdjust(),
@@ -122,4 +122,4 @@ TEST(FontSizeAdjustTest, Serialization) {
                 .ToString());
 }
 
-} // namespace blink
+} // namespace bkfont

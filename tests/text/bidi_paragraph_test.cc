@@ -10,7 +10,7 @@
 #include "text/character.h"
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 using testing::ElementsAre;
 
@@ -96,4 +96,4 @@ TEST_P(BaseDirectionTest, Data) {
   }
 }
 
-} // namespace blink
+} // namespace bkfont

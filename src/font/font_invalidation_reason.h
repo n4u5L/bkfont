@@ -8,7 +8,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 // Notifies FontSelectorClient of detailed reason of FontSelection invalidation.
 enum class FontInvalidationReason {
@@ -22,4 +22,4 @@ enum class FontInvalidationReason {
   // implement different behaviors on FontSelectorClient.
 };
 
-} // namespace blink
+} // namespace bkfont

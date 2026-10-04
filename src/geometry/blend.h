@@ -12,7 +12,7 @@
 
 #include <type_traits>
 
-namespace blink {
+namespace bkfont {
 
 inline int Blend(int from, int to, double progress) {
   return static_cast<int>(lround(from + (to - from) * progress));
@@ -45,4 +45,4 @@ inline gfx::PointF Blend(const gfx::PointF& from,
                      Blend(from.y(), to.y(), progress));
 }
 
-} // namespace blink
+} // namespace bkfont

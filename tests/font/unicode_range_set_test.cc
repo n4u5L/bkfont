@@ -7,7 +7,7 @@
 
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 static const UChar kHiraganaA[2] = {0x3042, 0};
 
@@ -87,4 +87,4 @@ TEST(UnicodeRangeSet, Non8Bit) {
   EXPECT_TRUE(set->IntersectsWith(String(kHiraganaA)));
 }
 
-} // namespace blink
+} // namespace bkfont

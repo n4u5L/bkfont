@@ -32,7 +32,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 enum class FontOrientation : uint8_t {
   // Horizontal; i.e., writing-mode: horizontal-tb
@@ -75,4 +75,4 @@ inline FontOrientation AdjustOrientationForCharacterInMixedVertical(
 
 String ToString(FontOrientation);
 
-} // namespace blink
+} // namespace bkfont

@@ -27,7 +27,7 @@
 #include "gtest/gtest.h"
 #include "shaping/opentype/open_type_types.h"
 
-namespace blink {
+namespace bkfont {
 
 struct TestTable : open_type::TableBase {
   open_type::Fixed version;
@@ -73,4 +73,4 @@ TEST(OpenTypeVerticalDataTest, ValidateOffsetTest) {
   EXPECT_FALSE(table->ValidateOffset<uint16_t>(buffer, sizeof(TestTable) - 1));
 }
 
-} // namespace blink
+} // namespace bkfont

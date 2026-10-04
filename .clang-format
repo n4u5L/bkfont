@@ -11,11 +11,11 @@ PointerAlignment: Left
 AlignConsecutiveAssignments: None
 
 BreakBeforeBraces: Attach
-BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBinaryOperators: None
 BreakTemplateDeclarations: Yes
 BreakConstructorInitializers: BeforeColon
 PackConstructorInitializers: Never
-BinPackArguments: false
+BinPackArguments: true
 BinPackParameters: true
 AllowShortBlocksOnASingleLine: Never
 AllowShortEnumsOnASingleLine: false

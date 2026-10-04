@@ -8,7 +8,7 @@
 #include "gtest/gtest.h"
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(TypesettingFeaturesTest, ToString) {
   {
@@ -25,4 +25,4 @@ TEST(TypesettingFeaturesTest, ToString) {
   }
 }
 
-} // namespace blink
+} // namespace bkfont

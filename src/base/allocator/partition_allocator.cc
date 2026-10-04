@@ -4,7 +4,7 @@
 // Source: platform/wtf/allocator/partition_allocator.cc.
 #include "base/allocator/partition_allocator.h"
 
-namespace blink {
+namespace bkfont {
 
 void* PartitionAllocator::AllocateBacking(std::size_t size,
                                           const char* type_name) {
@@ -21,4 +21,4 @@ char* PartitionAllocator::AllocateVectorBacking<char>(std::size_t size) {
       AllocateBacking(size, "PartitionAllocator::allocateVectorBacking<char>"));
 }
 
-} // namespace blink
+} // namespace bkfont

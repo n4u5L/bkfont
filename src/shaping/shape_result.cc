@@ -55,8 +55,9 @@
 #include "text/text_break_iterator.h"
 
 #include "base/text/string_builder.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 constexpr unsigned HarfBuzzRunGlyphData::kMaxCharacterIndex;
 constexpr unsigned HarfBuzzRunGlyphData::kMaxGlyphs;
@@ -586,7 +587,7 @@ unsigned ShapeResult::OffsetToFit(float x, TextDirection line_direction) const {
   GlyphIndexResult result;
   OffsetForPosition(x, BreakGlyphsOption(false), &result);
 
-  if (blink::IsLtr(line_direction))
+  if (bkfont::IsLtr(line_direction))
     return result.left_character_index;
 
   if (x == result.origin_x)
@@ -990,7 +991,7 @@ void ShapeResult::ApplyLeadingExpansion(LayoutUnit expansion) {
     }
   }
   // No glyphs.
-  std::unreachable();
+  NOTREACHED();
 }
 
 void ShapeResult::ApplyTrailingExpansion(LayoutUnit expansion) {
@@ -1013,7 +1014,7 @@ void ShapeResult::ApplyTrailingExpansion(LayoutUnit expansion) {
     return;
   }
   // No glyphs.
-  std::unreachable();
+  NOTREACHED();
 }
 
 bool ShapeResult::HasAutoSpacingAfter(unsigned offset) const {
@@ -1111,7 +1112,7 @@ void ShapeResult::ApplyTextAutoSpacingCore(Iterator offset_begin,
         next_character_index = run->num_characters_;
       }
       bool should_add_spacing;
-      if (blink::IsLtr(direction)) {
+      if (bkfont::IsLtr(direction)) {
         // In the following example, add the spacing to the glyph 2 if the
         // `offset_in_run` is 1, 2, or 3.
         //   Glyph|0|1|2|3|4|5|
@@ -1501,7 +1502,7 @@ std::shared_ptr<ShapeResultRun> ShapeResult::InsertRunForTesting(
     Vector<uint16_t> safe_break_offsets) {
   auto run = std::make_shared<ShapeResultRun>(
       nullptr,
-      blink::IsLtr(direction) ? HB_DIRECTION_LTR : HB_DIRECTION_RTL,
+      bkfont::IsLtr(direction) ? HB_DIRECTION_LTR : HB_DIRECTION_RTL,
       CanvasRotationInVertical::kRegular,
       HB_SCRIPT_COMMON,
       start_index,
@@ -1693,7 +1694,7 @@ std::shared_ptr<const ShapeResult> ShapeResult::CreateForTabulationCharacters(
   // Tab characters are always LTR or RTL, not TTB, even when
   // isVerticalAnyUpright().
   hb_direction_t hb_direction =
-      blink::IsLtr(direction) ? HB_DIRECTION_LTR : HB_DIRECTION_RTL;
+      bkfont::IsLtr(direction) ? HB_DIRECTION_LTR : HB_DIRECTION_RTL;
   // Only the advance of the first tab is affected by |position|.
   TextRunLayoutUnit advance = TextRunLayoutUnit::FromFloatRound(
       font->TabWidth(font_data, tab_size, position));
@@ -1714,7 +1715,7 @@ std::shared_ptr<const ShapeResult> ShapeResult::CreateForTabulationCharacters(
         advance = TextRunLayoutUnit::FromFloatRound(
             font->TabWidth(font_data, tab_size));
       }
-      const unsigned index = blink::IsLtr(direction) ? i : length - 1 - i;
+      const unsigned index = bkfont::IsLtr(direction) ? i : length - 1 - i;
       run->glyph_data_[i] = {font_data->SpaceGlyph(), index, SafeToBreak::kSafe, advance};
       run_width += advance;
     }
@@ -1740,7 +1741,7 @@ std::shared_ptr<const ShapeResult> ShapeResult::CreateForSpaces(const Font* font
   result->has_vertical_offsets_ =
       font_data->PlatformData().IsVerticalAnyUpright();
   hb_direction_t hb_direction =
-      blink::IsLtr(direction) ? HB_DIRECTION_LTR : HB_DIRECTION_RTL;
+      bkfont::IsLtr(direction) ? HB_DIRECTION_LTR : HB_DIRECTION_RTL;
   auto run = std::make_shared<ShapeResultRun>(
       font_data,
       hb_direction,
@@ -1753,7 +1754,7 @@ std::shared_ptr<const ShapeResult> ShapeResult::CreateForSpaces(const Font* font
   length = run->NumGlyphs();
   TextRunLayoutUnit glyph_width = TextRunLayoutUnit::FromFloatRound(width);
   for (unsigned i = 0; i < length; i++) {
-    const unsigned index = blink::IsLtr(direction) ? i : length - 1 - i;
+    const unsigned index = bkfont::IsLtr(direction) ? i : length - 1 - i;
     run->glyph_data_[i] = {font_data->SpaceGlyph(), index, SafeToBreak::kSafe, glyph_width};
     glyph_width = TextRunLayoutUnit();
   }
@@ -1940,7 +1941,7 @@ void ShapeResult::ComputePositionData() const {
       // Do not overwrite.
       if (character_index >= num_characters_) {
         // We are not sure why we reach here. See http://crbug.com/1286882
-        std::unreachable();
+        NOTREACHED();
       }
       if (next_character_index <= character_index) {
         if (next_character_index < character_index) {
@@ -2129,7 +2130,7 @@ void ShapeResult::AddRunInfoRanges(const ShapeResultRun& run_info,
     // TODO(crbug.com/1147011): This should not happen, but crash logs indicate
     // that this is happening.
     if (glyph.character_index >= character_widths.size()) [[unlikely]] {
-      std::unreachable();
+      NOTREACHED();
     }
     character_widths[glyph.character_index] += glyph.advance.ToFloat();
   }
@@ -2251,4 +2252,4 @@ gfx::RectF ShapeResult::ComputeInkBounds() const {
   return ink_bounds;
 }
 
-} // namespace blink
+} // namespace bkfont

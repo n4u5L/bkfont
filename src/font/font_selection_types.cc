@@ -29,7 +29,7 @@
 #include "base/text/string_hasher.h"
 
 #include "base/containers/span.h"
-namespace blink {
+namespace bkfont {
 
 unsigned FontSelectionRequest::GetHash() const {
   int16_t val[] = {
@@ -64,4 +64,4 @@ String FontSelectionRequest::ToString() const {
       slope.ToString().Ascii().c_str());
 }
 
-} // namespace blink
+} // namespace bkfont

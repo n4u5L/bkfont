@@ -11,7 +11,7 @@
 #include "gtest/gtest.h"
 #include "font/font_description.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -143,4 +143,4 @@ TEST_P(FontFeaturesByOrientationTest, MultipleGlyphWidthGPOS) {
 
 } // namespace
 
-} // namespace blink
+} // namespace bkfont

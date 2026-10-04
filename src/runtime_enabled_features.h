@@ -4,7 +4,7 @@
 // FontSrcLocalMatching: content/common/features.cc, forwarded by runtime_features.cc.
 // Browser field trials are replaced by explicit configuration before font use.
 #pragma once
-namespace blink {
+namespace bkfont {
 class RuntimeEnabledFeatures {
 public:
   static bool ShapeResultCachedPreviousSafeToBreakOffsetEnabled() {
@@ -136,4 +136,4 @@ private:
   inline static bool TextSpacingTrimFallback_ = true;
   inline static bool TextSpacingTrimFallback2_ = false;
 };
-} // namespace blink
+} // namespace bkfont

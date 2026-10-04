@@ -47,7 +47,7 @@ __pragma(warning(disable : 4244))
 #endif
 #endif
 
-    namespace double_conversion {
+    namespace bkfont::double_conversion {
 
   namespace {
 
@@ -809,4 +809,4 @@ static bool inline IsDecimalDigitForRadix(int c, int radix) {
     return StringToFloat(buffer, length, processed_characters_count);
   }
 
-} // namespace double_conversion
+} // namespace bkfont::double_conversion

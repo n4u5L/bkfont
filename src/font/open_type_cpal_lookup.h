@@ -12,7 +12,7 @@
 
 #include "platform/font_face.h"
 #include "font_table_harfbuzz.h"
-namespace blink {
+namespace bkfont {
 
 /* Tools for inspecting the font palette of a COLR/CPAL font to find dark/light
  * mode preferred palettes and resolve string-based palette overrides as
@@ -40,4 +40,4 @@ public:
                                             unsigned int palette_index);
 };
 
-} // namespace blink
+} // namespace bkfont

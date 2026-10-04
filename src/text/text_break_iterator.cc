@@ -34,8 +34,9 @@
 #include "base/text/ascii_ctype.h"
 #include "base/text/character_names.h"
 #include "base/text/unicode.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 // Pack 8 bits into one byte
 #define B(a, b, c, d, e, f, g, h) \
@@ -361,7 +362,7 @@ inline unsigned LazyLineBreakIterator::NextBreakablePosition(
   case BreakSpaceType::kAfterEverySpace:
     return NextBreakablePosition<CharacterType, lineBreakType, BreakSpaceType::kAfterEverySpace>(pos, str, len);
   }
-  std::unreachable();
+  NOTREACHED();
 }
 
 template <LineBreakType lineBreakType>
@@ -409,7 +410,7 @@ unsigned LazyLineBreakIterator::NextBreakablePosition(unsigned pos,
   case LineBreakType::kBreakCharacter:
     return NextBreakablePositionBreakCharacter(pos);
   };
-  std::unreachable();
+  NOTREACHED();
 }
 
 unsigned LazyLineBreakIterator::NextBreakOpportunity(unsigned offset) const {
@@ -458,7 +459,7 @@ std::ostream& operator<<(std::ostream& ostream, LineBreakType line_break_type) {
   case LineBreakType::kPhrase:
     return ostream << "Phrase";
   };
-  std::unreachable();
+  NOTREACHED();
 }
 
 std::ostream& operator<<(std::ostream& ostream, BreakSpaceType break_space) {
@@ -468,7 +469,7 @@ std::ostream& operator<<(std::ostream& ostream, BreakSpaceType break_space) {
   case BreakSpaceType::kAfterEverySpace:
     return ostream << "kAfterEverySpace";
   };
-  std::unreachable();
+  NOTREACHED();
 }
 
-} // namespace blink
+} // namespace bkfont

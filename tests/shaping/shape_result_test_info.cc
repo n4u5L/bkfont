@@ -10,7 +10,7 @@
 #include "gtest/gtest.h"
 #include "shaping/shape_result_run.h"
 
-namespace blink {
+namespace bkfont {
 
 // Original debug consistency invariants remain assertions in the test helper.
 void ShapeResultTestInfo::CheckConsistency() const {
@@ -169,4 +169,4 @@ bool CompareResultGlyphs(const Vector<ShapeResultTestGlyphInfo>& test,
   return glyphs_match;
 }
 
-} // namespace blink
+} // namespace bkfont

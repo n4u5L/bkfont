@@ -3,6 +3,6 @@
 // upstream renderer TaskEnvironment or Skia's PNG-decoder registration.
 #pragma once
 #include "gtest/gtest.h"
-namespace blink {
+namespace bkfont {
 class FontTestBase : public ::testing::Test {};
-} // namespace blink
+} // namespace bkfont

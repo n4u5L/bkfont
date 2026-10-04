@@ -43,7 +43,7 @@
 #include "base/hash_functions.h"
 #include "base/hash_table_deleted_value_type.h"
 
-namespace blink {
+namespace bkfont {
 
 using ShapeCacheEntry = std::shared_ptr<const ShapeResult>;
 
@@ -241,4 +241,4 @@ inline bool operator==(const ShapeCache::SmallStringKey& a,
   return base::span(a) == base::span(b);
 }
 
-} // namespace blink
+} // namespace bkfont

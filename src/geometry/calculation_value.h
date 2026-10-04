@@ -37,7 +37,7 @@
 #include "length_functions.h"
 #include "base/allocator/allocator.h"
 
-namespace blink {
+namespace bkfont {
 
 class CalculationExpressionNode;
 
@@ -125,4 +125,4 @@ private:
   const bool is_non_negative_;
 };
 
-} // namespace blink
+} // namespace bkfont

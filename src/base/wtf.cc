@@ -41,7 +41,7 @@
 #include "base/thread_specific.h"
 #include "base/threading.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -87,4 +87,4 @@ void InitializeBase() {
   InitStringStatics();
 }
 
-} // namespace blink
+} // namespace bkfont

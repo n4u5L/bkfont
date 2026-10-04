@@ -23,8 +23,9 @@
 #include "base/text/atomic_string_hash.h"
 #include "base/text/case_folding_hash.h"
 #include "base/thread_specific.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -118,7 +119,7 @@ inline const char* LbValueFromStrictness(LineBreakStrictness strictness) {
   case LineBreakStrictness::kLoose:
     return "loose";
   };
-  std::unreachable();
+  NOTREACHED();
 }
 
 } // namespace
@@ -415,7 +416,7 @@ AtomicString LayoutLocale::LocaleWithBreakKeyword(
   if (builder.SetStrictness(strictness) && (!use_phrase || builder.SetKeywordValue("lw", "phrase"))) {
     return builder.ToAtomicString();
   };
-  std::unreachable();
+  NOTREACHED();
 }
 
 // static
@@ -434,4 +435,4 @@ void LayoutLocale::ClearForTesting() {
   GetPerThreadData() = PerThreadData();
 }
 
-} // namespace blink
+} // namespace bkfont

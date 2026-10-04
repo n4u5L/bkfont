@@ -13,7 +13,7 @@
 
 #include <hb.h>
 
-namespace blink {
+namespace bkfont {
 
 class OpenTypeCapsSupport {
 
@@ -70,4 +70,4 @@ private:
   mutable FontFormat font_format_;
 };
 
-} // namespace blink
+} // namespace bkfont

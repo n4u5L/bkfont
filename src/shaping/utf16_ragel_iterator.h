@@ -16,7 +16,7 @@
 
 #include "base/text/character_names.h"
 
-namespace blink {
+namespace bkfont {
 
 // UTF16RagelIterator is set up on top of a UTF-16 UChar* buffer iterating over
 // a Blink internal text string and as such is used as an adapter between Blink
@@ -172,4 +172,4 @@ private:
   EmojiSegmentationCategory cached_category_;
 };
 
-} // namespace blink
+} // namespace bkfont

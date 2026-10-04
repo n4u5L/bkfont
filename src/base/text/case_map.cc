@@ -16,7 +16,7 @@
 #include "base/text/unicode.h"
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -112,7 +112,7 @@ scoped_refptr<StringImpl> CaseConvert(CaseMapType type,
       // Use an 'A' as a previous character which is already capitalized to
       // make sure the titlecasing with previous character.
       string_with_previous[0] =
-          is_previous_alpha ? u'A' : blink::uchar::kSpace;
+          is_previous_alpha ? u'A' : bkfont::uchar::kSpace;
       string_with_previous.subspan(1u).copy_from(source16);
 
       // Add a space of the previous character at the start.
@@ -241,7 +241,7 @@ scoped_refptr<StringImpl> CaseMap::TryFastToLowerInvariant(StringImpl* source) {
       const LChar ch = source8_tail[i];
       LChar lowered_ch;
       if (ch & ~0x7F) [[unlikely]] {
-        lowered_ch = static_cast<LChar>(blink::unicode::ToLower(ch));
+        lowered_ch = static_cast<LChar>(bkfont::unicode::ToLower(ch));
       } else {
         lowered_ch = ToASCIILower(ch);
       }
@@ -338,10 +338,10 @@ scoped_refptr<StringImpl> CaseMap::ToUpperInvariant(StringImpl* source,
     //  2. Lower case sharp-S converts to "SS" (two characters)
     for (size_t i = 0; i < source8.size(); ++i) {
       const LChar c = source8[i];
-      if (c == blink::uchar::kLatinSmallLetterSharpS) [[unlikely]] {
+      if (c == bkfont::uchar::kLatinSmallLetterSharpS) [[unlikely]] {
         ++count_sharp_s_characters;
       }
-      const UChar upper = static_cast<UChar>(blink::unicode::ToUpper(c));
+      const UChar upper = static_cast<UChar>(bkfont::unicode::ToUpper(c));
       if (upper > 0xff) [[unlikely]] {
         // Since this upper-cased character does not fit in an 8-bit string, we
         // need to take the 16-bit path.
@@ -363,13 +363,13 @@ scoped_refptr<StringImpl> CaseMap::ToUpperInvariant(StringImpl* source,
     size_t dest_index = 0;
     for (size_t i = 0; i < source8.size(); ++i) {
       const LChar c = source8[i];
-      if (c == blink::uchar::kLatinSmallLetterSharpS) {
+      if (c == bkfont::uchar::kLatinSmallLetterSharpS) {
         data8[dest_index++] = 'S';
         data8[dest_index++] = 'S';
         if (offset_map)
           offset_map->Append(i + 1, dest_index);
       } else {
-        data8[dest_index++] = static_cast<LChar>(blink::unicode::ToUpper(c));
+        data8[dest_index++] = static_cast<LChar>(bkfont::unicode::ToUpper(c));
       }
     }
     return new_impl;
@@ -445,4 +445,4 @@ String CaseMap::ToTitle(const String& source,
   return String();
 }
 
-} // namespace blink
+} // namespace bkfont

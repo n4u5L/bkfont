@@ -12,7 +12,7 @@
 #include "base/text/character_names.h"
 #include "base/text/unicode_string.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(UTF16RagelIteratorTest, CharacterClasses) {
   UChar32 class_examples_codepoints[] = {
@@ -139,4 +139,4 @@ TEST(UTF16RagelIteratorTest, CursorPositioning) {
 #endif
 }
 
-} // namespace blink
+} // namespace bkfont

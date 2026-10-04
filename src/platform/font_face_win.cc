@@ -5,10 +5,11 @@
  * SkScalerContext_win_dw.cpp. See corresponding function names below.
  */
 #include "dwrite_internal.h"
+#include "font_host_freetype.h"
 
 #include <cmath>
 
-namespace blink {
+namespace bkfont {
 namespace {
 
 std::atomic<std::int32_t> next_font_id{1};
@@ -64,6 +65,47 @@ int WidthForAxisValue(float value) {
   }
   return 9;
 }
+
+// SkDWriteFontFileStream (src/utils/win/SkDWriteFontFileStream.cpp): the
+// getLength and getMemoryBase subset.
+class DWriteFontFileStream final : public FontFileStream {
+public:
+  explicit DWriteFontFileStream(IDWriteFontFileStream* font_file_stream)
+      : font_file_stream_(font_file_stream) {
+  }
+  ~DWriteFontFileStream() override {
+    if (fragment_lock_) {
+      font_file_stream_->ReleaseFileFragment(fragment_lock_);
+    }
+  }
+
+  std::size_t GetLength() const override {
+    UINT64 real_file_size = 0;
+    font_file_stream_->GetFileSize(&real_file_size);
+    if (real_file_size > std::numeric_limits<std::size_t>::max()) {
+      return 0;
+    }
+    return static_cast<std::size_t>(real_file_size);
+  }
+
+  const void* GetMemoryBase() override {
+    if (locked_memory_) {
+      return locked_memory_;
+    }
+
+    UINT64 file_size;
+    if (FAILED(font_file_stream_->GetFileSize(&file_size)))
+      return nullptr;
+    if (FAILED(font_file_stream_->ReadFileFragment(&locked_memory_, 0, file_size, &fragment_lock_)))
+      return nullptr;
+    return locked_memory_;
+  }
+
+private:
+  ComPtr<IDWriteFontFileStream> font_file_stream_;
+  const void* locked_memory_ = nullptr;
+  void* fragment_lock_ = nullptr;
+};
 
 } // namespace
 
@@ -134,7 +176,43 @@ FontFace::FontFace(std::unique_ptr<Impl> implementation)
       next_font_id.fetch_add(1, std::memory_order_relaxed));
   impl_->InitializePalette();
 }
-FontFace::~FontFace() = default;
+// SkTypeface_FreeType::~SkTypeface_FreeType.
+FontFace::~FontFace() {
+  if (face_rec_) {
+    AutoMutexExclusive ac(FreeTypeMutex());
+    face_rec_.reset();
+  }
+}
+
+// DWriteFontTypeface::onOpenStream.
+std::unique_ptr<FontFileStream> FontFace::OpenStream(int* ttc_index) const {
+  *ttc_index = static_cast<int>(impl_->face->GetIndex());
+
+  UINT32 num_files = 0;
+  if (FAILED(impl_->face->GetFiles(&num_files, nullptr)))
+    return nullptr;
+  if (num_files != 1)
+    return nullptr;
+
+  ComPtr<IDWriteFontFile> font_file;
+  if (FAILED(impl_->face->GetFiles(&num_files, font_file.GetAddressOf())))
+    return nullptr;
+
+  const void* font_file_key;
+  UINT32 font_file_key_size;
+  if (FAILED(font_file->GetReferenceKey(&font_file_key, &font_file_key_size)))
+    return nullptr;
+
+  ComPtr<IDWriteFontFileLoader> font_file_loader;
+  if (FAILED(font_file->GetLoader(&font_file_loader)))
+    return nullptr;
+
+  ComPtr<IDWriteFontFileStream> font_file_stream;
+  if (FAILED(font_file_loader->CreateStreamFromKey(font_file_key, font_file_key_size, &font_file_stream)))
+    return nullptr;
+
+  return std::make_unique<DWriteFontFileStream>(font_file_stream.Get());
+}
 
 String FontFace::FamilyName() const {
   ComPtr<IDWriteLocalizedStrings> names;
@@ -515,4 +593,4 @@ std::uint16_t FontFace::RequestedPaletteIndex() const {
   return impl_->palette_index;
 }
 
-} // namespace blink
+} // namespace bkfont

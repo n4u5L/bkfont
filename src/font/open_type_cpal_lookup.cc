@@ -20,7 +20,7 @@ uint32_t kCpalTag = HB_TAG('C', 'P', 'A', 'L');
 
 #include "platform/font_face.h"
 #include "font_table_harfbuzz.h"
-namespace blink {
+namespace bkfont {
 
 /* static */
 std::optional<uint16_t> OpenTypeCpalLookup::FirstThemedPalette(
@@ -79,4 +79,4 @@ Vector<Color> OpenTypeCpalLookup::RetrieveColorRecords(
   return color_records;
 }
 
-} // namespace blink
+} // namespace bkfont

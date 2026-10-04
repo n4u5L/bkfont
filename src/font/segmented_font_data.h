@@ -34,7 +34,7 @@
 #include <cmath>
 #include "base/vector.h"
 
-namespace blink {
+namespace bkfont {
 
 class SimpleFontData;
 
@@ -72,4 +72,4 @@ struct DowncastTraits<SegmentedFontData> {
   }
 };
 
-} // namespace blink
+} // namespace bkfont

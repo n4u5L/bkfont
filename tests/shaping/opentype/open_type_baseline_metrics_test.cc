@@ -18,7 +18,7 @@ const char kCanvasTestFontName[] = "CanvasTest.ttf";
 const char kAhemFontName[] = "Ahem.ttf";
 } // namespace
 
-namespace blink {
+namespace bkfont {
 
 class OpenTypeBaselineMetricsTest : public FontTestBase {
 protected:
@@ -29,18 +29,18 @@ protected:
   }
   std::shared_ptr<Font> CreateCanvasTestFont(float size) {
     FontDescription::VariantLigatures ligatures;
-    return blink::test::CreateTestFont(
+    return bkfont::test::CreateTestFont(
         AtomicString("CanvasTest"),
-        blink::test::BlinkWebTestsFontsTestDataPath(kCanvasTestFontName),
+        bkfont::test::BlinkWebTestsFontsTestDataPath(kCanvasTestFontName),
         size,
         &ligatures);
   }
 
   std::shared_ptr<Font> CreateAhemFont(float size) {
     FontDescription::VariantLigatures ligatures;
-    return blink::test::CreateTestFont(
+    return bkfont::test::CreateTestFont(
         AtomicString("Ahem"),
-        blink::test::BlinkWebTestsFontsTestDataPath(kAhemFontName),
+        bkfont::test::BlinkWebTestsFontsTestDataPath(kAhemFontName),
         size,
         &ligatures);
   }
@@ -136,4 +136,4 @@ TEST_F(OpenTypeBaselineMetricsTest, IdeographicBaseline) {
   EXPECT_FALSE(baseline_metrics.OpenTypeIdeographicBaseline());
 }
 
-} // namespace blink
+} // namespace bkfont

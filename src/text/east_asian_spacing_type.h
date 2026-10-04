@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-namespace blink {
+namespace bkfont {
 
 // Represents the East Asian Spacing property, as defined in
 // https://unicode.org/reports/tr59/.
@@ -19,4 +19,4 @@ enum class EastAsianSpacingType : uint8_t {
   // When adding values, ensure `CharacterProperty` has enough storage.
 };
 
-} // namespace blink
+} // namespace bkfont

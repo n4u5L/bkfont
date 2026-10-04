@@ -16,9 +16,9 @@
 #include "text/text_direction.h"
 #include "base/text/string_view.h"
 
-using blink::test::CreateTestFont;
+using bkfont::test::CreateTestFont;
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -105,7 +105,7 @@ TEST_F(FontTest, IdeographicFullWidthCjkFull) {
     GTEST_SKIP() << "Missing upstream font resource: " << required_font.Utf8();
   auto font = CreateTestFont(
       AtomicString("M PLUS 1p"),
-      blink::test::BlinkWebTestsFontsTestDataPath("mplus-1p-regular.woff"),
+      bkfont::test::BlinkWebTestsFontsTestDataPath("mplus-1p-regular.woff"),
       16);
   const SimpleFontData* font_data = font->PrimaryFont();
   ASSERT_TRUE(font_data);
@@ -121,7 +121,7 @@ TEST_F(FontTest, IdeographicFullWidthCjkNarrow) {
   ScopedNoFontAntialiasingForTest disable_no_font_antialiasing_for_test(false);
 
   auto font = CreateTestFont(AtomicString("CSSHWOrientationTest"),
-                             blink::test::BlinkWebTestsFontsTestDataPath(
+                             bkfont::test::BlinkWebTestsFontsTestDataPath(
                                  "adobe-fonts/CSSHWOrientationTest.otf"),
                              16);
   const SimpleFontData* font_data = font->PrimaryFont();
@@ -148,7 +148,7 @@ TEST_F(FontTest, IdeographicFullWidthUprightCjkNoVmtx) {
     GTEST_SKIP() << "Missing upstream font resource: " << required_font.Utf8();
   auto font = CreateVerticalUprightTestFont(
       AtomicString("M PLUS 1p"),
-      blink::test::BlinkWebTestsFontsTestDataPath("mplus-1p-regular.woff"),
+      bkfont::test::BlinkWebTestsFontsTestDataPath("mplus-1p-regular.woff"),
       16);
   const SimpleFontData* font_data = font->PrimaryFont();
   ASSERT_TRUE(font_data);
@@ -166,7 +166,7 @@ TEST_F(FontTest, IdeographicFullWidthUprightCjkVmtx) {
     GTEST_SKIP() << "Missing upstream font resource: " << required_font.Utf8();
   auto font =
       CreateVerticalUprightTestFont(AtomicString("CSSHWOrientationTest"),
-                                    blink::test::BlinkWebTestsFontsTestDataPath(
+                                    bkfont::test::BlinkWebTestsFontsTestDataPath(
                                         "adobe-fonts/CSSHWOrientationTest.otf"),
                                     16);
   const SimpleFontData* font_data = font->PrimaryFont();
@@ -261,4 +261,4 @@ TEST_F(FontTest, NullifyPrimaryFontForTesting) {
 
 #endif // NullifyPrimaryFontForTesting
 
-} // namespace blink
+} // namespace bkfont

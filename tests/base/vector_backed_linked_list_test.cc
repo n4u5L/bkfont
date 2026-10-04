@@ -11,7 +11,7 @@
 #include "base/text/wtf_string.h"
 #include "support/wtf_test_helper.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(VectorBackedLinkedListTest, Insert) {
   using List = VectorBackedLinkedList<int>;
@@ -506,4 +506,4 @@ TEST(VectorBackedLinkedListTest, UniquePtr) {
   EXPECT_TRUE(deleted6);
 }
 
-} // namespace blink
+} // namespace bkfont

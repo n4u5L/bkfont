@@ -57,7 +57,7 @@
 #include "font_face.h"
 #include "font_manager.h"
 
-namespace blink {
+namespace bkfont {
 using Microsoft::WRL::ComPtr;
 
 inline std::uint32_t SwapFontTag(std::uint32_t tag) {
@@ -131,4 +131,4 @@ struct FontFace::Impl {
   void InitializePalette();
 };
 
-} // namespace blink
+} // namespace bkfont

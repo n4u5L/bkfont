@@ -5,7 +5,7 @@
 
 #include "base/text/strcat.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -62,4 +62,4 @@ String StrCat(std::initializer_list<StringView> pieces) {
   return StrCat(base::span(pieces));
 }
 
-} // namespace blink
+} // namespace bkfont

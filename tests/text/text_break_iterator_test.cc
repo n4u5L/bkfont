@@ -9,7 +9,7 @@
 #include "gtest/gtest.h"
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 class TextBreakIteratorTest : public testing::Test {
 protected:
@@ -75,7 +75,7 @@ protected:
                                         unsigned start,
                                         unsigned length) {
     Vector<unsigned> result(length);
-    ::blink::GraphemesClusterList(StringView(input, start, length), result);
+    ::bkfont::GraphemesClusterList(StringView(input, start, length), result);
     return result;
   }
 
@@ -359,4 +359,4 @@ TEST_F(TextBreakIteratorTest, HyphenMinusBeforeHighLatin) {
   MatchLineBreaks({6, 11});
 }
 
-} // namespace blink
+} // namespace bkfont

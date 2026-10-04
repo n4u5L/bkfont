@@ -10,7 +10,7 @@
 #include "gtest/gtest.h"
 #include "base/text/wtf_string.h"
 
-namespace blink {
+namespace bkfont {
 
 TEST(StringToNumberTest, CharactersToInt) {
 #define EXPECT_VALID(string, options, expectedValue)                   \
@@ -377,4 +377,4 @@ TEST(StringToNumberTest, CharactersToFloatParsedLength) {
   EXPECT_EQ(7u, ParseFloat("1.234e1"));
 }
 
-} // namespace blink
+} // namespace bkfont

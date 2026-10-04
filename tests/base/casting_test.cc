@@ -7,7 +7,7 @@
 
 #include "gtest/gtest.h"
 
-namespace blink {
+namespace bkfont {
 
 namespace {
 
@@ -51,4 +51,4 @@ TEST(CastingTest, Basic) {
   EXPECT_FALSE(IsA<Derived>(i2));
 }
 
-} // namespace blink
+} // namespace bkfont

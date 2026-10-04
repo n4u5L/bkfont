@@ -11,7 +11,7 @@
 #include "font/unicode_range_set.h"
 #include "variation_selector_mode.h"
 
-namespace blink {
+namespace bkfont {
 class FontPlatformData;
 class OpenTypeVerticalData;
 struct HarfBuzzFontData;
@@ -43,4 +43,4 @@ private:
   std::shared_ptr<HarfBuzzFontData> harfbuzz_font_data_;
 };
 inline constexpr hb_codepoint_t kUnmatchedVSGlyphId = static_cast<hb_codepoint_t>(-1);
-} // namespace blink
+} // namespace bkfont

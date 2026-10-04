@@ -14,8 +14,10 @@
 #include "length_functions.h"
 #include "math_functions.h"
 #include "base/math_extras.h"
+#include "base/compiler_specific.h"
+#include "base/notreached.h"
 
-namespace blink {
+namespace bkfont {
 
 // ------ CalculationExpressionNumberNode ------
 
@@ -470,7 +472,7 @@ CalculationExpressionOperationNode::CreateSimplified(Children&& children,
     }
   }
   }
-  std::unreachable();
+  FALLS_OFF_END();
 }
 
 CalculationExpressionOperationNode::CalculationExpressionOperationNode(
@@ -654,7 +656,7 @@ float CalculationExpressionOperationNode::Evaluate(
   }
     // TODO(crbug.com/1284199): Support other math functions.
   }
-  std::unreachable();
+  NOTREACHED();
 }
 
 bool CalculationExpressionOperationNode::Equals(
@@ -735,7 +737,7 @@ std::shared_ptr<const CalculationExpressionNode> CalculationExpressionOperationN
     return CreateSimplified(std::move(cloned_operands), operator_);
   }
   }
-  std::unreachable();
+  FALLS_OFF_END();
 }
 
 bool CalculationExpressionOperationNode::HasMinContent() const {
@@ -762,4 +764,4 @@ bool CalculationExpressionOperationNode::HasFitContent() const {
   return basis->HasFitContent();
 }
 
-} // namespace blink
+} // namespace bkfont

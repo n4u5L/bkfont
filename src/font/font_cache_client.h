@@ -33,7 +33,7 @@
 
 #include <memory>
 #include "base/hash_map.h"
-namespace blink {
+namespace bkfont {
 
 class FontCacheClient {
 public:
@@ -42,4 +42,4 @@ public:
   virtual void FontCacheInvalidated() = 0;
 };
 
-} // namespace blink
+} // namespace bkfont

@@ -24,7 +24,7 @@
 
 #include "utf16_text_iterator.h"
 
-namespace blink {
+namespace bkfont {
 
 bool UTF16TextIterator::IsValidSurrogatePair(UChar32& character) {
   // If we have a surrogate pair, make sure it starts with the high part.
@@ -57,4 +57,4 @@ bool UTF16TextIterator::ConsumeSurrogatePair(UChar32& character) {
   return true;
 }
 
-} // namespace blink
+} // namespace bkfont

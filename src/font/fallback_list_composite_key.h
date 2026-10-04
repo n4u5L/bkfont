@@ -12,7 +12,7 @@
 
 #include <memory>
 #include "base/hash_map.h"
-namespace blink {
+namespace bkfont {
 
 class FontDescription;
 
@@ -99,4 +99,4 @@ struct FallbackListCompositeKeyTraits
   static constexpr bool kSafeToCompareToEmptyOrDeleted = false;
 };
 
-} // namespace blink
+} // namespace bkfont
