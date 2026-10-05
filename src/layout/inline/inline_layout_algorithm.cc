@@ -1,5 +1,5 @@
 // Adapts Blink InlineNode, ShapingLineBreaker and LogicalLineBuilder to a
-// direct model. No block formatting, DOM, CSS resolution or fragmentainers.
+// direct model. No block formatting, DOM or fragmentainers.
 // Copyright 2017 The Chromium Authors
 // Use of this source code is governed by a BSD-style license in LICENSE.
 #include "inline_layout_algorithm.h"
@@ -8,10 +8,12 @@
 #include <cassert>
 #include <unicode/uchar.h>
 
+#include "base/text/character_names.h"
 #include "layout/inline_text_metrics.h"
 #include "shaping/harfbuzz_shaper.h"
 #include "shaping/shape_result_spacing.h"
 #include "shaping/shaping_line_breaker.h"
+#include "text/character.h"
 #include "text/character_break_iterator.h"
 
 namespace bkfont {
@@ -68,26 +70,17 @@ InlineLayoutAlgorithm::InlineLayoutAlgorithm(InlineFormattingContext& context)
       result_(std::make_unique<FragmentItems>()) {
 }
 
-void InlineLayoutAlgorithm::Collect(const InlineObject& object, std::shared_ptr<const InlineStyle> style,
-                                    StringBuilder& text) {
-  if (object.SpecifiedStyle()) style = object.LayoutStyle();
+// InlineNode::CollectInlinesInternal(): inline containers are culled, so only
+// leaves append items.
+void InlineLayoutAlgorithm::Collect(const InlineObject& object, InlineItemsBuilder& builder) {
   if (object.IsInline()) {
-    Vector<unsigned> boundaries{text.length()};
-    for (const auto& child : object.Children()) {
-      Collect(*child, style, text);
-      boundaries.push_back(text.length());
-    }
-    result_->mapping_.container_offsets_.emplace(object.Id(), std::move(boundaries));
+    for (const auto& child : object.Children()) Collect(*child, builder);
     return;
   }
-  const unsigned start = text.length();
   if (object.IsText())
-    text.Append(object.Text());
+    builder.AppendText(object);
   else
-    text.Append(static_cast<UChar>(0xfffc));
-  result_->mapping_.index_.emplace(object.Id(), result_->mapping_.units_.size());
-  result_->mapping_.units_.push_back(OffsetMapping::Unit{&object, start, text.length()});
-  styles_.push_back(std::move(style));
+    builder.AppendAtomicInline(object);
 }
 
 void InlineLayoutAlgorithm::SegmentAndShape() {
@@ -104,19 +97,20 @@ void InlineLayoutAlgorithm::SegmentAndShape() {
       start = end;
     }
   }
-  const auto& units = result_->mapping_.units_;
+  const auto& units = result_->inline_items_;
   for (size_t i = 0; i < units.size(); ++i) {
     const auto& unit = units[i];
     for (unsigned start = unit.start; start < unit.end;) {
       unsigned end = start + 1;
-      const bool control = unit.object->IsAtomicInline() || IsControl(text[start]);
+      const bool control =
+          unit.type != InlineItem::kText || unit.object->IsAtomicInline() || IsControl(text[start]);
       if (!control) {
         while (end < unit.end && levels_[end] == levels_[start] && !IsControl(text[end])) ++end;
       }
       // InlineNode shapes through model boundaries with the same font. Color
       // and node identity split fragments later, without changing ligatures.
       if (!control && !runs_.empty() && !runs_.back().control && runs_.back().end == start &&
-          runs_.back().level == levels_[start] && runs_.back().style->font == styles_[i]->font) {
+          runs_.back().level == levels_[start] && *runs_.back().style->GetFont() == *styles_[i]->GetFont()) {
         runs_.back().end = end;
       } else {
         runs_.push_back(Run{start, end, levels_[start], styles_[i], unit.object, nullptr, control});
@@ -127,7 +121,7 @@ void InlineLayoutAlgorithm::SegmentAndShape() {
   HarfBuzzShaper shaper(text);
   for (Run& run : runs_) {
     if (run.control) continue;
-    RunSegmenter segmenter(text.Span16(), run.style->font.GetFontDescription().Orientation());
+    RunSegmenter segmenter(text.Span16(), run.style->GetFont()->GetFontDescription().Orientation());
     Vector<RunSegmenter::RunSegmenterRange> ranges;
     RunSegmenter::RunSegmenterRange segment;
     while (segmenter.Consume(&segment)) {
@@ -141,10 +135,24 @@ void InlineLayoutAlgorithm::SegmentAndShape() {
       }
       if (segment.end >= run.end) break;
     }
-    run.shape = shaper.Shape(&run.style->font, DirectionFromLevel(run.level), run.start, run.end, ranges);
+    run.shape = shaper.Shape(run.style->GetFont(), DirectionFromLevel(run.level), run.start, run.end, ranges);
     ShapeResultSpacing<String> spacing(text);
-    if (spacing.SetSpacing(run.style->font.GetFontDescription())) run.shape->ApplySpacing(spacing);
+    if (spacing.SetSpacing(run.style->GetFont()->GetFontDescription())) run.shape->ApplySpacing(spacing);
   }
+}
+
+// InlineNode::PrepareLayoutIfNeeded() keeps InlineNodeData when only layout
+// inputs changed: text, offset mapping, bidi levels and shape results stay.
+// Styles are refreshed; any change that needs reshaping (including font,
+// spacing and text edits) sets NeedsCollectInlines instead.
+void InlineLayoutAlgorithm::ReuseCollectedItems(const FragmentItems& old) {
+  result_->mapping_ = old.mapping_;
+  result_->inline_items_ = old.inline_items_;
+  result_->shaping_context_ = old.shaping_context_;
+  levels_ = old.levels_;
+  runs_ = old.runs_;
+  for (const auto& item : result_->inline_items_) styles_.push_back(item.object->LayoutStyle());
+  for (Run& run : runs_) run.style = run.object->LayoutStyle();
 }
 
 HeapVector<FragmentItem> InlineLayoutAlgorithm::ShapeLine(unsigned start, unsigned end) {
@@ -160,18 +168,18 @@ HeapVector<FragmentItem> InlineLayoutAlgorithm::ShapeLine(unsigned start, unsign
     const unsigned run_end = std::min(end, run.end);
     std::shared_ptr<const ShapeResultView> shape;
     if (run.shape) {
-      LazyLineBreakIterator breaks(text, run.style->font.GetFontDescription().Locale(), options_.word_break);
-      LineShaper shaper(text, run.style->font, *run.shape, breaks);
+      LazyLineBreakIterator breaks(text, run.style->GetFont()->GetFontDescription().Locale(), options_.word_break);
+      LineShaper shaper(text, *run.style->GetFont(), *run.shape, breaks);
       shaper.SetLineStart(start);
       shaper.SetIsAfterForcedBreak(start && IsForcedBreak(text[start - 1]));
-      shaper.SetTextSpacingTrim(run.style->font.GetFontDescription().GetTextSpacingTrim());
+      shaper.SetTextSpacingTrim(run.style->GetFont()->GetFontDescription().GetTextSpacingTrim());
       shape = shaper.ShapeLineAt(run_start, run_end);
     } else if (text[run_start] == '\t') {
-      const auto tab_shape = ShapeResult::CreateForTabulationCharacters(&run.style->font,
-                                                                        DirectionFromLevel(run.level), run.style->tab_size, advance.ToFloat(), run_start, 1);
+      const auto tab_shape = ShapeResult::CreateForTabulationCharacters(run.style->GetFont(),
+                                                                        DirectionFromLevel(run.level), run.style->GetTabSize(), advance.ToFloat(), run_start, 1);
       shape = ShapeResultView::Create(tab_shape.get());
     }
-    const auto& units = result_->mapping_.units_;
+    const auto& units = result_->inline_items_;
     for (size_t i = 0; i < units.size(); ++i) {
       const auto& unit = units[i];
       if (unit.end <= run_start) continue;
@@ -204,6 +212,7 @@ HeapVector<FragmentItem> InlineLayoutAlgorithm::ShapeLine(unsigned start, unsign
       }
     }
   }
+  RemoveTrailingCollapsibleSpace(items);
   // HyphenResult::Shape and LogicalLineBuilder::PlaceHyphen. A soft hyphen
   // generates a visible hyphen only when it actually ends a wrapped line.
   if (!items.empty() && end > start && end < text.length() && text[end - 1] == 0x00ad && !IsForcedBreak(text[end])) {
@@ -214,9 +223,9 @@ HeapVector<FragmentItem> InlineLayoutAlgorithm::ShapeLine(unsigned start, unsign
     hyphen.bidi_level_ = previous.bidi_level_;
     hyphen.type_ = FragmentItem::kGeneratedText;
     hyphen.text_offset_ = {end, end};
-    const auto* font = hyphen.Style().font.PrimaryFont();
+    const auto* font = hyphen.Style().GetFont()->PrimaryFont();
     hyphen.generated_text_ = font && font->GlyphForCharacter(0x2010) ? String(u"\u2010") : String("-");
-    const auto shape = HarfBuzzShaper(hyphen.generated_text_).Shape(&hyphen.Style().font, hyphen.ResolvedDirection());
+    const auto shape = HarfBuzzShaper(hyphen.generated_text_).Shape(hyphen.Style().GetFont(), hyphen.ResolvedDirection());
     hyphen.shape_ = ShapeResultView::Create(shape.get());
     hyphen.inline_size_ = hyphen.shape_->SnappedWidth().ClampNegativeToZero();
     items.push_back(std::move(hyphen));
@@ -224,17 +233,74 @@ HeapVector<FragmentItem> InlineLayoutAlgorithm::ShapeLine(unsigned start, unsign
   return items;
 }
 
+// LineBreaker::RemoveTrailingCollapsibleSpace(): the last text item of a
+// line drops its trailing collapsible space (one space after Phase I). An item
+// that becomes empty is not placed.
+// https://drafts.csswg.org/css-text-3/#white-space-phase-2
+void InlineLayoutAlgorithm::RemoveTrailingCollapsibleSpace(HeapVector<FragmentItem>& items) const {
+  const String& text = result_->TextContent();
+  for (wtf_size_t i = items.size(); i;) {
+    FragmentItem& item = items[--i];
+    if (item.IsAtomicInline() || item.IsLineBreak()) return;
+    const auto range = item.text_offset_;
+    if (range.start == range.end) continue;
+    if (text[range.end - 1] != uchar::kSpace || !item.Style().ShouldCollapseWhiteSpaces()) return;
+    if (range.end - range.start == 1) {
+      items.EraseAt(i);
+      return;
+    }
+    item.text_offset_.end = range.end - 1;
+    if (item.shape_) {
+      item.shape_ = ShapeResultView::Create(item.shape_.get(), range.start, range.end - 1);
+      item.inline_size_ = item.shape_->SnappedWidth().ClampNegativeToZero();
+    }
+    return;
+  }
+}
+
+// Preserved trailing spaces of 'white-space-collapse: preserve' hang
+// (LineBreaker::HandleTrailingSpaces, has_only_pre_wrap_trailing_spaces):
+// they do not count when fitting or aligning the line. 'break-spaces' spaces
+// do not hang, and nowrap lines never break.
+LayoutUnit InlineLayoutAlgorithm::HangingTrailingSpaceWidth(const HeapVector<FragmentItem>& items) const {
+  if (!options_.wrap) return LayoutUnit();
+  const String& text = result_->TextContent();
+  LayoutUnit hang;
+  for (wtf_size_t i = items.size(); i;) {
+    const FragmentItem& item = items[--i];
+    if (item.IsGeneratedText() || item.IsAtomicInline()) break;
+    if (item.IsLineBreak()) continue;
+    const auto& style = item.Style();
+    if (!style.ShouldPreserveWhiteSpaces() || style.ShouldBreakSpaces()) break;
+    const auto range = item.text_offset_;
+    unsigned end = range.end;
+    while (end > range.start &&
+           (text[end - 1] == uchar::kSpace || Character::IsOtherSpaceSeparator(text[end - 1])))
+      --end;
+    if (end == range.end) break;
+    if (end == range.start || !item.shape_) {
+      hang += item.inline_size_;
+      if (end == range.start) continue;
+      break;
+    }
+    hang += item.inline_size_ - ShapeResultView::Create(item.shape_.get(), range.start, end)->SnappedWidth();
+    break;
+  }
+  return hang;
+}
+
 LayoutUnit InlineLayoutAlgorithm::Measure(unsigned start, unsigned end) {
+  const auto items = ShapeLine(start, end);
   LayoutUnit width;
-  for (const auto& item : ShapeLine(start, end)) width += item.inline_size_;
-  return width;
+  for (const auto& item : items) width += item.inline_size_;
+  return width - HangingTrailingSpaceWidth(items);
 }
 
 void InlineLayoutAlgorithm::PlaceLine(unsigned start, unsigned end, bool soft_wrap) {
   HeapVector<FragmentItem> items = ShapeLine(start, end);
   const auto& root_style = context_.root_->LayoutStyle();
-  const FontBaseline baseline_type = GetFontBaseline(root_style->font.GetFontDescription());
-  FontHeight metrics = ComputeTextMetrics(root_style->font, root_style->line_height, baseline_type).text_metrics;
+  const FontBaseline baseline_type = GetFontBaseline(root_style->GetFont()->GetFontDescription());
+  FontHeight metrics = ComputeTextMetrics(*root_style->GetFont(), root_style->LineHeight(), baseline_type).text_metrics;
   LayoutUnit width;
   for (FragmentItem& item : items) {
     const auto& style = item.Style();
@@ -245,12 +311,12 @@ void InlineLayoutAlgorithm::PlaceLine(unsigned start, unsigned end, bool soft_wr
       item.block_size_ = item.object_->LayoutAtomicSize().block_size;
       item.block_offset_ = -item_metrics.ascent;
     } else {
-      const auto text_metrics = ComputeTextMetrics(style.font, style.line_height, baseline_type);
+      const auto text_metrics = ComputeTextMetrics(*style.GetFont(), style.LineHeight(), baseline_type);
       item_metrics = text_metrics.text_metrics;
       item.block_offset_ = text_metrics.text_top;
       item.block_size_ = text_metrics.text_height;
       // InlineBoxState::AccumulateUsedFonts for line-height: normal.
-      if (style.line_height.IsAuto() && item.shape_) {
+      if (style.LineHeight().IsAuto() && item.shape_) {
         for (const auto& font : item.shape_->UsedFonts()) {
           FontHeight used = font->GetFontMetrics().GetFontHeight(baseline_type);
           used.AddLeading(CalculateLeadingSpace(font->GetFontMetrics().FixedLineSpacing(), used));
@@ -258,9 +324,9 @@ void InlineLayoutAlgorithm::PlaceLine(unsigned start, unsigned end, bool soft_wr
         }
       }
     }
-    item.block_offset_ -= style.baseline_shift;
-    item_metrics.ascent += style.baseline_shift;
-    item_metrics.descent -= style.baseline_shift;
+    item.block_offset_ -= style.LegacyBaselineShift();
+    item_metrics.ascent += style.LegacyBaselineShift();
+    item_metrics.descent -= style.LegacyBaselineShift();
     metrics.Unite(item_metrics);
     width += item.inline_size_;
   }
@@ -296,7 +362,10 @@ void InlineLayoutAlgorithm::PlaceLine(unsigned start, unsigned end, bool soft_wr
   line.descendants_count_ = items.size() + 1;
   line.soft_wrap_ = soft_wrap;
   // Start alignment, as LineOffsetForTextAlign() does for direction: rtl.
-  LayoutUnit inline_offset = IsLtr(options_.direction) ? LayoutUnit() : options_.available_inline_size - width;
+  // Hanging spaces are not considered for alignment.
+  LayoutUnit inline_offset = IsLtr(options_.direction)
+                                 ? LayoutUnit()
+                                 : options_.available_inline_size - (width - HangingTrailingSpaceWidth(items));
   line.inline_offset_ = inline_offset;
   const size_t line_index = result_->items_.size();
   result_->items_.push_back(std::move(line));
@@ -324,10 +393,15 @@ unsigned InlineLayoutAlgorithm::ReuseLines() {
     bool reusable = true;
     for (size_t i = index + 1; i < index + line.descendants_count_; ++i) {
       const auto& item = (*old)[i];
-      const auto* unit = result_->mapping_.GetUnit(item.object_->Id());
-      const auto* old_unit = old->Mapping().GetUnit(item.object_->Id());
-      if (!item.object_->IsAttached() || !unit || !old_unit || unit->start != old_unit->start ||
-          item.text_offset_.end > unit->end || item.object_->LayoutStyle() != item.style_) {
+      if (!item.object_->IsAttached()) {
+        reusable = false;
+        break;
+      }
+      const auto units = result_->Mapping().GetMappingUnitsForNode(*item.object_);
+      const auto old_units = old->Mapping().GetMappingUnitsForNode(*item.object_);
+      if (units.empty() || old_units.empty() ||
+          units.front().TextContentStart() != old_units.front().TextContentStart() ||
+          item.text_offset_.end > units.back().TextContentEnd() || item.object_->LayoutStyle() != item.style_) {
         reusable = false;
         break;
       }
@@ -371,18 +445,30 @@ void InlineLayoutAlgorithm::ToPhysicalCoordinates() {
 }
 
 std::unique_ptr<FragmentItems> InlineLayoutAlgorithm::Layout() {
-  StringBuilder builder;
-  Collect(*context_.root_, context_.root_->LayoutStyle(), builder);
-  result_->mapping_.text_ = builder.ToString();
-  result_->mapping_.text_.Ensure16Bit();
-  SegmentAndShape();
+  if (context_.needs_collect_inlines_ || !context_.fragments_) {
+    InlineItemsBuilder builder(&result_->inline_items_, &mapping_builder_, options_.wrap);
+    Collect(*context_.root_, builder);
+    builder.ExitBlock();
+    String text = builder.ToString();
+    text.Ensure16Bit();
+    const bool consistent = mapping_builder_.SetDestinationString(text);
+    assert(consistent);
+    (void)consistent;
+    result_->mapping_ = mapping_builder_.Build(*context_.root_);
+    for (const auto& item : result_->inline_items_) styles_.push_back(item.object->LayoutStyle());
+    SegmentAndShape();
+  } else {
+    ReuseCollectedItems(*context_.fragments_);
+  }
   const String& text = result_->TextContent();
   unsigned start = ReuseLines();
-  const auto* locale = context_.root_->Style().font.GetFontDescription().Locale();
+  const auto* locale = context_.root_->Style().GetFont()->GetFontDescription().Locale();
   LazyLineBreakIterator breaks(text, locale, options_.word_break);
   breaks.SetStrictness(options_.line_break);
-  // Direct model input has preserved whitespace (break-spaces semantics).
-  breaks.SetBreakSpace(BreakSpaceType::kAfterEverySpace);
+  // LineBreaker::SetCurrentStyle() sets this per item style; one iterator
+  // serves the whole context here, so the root style decides.
+  breaks.SetBreakSpace(context_.root_->Style().ShouldBreakSpaces() ? BreakSpaceType::kAfterEverySpace
+                                                                   : BreakSpaceType::kAfterSpaceRun);
   CharacterBreakIterator graphemes{StringView(text)};
   while (start < text.length()) {
     unsigned limit = start;
@@ -425,6 +511,8 @@ std::unique_ptr<FragmentItems> InlineLayoutAlgorithm::Layout() {
   if (text.empty() || IsForcedBreak(text[text.length() - 1])) PlaceLine(start, start, false);
   ToPhysicalCoordinates();
   result_->FinalizeAfterLayout();
+  result_->runs_ = std::move(runs_);
+  result_->levels_ = std::move(levels_);
   return std::move(result_);
 }
 

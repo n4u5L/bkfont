@@ -12,6 +12,12 @@ namespace bkfont {
 
 class RuntimeEnabledFeatures {
 public:
+  static bool BidiCaretAffinityEnabled() {
+    return BidiCaretAffinity_;
+  }
+  static void SetBidiCaretAffinityEnabled(bool value) {
+    BidiCaretAffinity_ = value;
+  }
   static bool CanvasTextCacheLimitEnabled() {
     return CanvasTextCacheLimit_;
   }
@@ -134,6 +140,7 @@ public:
   }
 
 private:
+  inline static bool BidiCaretAffinity_ = false;
   inline static bool CanvasTextCacheLimit_ = true;
   inline static bool ShapeResultCachedPreviousSafeToBreakOffset_ = true;
   inline static bool CSSChUnitSpecCompliantFallback_ = true;

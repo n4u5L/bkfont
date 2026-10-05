@@ -4,14 +4,58 @@
 #pragma once
 
 #include <span>
-#include <unordered_map>
+#include <unicode/ubidi.h>
 
+#include "base/hash_map.h"
 #include "base/heap_vector.h"
 #include "base/vector.h"
 #include "layout/inline/fragment_item.h"
 #include "layout/inline/offset_mapping.h"
 
 namespace bkfont {
+
+// Subset of Blink's InlineItem: a range of the text content from one object,
+// with the collapsing state InlineItemsBuilder needs. Empty and collapsed-away
+// text items have zero length.
+struct InlineItem {
+  enum InlineItemType {
+    kText,
+    // Forced breaks and generated break opportunities.
+    kControl,
+    kAtomicInline
+  };
+  // Whether the end of this item is collapsible or not, and if so, whether the
+  // trailing collapsible space is collapsed (removed) or not.
+  enum CollapseType {
+    // This item is not collapsible.
+    kNotCollapsible,
+    // This item is collapsible; i.e., ends with a collapsible space.
+    kCollapsible,
+    // This item ends with a collapsible space that is collapsed.
+    kCollapsed,
+    // This item is opaque to whitespace collapsing.
+    kOpaqueToCollapsing
+  };
+  const InlineObject* object;
+  unsigned start;
+  unsigned end;
+  InlineItemType type = kText;
+  CollapseType end_collapse_type = kNotCollapsible;
+  // True if the collapsible space run at the end contains a newline.
+  bool is_end_collapsible_newline = false;
+};
+
+// A shaping run of the collected inline items: consecutive items with the same
+// font and bidi level.
+struct InlineItemRun {
+  unsigned start;
+  unsigned end;
+  UBiDiLevel level;
+  std::shared_ptr<const ComputedStyle> style;
+  const InlineObject* object;
+  std::shared_ptr<ShapeResult> shape;
+  bool control;
+};
 
 class FragmentItems {
 public:
@@ -25,10 +69,10 @@ public:
     return items_.size();
   }
   const OffsetMapping& Mapping() const {
-    return mapping_;
+    return *mapping_;
   }
   const String& TextContent() const {
-    return mapping_.GetText();
+    return mapping_->GetText();
   }
   PhysicalSize SizeInPhysicalCoordinates() const {
     return physical_size_;
@@ -49,17 +93,25 @@ private:
   void DirtyLinesFromChangedChild(const InlineObject&);
   void DirtyTextRange(const InlineObject&, unsigned offset);
   void DirtyFirstItem();
+  void RefreshStyle(const InlineObject&, const std::shared_ptr<const ComputedStyle>&);
   bool TryDirtyFirstLineFor(const InlineObject&);
   bool TryDirtyLastLineFor(const InlineObject&);
   void DirtyLine(size_t item_index);
 
   HeapVector<FragmentItem> items_;
   Vector<size_t> lines_;
-  std::unordered_map<const InlineObject*, size_t> first_items_;
-  OffsetMapping mapping_;
+  HashMap<const InlineObject*, size_t> first_items_;
+  // Shared with later layouts that reuse the collected items, as
+  // InlineNodeData keeps its OffsetMapping.
+  std::shared_ptr<const OffsetMapping> mapping_;
   // Script/orientation/fallback segmentation is context dependent, even when
   // the text and bidi level before an edit are unchanged.
   Vector<uint32_t> shaping_context_;
+  // InlineNodeData equivalent. The next layout reuses the collected runs,
+  // their shape results and the bidi levels unless NeedsCollectInlines().
+  HeapVector<InlineItem> inline_items_;
+  HeapVector<InlineItemRun> runs_;
+  Vector<UBiDiLevel> levels_;
   PhysicalSize physical_size_;
   size_t reused_line_count_ = 0;
 };

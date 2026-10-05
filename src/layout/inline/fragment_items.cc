@@ -10,7 +10,7 @@ namespace bkfont {
 
 size_t FragmentItems::FirstInlineFragmentItemIndex(const InlineObject& object) const {
   const auto found = first_items_.find(&object);
-  return found == first_items_.end() ? 0 : found->second;
+  return found == first_items_.end() ? 0 : found->value;
 }
 
 void FragmentItems::FinalizeAfterLayout() {
@@ -18,7 +18,7 @@ void FragmentItems::FinalizeAfterLayout() {
     size_t index;
     size_t fragment_id;
   };
-  std::unordered_map<const InlineObject*, LastItem> last_items;
+  HashMap<const InlineObject*, LastItem> last_items;
   first_items_.clear();
   lines_.clear();
   size_t line_fragment_id = FragmentItem::kInitialLineFragmentId;
@@ -38,17 +38,18 @@ void FragmentItems::FinalizeAfterLayout() {
     assert(item.object_ && item.object_->IsAttached());
     item.line_index_ = line_index;
     item.is_last_for_node_ = true;
-    const auto [last, is_first] = last_items.emplace(item.object_, LastItem{index, 0});
-    if (is_first) {
+    const auto result = last_items.insert(item.object_, LastItem{index, 0});
+    if (result.is_new_entry) {
       item.fragment_id_ = 0;
-      first_items_.emplace(item.object_, index + 1);
+      first_items_.insert(item.object_, index + 1);
       continue;
     }
-    FragmentItem& previous = items_[last->second.index];
-    previous.delta_to_next_ = index - last->second.index;
+    auto* const last = result.stored_value;
+    FragmentItem& previous = items_[last->value.index];
+    previous.delta_to_next_ = index - last->value.index;
     previous.is_last_for_node_ = false;
-    item.fragment_id_ = ++last->second.fragment_id;
-    last->second.index = index;
+    item.fragment_id_ = ++last->value.fragment_id;
+    last->value.index = index;
   }
 }
 
@@ -58,6 +59,22 @@ void FragmentItems::DirtyLine(size_t index) {
 
 void FragmentItems::DirtyFirstItem() {
   if (!items_.empty()) items_.front().dirty_ = true;
+}
+
+void FragmentItems::RefreshStyle(const InlineObject& object, const std::shared_ptr<const ComputedStyle>& style) {
+  // Line items have no LayoutObject pointer and use the root's style.
+  if (!object.Parent()) {
+    for (const size_t index : lines_) items_[index].style_ = style;
+  }
+  size_t index = FirstInlineFragmentItemIndex(object);
+  if (!index) return;
+  --index;
+  for (;;) {
+    auto& item = items_[index];
+    item.style_ = style;
+    if (!item.delta_to_next_) break;
+    index += item.delta_to_next_;
+  }
 }
 
 bool FragmentItems::TryDirtyFirstLineFor(const InlineObject& object) {
@@ -105,12 +122,12 @@ void FragmentItems::DirtyLinesFromChangedChild(const InlineObject& child) {
 }
 
 void FragmentItems::DirtyTextRange(const InlineObject& object, unsigned offset) {
-  const auto* unit = mapping_.GetUnit(object.Id());
-  if (!unit) {
+  const auto mapped = mapping_->GetTextContentOffset({object.Id(), offset});
+  if (!mapped) {
     DirtyLinesFromChangedChild(object);
     return;
   }
-  const unsigned text_offset = unit->start + offset;
+  const unsigned text_offset = *mapped;
   size_t dirty = items_.size();
   for (size_t i = 0; i < items_.size(); ++i) {
     const auto& item = items_[i];

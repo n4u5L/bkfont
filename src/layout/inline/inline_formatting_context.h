@@ -2,15 +2,18 @@
 #pragma once
 
 #include <memory>
-#include <unordered_map>
 
+#include "base/hash_map.h"
 #include "base/heap_vector.h"
 #include "base/vector.h"
+#include "build/build_config.h"
 #include "font/font_cache_client.h"
 #include "layout/inline/fragment_items.h"
 #include "paint/device_scale.h"
 #include "text/text_break_iterator.h"
 #include "text/writing_mode.h"
+#include "style/style_resolver.h"
+#include "style/style_sheet.h"
 
 namespace bkfont {
 
@@ -31,7 +34,8 @@ struct InlineLayoutEpoch {
 };
 
 struct InlineLayoutOptions {
-  // Input whitespace is preserved, with break-spaces wrapping semantics.
+  // Whitespace follows each object's 'white-space-collapse'. |wrap| stands
+  // in for 'text-wrap-mode' of every object.
   // Available space is already in layout/framebuffer pixels, like the
   // viewport supplied by WebFrameWidget. It is not multiplied by page zoom.
   LayoutUnit available_inline_size{640};
@@ -44,9 +48,16 @@ struct InlineLayoutOptions {
   bool operator==(const InlineLayoutOptions&) const = default;
 };
 
+struct InlineHitTestOptions {
+  // EditingBehavior::ShouldMoveCaretToHorizontalBoundaryWhenPastTopOrBottom:
+  // Windows preserves the inline position; Unix moves to a line boundary.
+  bool move_caret_to_horizontal_boundary_when_past_top_or_bottom = !BUILDFLAG(IS_WIN);
+};
+
 class InlineFormattingContext final : private FontCacheClient {
 public:
   explicit InlineFormattingContext(const InlineStyle&, InlineLayoutOptions = {});
+  explicit InlineFormattingContext(const StyleResolverSettings&, InlineLayoutOptions = {});
   ~InlineFormattingContext() override;
   InlineFormattingContext(const InlineFormattingContext&) = delete;
   InlineFormattingContext& operator=(const InlineFormattingContext&) = delete;
@@ -63,6 +74,19 @@ public:
                                    std::shared_ptr<const InlineStyle> = nullptr);
   void ReplaceText(const InlineObject&, unsigned offset, unsigned length, const String&);
   void SetStyle(const InlineObject&, const InlineStyle&);
+  void SetInlineStyle(const InlineObject&, const StyleDeclaration&);
+  void SetRules(const InlineObject&, Vector<AtomicString>);
+  bkfont::StyleSheet& StyleSheet() { return style_sheet_; }
+  const bkfont::StyleSheet& StyleSheet() const { return style_sheet_; }
+  void SetRootDefaults(const StyleResolverSettings&);
+  const ComputedStyle& ComputedStyleFor(const InlineObject&);
+  // Recalculates only objects marked by a mutation and the descendants that
+  // inherit from a changed style (Document::UpdateStyleAndLayoutTree).
+  void UpdateStyle();
+  // The work needed by every mutation since the previous call: tree and text
+  // edits, options, zoom and font-cache changes, and style differences.
+  // Obtaining geometry or painting does not consume this notification.
+  StyleDifference TakeInvalidation();
   void Remove(const InlineObject&);
   // Same-root moves; before == nullptr appends. Old objects remain allocated.
   bool Move(const InlineObject&, const InlineObject& parent, const InlineObject* before = nullptr);
@@ -85,20 +109,26 @@ public:
   }
 
   InlineLayoutState State() const {
-    return epoch_->state;
+    return styles_dirty_ && epoch_->state == InlineLayoutState::kClean ? InlineLayoutState::kDirty : epoch_->state;
   }
   uint64_t Generation() const {
     return epoch_->generation;
   }
+  uint64_t LayoutGeneration() const { return layout_generation_; }
   void UpdateLayout();
   // Geometry clients acquire a clean snapshot. Do not retain references across
-  // mutations; use InlineCursor when a checked, temporary traversal is needed.
+  // mutations or UpdateStyle/UpdateLayout calls; use InlineCursor when a
+  // checked, temporary traversal is needed.
   const FragmentItems& Fragments();
   bool HasInlineFragments(const InlineObject&) const;
   // Geometry, hit testing and paint offsets all use layout/framebuffer pixels.
   PhysicalRect CaretRect(InlinePosition);
   PhysicalRect CaretRect(InlinePosition, LayoutUnit caret_width);
-  InlinePosition HitTest(const PhysicalOffset&);
+  // PositionForPoint in this formatting context. Generated text and empty
+  // lines are skipped; if no position resolves, returns the root's start.
+  // Like Blink's caret-position lookup, this is not a painted-node hit test
+  // and does not exclude visibility:hidden text.
+  InlinePosition HitTest(const PhysicalOffset&, InlineHitTestOptions = {});
   Vector<PhysicalRect> SelectionRects(const InlineSelection&);
   // HighlightPainter adds the snapped text box origin before pixel snapping.
   // These rects include the paint offset; SelectionRects stays in layout space.
@@ -109,20 +139,42 @@ public:
 private:
   friend class InlineCursor;
   friend class InlineLayoutAlgorithm;
-  friend class InlineEditor;
   void FontCacheInvalidated() override;
   InlineObject& Add(const InlineObject&, InlineObject::Type, std::shared_ptr<const InlineStyle>);
+  // StyleRecalcChange: kRecalcChildren covers direct children only.
+  enum class StyleRecalcChange {
+    kNone,
+    kRecalcChildren,
+    kRecalcDescendants
+  };
   void MarkDirty(const InlineObject&);
+  void SetNeedsStyleRecalc(const InlineObject&, StyleChangeType);
+  void MarkAncestorsWithChildNeedsStyleRecalc(const InlineObject&);
+  void RulesChanged(const AtomicString& name);
+  void RecalcStyle(InlineObject&, const ComputedStyle* parent, const ComputedStyle* root, StyleRecalcChange);
   void Retire(InlineObject&);
   void Validate(const InlineObject&) const;
   Vector<PhysicalRect> CollectSelectionRects(const InlineSelection&, const PhysicalOffset* paint_offset);
   std::unique_ptr<InlineObject> root_;
-  std::unordered_map<InlineNodeId, InlineObject*> objects_;
+  // Attached objects by ID. IDs start at 1, so 0 is never a key.
+  HashMap<InlineNodeId, InlineObject*> objects_;
   // Must outlive fragments_. Destruction also drops fragments before nodes.
   HeapVector<std::unique_ptr<InlineObject>> retired_;
   std::unique_ptr<FragmentItems> fragments_;
   std::shared_ptr<InlineLayoutEpoch> epoch_ = std::make_shared<InlineLayoutEpoch>();
   InlineLayoutOptions options_;
+  StyleResolverSettings style_settings_;
+  bkfont::StyleSheet style_sheet_;
+  // Recreated after root defaults or zoom change.
+  std::shared_ptr<const ComputedStyle> initial_style_;
+  StyleDifference invalidation_;
+  // The root needs or has a descendant needing style recalc.
+  bool styles_dirty_ = true;
+  bool resolving_style_ = false;
+  // InlineNode::NeedsCollectInlines(): text, tree, base direction, zoom, font
+  // data or a reshaping style change. Otherwise layout reuses shape results.
+  bool needs_collect_inlines_ = true;
+  uint64_t layout_generation_ = 0;
   DeviceScale device_scale_;
   float page_zoom_factor_ = 1;
   InlineNodeId next_id_ = 1;

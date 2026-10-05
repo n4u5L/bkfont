@@ -68,20 +68,13 @@ bool InlineObject::IsDescendantOf(const InlineObject& ancestor) const {
   return false;
 }
 
-const InlineStyle& InlineObject::Style() const {
-  return style_ ? *style_ : parent_->Style();
+const ComputedStyle& InlineObject::Style() const {
+  return *LayoutStyle();
 }
 
-const std::shared_ptr<const InlineStyle>& InlineObject::LayoutStyle() const {
-  if (!style_) return parent_->LayoutStyle();
-  const float zoom = root_->LayoutZoomFactor();
-  if (zoom == 1) return style_;
-  if (layout_style_source_ != style_ || layout_style_zoom_ != zoom) {
-    layout_style_ = std::make_shared<const InlineStyle>(style_->Zoom(zoom));
-    layout_style_source_ = style_;
-    layout_style_zoom_ = zoom;
-  }
-  return layout_style_;
+const std::shared_ptr<const ComputedStyle>& InlineObject::LayoutStyle() const {
+  assert(computed_style_);
+  return computed_style_;
 }
 
 LogicalSize InlineObject::LayoutAtomicSize() const {

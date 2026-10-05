@@ -187,7 +187,27 @@ target_sources(bkfont PRIVATE
   src/third_party/rapidhash/rapidhash.h
   src/fonts.h
   src/inline_layout.h
-  src/editing/inline_editor.h src/editing/inline_editor.cc
+  src/layout/geometry/logical_offset.h
+  src/layout/geometry/writing_mode_converter.h
+  src/style/css_value.h src/style/css_value.cc
+  src/style/css_primitive_value.h src/style/css_primitive_value.cc
+  src/style/css_numeric_literal_value.h
+  src/style/css_math_function_value.h
+  src/style/css_identifier_value.h
+  src/style/css_value_keywords.h src/style/css_value_keywords.cc
+  src/style/css_color.h
+  src/style/css_initial_value.h
+  src/style/css_inherited_value.h
+  src/style/css_unset_value.h
+  src/style/style_color.h
+  src/style/white_space.h
+  src/style/computed_style_base_constants.h
+  src/style/style_declaration.h src/style/style_declaration.cc
+  src/style/style_sheet.h
+  src/style/style_difference.h
+  src/style/inline_style.h
+  src/style/computed_style.h src/style/computed_style.cc
+  src/style/style_resolver.h src/style/style_resolver.cc
   src/editing/bidi_adjustment.h src/editing/bidi_adjustment.cc
   src/initialize.h src/initialize.cc
   src/language.h src/language.cc
@@ -280,6 +300,8 @@ target_sources(bkfont PRIVATE
   src/layout/inline_text_metrics.h src/layout/inline_text_metrics.cc
   src/layout/inline/inline_object.h src/layout/inline/inline_object.cc
   src/layout/inline/offset_mapping.h src/layout/inline/offset_mapping.cc
+  src/layout/inline/offset_mapping_builder.h src/layout/inline/offset_mapping_builder.cc
+  src/layout/inline/inline_items_builder.h src/layout/inline/inline_items_builder.cc
   src/layout/inline/fragment_item.h src/layout/inline/fragment_item.cc
   src/layout/inline/fragment_items.h src/layout/inline/fragment_items.cc
   src/layout/inline/inline_cursor.h src/layout/inline/inline_cursor.cc

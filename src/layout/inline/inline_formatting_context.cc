@@ -4,11 +4,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <limits>
 #include <utility>
 
 #include "base/text/string_builder.h"
-#include "editing/bidi_adjustment.h"
 #include "font/font_cache.h"
 #include "font/text_fragment_paint_info.h"
 #include "layout/inline/inline_caret_position.h"
@@ -18,11 +16,16 @@
 namespace bkfont {
 
 InlineFormattingContext::InlineFormattingContext(const InlineStyle& style, InlineLayoutOptions options)
-    : options_(options) {
+    : InlineFormattingContext(StyleResolverSettings(style.font), options) {
+  root_->style_ = std::make_shared<const InlineStyle>(style);
+}
+
+InlineFormattingContext::InlineFormattingContext(const StyleResolverSettings& settings, InlineLayoutOptions options)
+    : options_(options), style_settings_(settings),
+      style_sheet_([this](const AtomicString& name) { RulesChanged(name); }) {
   options_.available_inline_size = options_.available_inline_size.ClampNegativeToZero();
-  root_.reset(new InlineObject(*this, next_id_++, InlineObject::Type::kInline,
-                               std::make_shared<const InlineStyle>(style)));
-  objects_.emplace(root_->Id(), root_.get());
+  root_.reset(new InlineObject(*this, next_id_++, InlineObject::Type::kInline, nullptr));
+  objects_.insert(root_->Id(), root_.get());
   FontCache::Get().AddClient(this);
 }
 
@@ -37,22 +40,31 @@ void InlineFormattingContext::FontCacheInvalidated() {
   // logical viewport and styles are unchanged. No old line can be reused.
   MarkDirty(*root_);
   if (fragments_) fragments_->DirtyFirstItem();
+  // lh/rlh specified values can depend on changed font metrics even though
+  // the FontDescription and inherited computed line-height remain equal.
+  initial_style_.reset();
+  SetNeedsStyleRecalc(*root_, StyleChangeType::kSubtreeStyleChange);
 }
 
 const InlineObject* InlineFormattingContext::Find(InlineNodeId id) const {
+  if (!objects_.IsValidKey(id)) return nullptr;
   const auto found = objects_.find(id);
-  return found == objects_.end() ? nullptr : found->second;
+  return found == objects_.end() ? nullptr : found->value;
 }
 
 void InlineFormattingContext::Validate(const InlineObject& object) const {
   assert(&object.Root() == this && object.IsAttached() && State() != InlineLayoutState::kInLayout);
 }
 
+// Tree changes, zoom and font data changes need new inline items. Style is
+// marked separately, only for objects whose cascade inputs changed.
 void InlineFormattingContext::MarkDirty(const InlineObject& object) {
   Validate(object);
   if (fragments_) fragments_->DirtyLinesFromChangedChild(object);
   epoch_->state = InlineLayoutState::kDirty;
   ++epoch_->generation;
+  needs_collect_inlines_ = true;
+  invalidation_.SetNeedsReshape();
 }
 
 InlineObject& InlineFormattingContext::Add(const InlineObject& parent, InlineObject::Type type,
@@ -65,9 +77,10 @@ InlineObject& InlineFormattingContext::Add(const InlineObject& parent, InlineObj
   auto child = std::unique_ptr<InlineObject>(new InlineObject(*this, next_id_++, type, std::move(style)));
   child->parent_ = const_cast<InlineObject*>(&parent);
   InlineObject& result = *child;
-  objects_.emplace(child->Id(), child.get());
+  objects_.insert(child->Id(), child.get());
   child->parent_->children_.push_back(std::move(child));
   MarkDirty(result);
+  MarkAncestorsWithChildNeedsStyleRecalc(result);
   return result;
 }
 
@@ -99,6 +112,8 @@ void InlineFormattingContext::ReplaceText(const InlineObject& object, unsigned o
   if (fragments_) fragments_->DirtyTextRange(object, offset);
   epoch_->state = InlineLayoutState::kDirty;
   ++epoch_->generation;
+  needs_collect_inlines_ = true;
+  invalidation_.SetNeedsReshape();
   StringBuilder builder;
   builder.Append(StringView(object.Text(), 0, offset));
   builder.Append(replacement);
@@ -107,8 +122,139 @@ void InlineFormattingContext::ReplaceText(const InlineObject& object, unsigned o
 }
 
 void InlineFormattingContext::SetStyle(const InlineObject& object, const InlineStyle& style) {
-  MarkDirty(object);
+  Validate(object);
   const_cast<InlineObject&>(object).style_ = std::make_shared<const InlineStyle>(style);
+  SetNeedsStyleRecalc(object, StyleChangeType::kLocalStyleChange);
+}
+
+void InlineFormattingContext::SetNeedsStyleRecalc(const InlineObject& object, StyleChangeType type) {
+  assert(epoch_->state != InlineLayoutState::kInLayout && !resolving_style_);
+  auto& node = const_cast<InlineObject&>(object);
+  node.style_change_ = std::max(node.style_change_, type);
+  MarkAncestorsWithChildNeedsStyleRecalc(node);
+  ++epoch_->generation;
+}
+
+// Node::MarkAncestorsWithChildNeedsStyleRecalc(). Stops at an ancestor that is
+// already marked; Move() marks the moved object so this invariant holds.
+void InlineFormattingContext::MarkAncestorsWithChildNeedsStyleRecalc(const InlineObject& object) {
+  for (InlineObject* parent = object.parent_; parent && !parent->child_needs_style_recalc_; parent = parent->parent_)
+    parent->child_needs_style_recalc_ = true;
+  styles_dirty_ = true;
+}
+
+void InlineFormattingContext::RulesChanged(const AtomicString& name) {
+  for (const auto& entry : objects_) {
+    InlineObject* const object = entry.value;
+    if (object->rules_.Contains(name))
+      SetNeedsStyleRecalc(*object, StyleChangeType::kLocalStyleChange);
+  }
+}
+
+void InlineFormattingContext::SetInlineStyle(const InlineObject& object, const StyleDeclaration& declaration) {
+  Validate(object);
+  if (object.declaration_ == declaration) return;
+  const_cast<InlineObject&>(object).declaration_ = declaration;
+  SetNeedsStyleRecalc(object, StyleChangeType::kLocalStyleChange);
+}
+
+void InlineFormattingContext::SetRules(const InlineObject& object, Vector<AtomicString> rules) {
+  Validate(object);
+  if (object.rules_ == rules) return;
+  const_cast<InlineObject&>(object).rules_ = std::move(rules);
+  SetNeedsStyleRecalc(object, StyleChangeType::kLocalStyleChange);
+}
+
+void InlineFormattingContext::SetRootDefaults(const StyleResolverSettings& settings) {
+  Validate(*root_);
+  style_settings_ = settings;
+  initial_style_.reset();
+  SetNeedsStyleRecalc(*root_, StyleChangeType::kSubtreeStyleChange);
+}
+
+const ComputedStyle& InlineFormattingContext::ComputedStyleFor(const InlineObject& object) {
+  Validate(object);
+  UpdateStyle();
+  return *object.computed_style_;
+}
+
+// Element::RecalcStyle() for the local tree. An object is resolved when it
+// was marked or its parent's style changed; descendants are visited only
+// through ChildNeedsStyleRecalc() or a propagated StyleRecalcChange.
+void InlineFormattingContext::RecalcStyle(InlineObject& object, const ComputedStyle* parent,
+                                          const ComputedStyle* root, StyleRecalcChange change) {
+  StyleRecalcChange child_change = change == StyleRecalcChange::kRecalcDescendants ||
+                                           object.style_change_ == StyleChangeType::kSubtreeStyleChange
+                                       ? StyleRecalcChange::kRecalcDescendants
+                                       : StyleRecalcChange::kNone;
+  bool recalc_explicit_inheritance = false;
+  if (change != StyleRecalcChange::kNone || object.style_change_ != StyleChangeType::kNoStyleChange) {
+    Vector<const StyleDeclaration*, 8> blocks;
+    blocks.ReserveInitialCapacity(object.rules_.size() + 1);
+    for (const auto& name : object.rules_) blocks.push_back(style_sheet_.Rule(name));
+    blocks.push_back(&object.declaration_);
+    const StyleResolverContext context{*initial_style_, parent, root, device_scale_.factor, page_zoom_factor_};
+    auto next = StyleResolver::Resolve(context, std::span<const StyleDeclaration* const>(blocks.data(), blocks.size()),
+                                       object.style_.get());
+    assert(next);
+    StyleDifference diff;
+    if (object.computed_style_) diff = object.computed_style_->VisualInvalidationDiff(*next);
+    else diff.SetNeedsReshape();
+    if (!object.computed_style_ || *object.computed_style_ != *next) {
+      const bool inherited_changed = !object.computed_style_ || !object.computed_style_->InheritedEqual(*next);
+      // Only root font metrics and line-height feed rem/rlh. A root color
+      // change follows ordinary inheritance and stops at overriding nodes.
+      const bool root_units_changed = !parent && (!object.computed_style_ ||
+          *object.computed_style_->GetFont() != *next->GetFont() || object.computed_style_->LineHeight() != next->LineHeight());
+      if (root_units_changed)
+        child_change = StyleRecalcChange::kRecalcDescendants;
+      else if (inherited_changed && child_change == StyleRecalcChange::kNone)
+        child_change = StyleRecalcChange::kRecalcChildren;
+      recalc_explicit_inheritance = !inherited_changed;
+      object.computed_style_ = std::move(next);
+      // No full fragment scan for a local style change. The per-object chain
+      // includes generated text; root line styles are handled separately.
+      if (fragments_ && !diff.NeedsLayout()) fragments_->RefreshStyle(object, object.computed_style_);
+    }
+    invalidation_.Merge(diff);
+    if (diff.NeedsReshape()) needs_collect_inlines_ = true;
+    if (diff.NeedsLayout()) {
+      if (fragments_) fragments_->DirtyLinesFromChangedChild(object);
+      epoch_->state = InlineLayoutState::kDirty;
+    }
+  }
+  object.style_change_ = StyleChangeType::kNoStyleChange;
+  const bool child_needs_style_recalc = object.child_needs_style_recalc_;
+  object.child_needs_style_recalc_ = false;
+  if (child_change == StyleRecalcChange::kNone && !child_needs_style_recalc && !recalc_explicit_inheritance) return;
+  const ComputedStyle* root_style = root ? root : object.computed_style_.get();
+  for (auto& child : object.children_) {
+    const StyleRecalcChange change_for_child = child_change == StyleRecalcChange::kNone && recalc_explicit_inheritance &&
+                                                child->computed_style_ && child->computed_style_->HasExplicitInheritance()
+                                            ? StyleRecalcChange::kRecalcChildren : child_change;
+    if (change_for_child != StyleRecalcChange::kNone || child->style_change_ != StyleChangeType::kNoStyleChange ||
+        child->child_needs_style_recalc_)
+      RecalcStyle(*child, object.computed_style_.get(), root_style, change_for_child);
+  }
+}
+
+void InlineFormattingContext::UpdateStyle() {
+  if (!styles_dirty_) return;
+  assert(epoch_->state != InlineLayoutState::kInLayout && !resolving_style_);
+  FontCache::UpdateDeviceScaleFactor(device_scale_.factor);
+  resolving_style_ = true;
+  if (!initial_style_)
+    initial_style_ = StyleResolver::CreateInitialStyle(style_settings_, device_scale_.factor, page_zoom_factor_);
+  RecalcStyle(*root_, nullptr, nullptr, StyleRecalcChange::kNone);
+  styles_dirty_ = false;
+  resolving_style_ = false;
+}
+
+StyleDifference InlineFormattingContext::TakeInvalidation() {
+  UpdateStyle();
+  const StyleDifference result = invalidation_;
+  invalidation_ = {};
+  return result;
 }
 
 void InlineFormattingContext::Retire(InlineObject& object) {
@@ -148,15 +294,30 @@ bool InlineFormattingContext::Move(const InlineObject& object, const InlineObjec
   destination.insert(static_cast<wtf_size_t>(to - destination.begin()), std::move(moving));
   // A move can change bidi context and inherited style before either endpoint.
   if (fragments_) fragments_->DirtyFirstItem();
+  SetNeedsStyleRecalc(object, StyleChangeType::kLocalStyleChange);
   return true;
 }
 
 void InlineFormattingContext::SetOptions(InlineLayoutOptions options) {
   options.available_inline_size = options.available_inline_size.ClampNegativeToZero();
   if (options_ == options) return;
+  Validate(*root_);
+  // Only the base direction feeds bidi resolution and run segmentation. The
+  // other options are line-breaking and placement inputs.
+  const bool needs_collect_inlines = options.direction != options_.direction;
   options_ = options;
-  MarkDirty(*root_);
-  if (fragments_) fragments_->DirtyFirstItem();
+  if (fragments_) {
+    fragments_->DirtyLinesFromChangedChild(*root_);
+    fragments_->DirtyFirstItem();
+  }
+  epoch_->state = InlineLayoutState::kDirty;
+  ++epoch_->generation;
+  if (needs_collect_inlines) {
+    needs_collect_inlines_ = true;
+    invalidation_.SetNeedsReshape();
+  } else {
+    invalidation_.SetNeedsFullLayout();
+  }
 }
 
 bool InlineFormattingContext::SetZoomFactors(float device_scale_factor, float page_zoom_factor) {
@@ -174,6 +335,8 @@ bool InlineFormattingContext::SetZoomFactors(float device_scale_factor, float pa
   if (changed) {
     MarkDirty(*root_);
     if (fragments_) fragments_->DirtyFirstItem();
+    initial_style_.reset();
+    SetNeedsStyleRecalc(*root_, StyleChangeType::kSubtreeStyleChange);
   }
   return changed || fonts_changed;
 }
@@ -183,6 +346,7 @@ void InlineFormattingContext::UpdateLayout() {
   // LayoutView::LayoutRoot activates its Page's DSF before font lookup. Other
   // contexts may have used this thread since the last visual-properties update.
   FontCache::UpdateDeviceScaleFactor(device_scale_.factor);
+  UpdateStyle();
   if (State() == InlineLayoutState::kClean) return;
   epoch_->state = InlineLayoutState::kInLayout;
   auto next = InlineLayoutAlgorithm(*this).Layout();
@@ -190,7 +354,9 @@ void InlineFormattingContext::UpdateLayout() {
   // Destroy the old index AND items before any address can be recycled.
   fragments_ = std::move(next);
   retired_.clear();
+  needs_collect_inlines_ = false;
   ++epoch_->generation;
+  ++layout_generation_;
   epoch_->state = InlineLayoutState::kClean;
 }
 
@@ -205,10 +371,6 @@ bool InlineFormattingContext::HasInlineFragments(const InlineObject& object) con
 }
 
 namespace {
-
-float AxisDistance(float position, LayoutUnit begin, LayoutUnit end) {
-  return std::max({begin.ToFloat() - position, position - end.ToFloat(), 0.0f});
-}
 
 // FragmentItem::LocalRect() and the LTR WritingModeConverter used by
 // ComputeLogicalCaretRectAtTextOffset(). Positions are relative to the item.
@@ -281,6 +443,7 @@ PhysicalRect InlineFormattingContext::CaretRect(InlinePosition position, LayoutU
   const auto caret = ComputeInlineCaretPosition(*this, position);
   if (!caret) return {};
   const auto& item = *caret.cursor.Current();
+  if (item.Style().Visibility() != EVisibility::kVisible) return {};
   const auto& line = (*fragments_)[item.LineIndex()];
   if (caret.position_type == InlineCaretPositionType::kBeforeBox ||
       caret.position_type == InlineCaretPositionType::kAfterBox) {
@@ -302,9 +465,7 @@ PhysicalRect InlineFormattingContext::CaretRect(InlinePosition position, LayoutU
     return rect;
   }
   // FragmentItem::CaretInlinePositionForOffset() rounds to a LayoutUnit.
-  LayoutUnit caret_left;
-  if (caret.position_type != InlineCaretPositionType::kEmptyLine)
-    caret_left = LayoutUnit::FromFloatRound(item.CaretInlinePosition(caret.text_offset, fragments_->TextContent()));
+  LayoutUnit caret_left = LayoutUnit::FromFloatRound(item.CaretInlinePosition(caret.text_offset, fragments_->TextContent()));
   if (caret.position_type == InlineCaretPositionType::kAtTextOffset && !item.IsLineBreak()) caret_left -= caret_width / 2;
   // Text carets use the text fragment's block size and offset, not line-height.
   PhysicalRect rect = InlineRangeRect(item, caret_left, caret_left + caret_width, options_.writing_mode);
@@ -334,52 +495,12 @@ PhysicalRect InlineFormattingContext::CaretRect(InlinePosition position, LayoutU
   return rect;
 }
 
-InlinePosition InlineFormattingContext::HitTest(const PhysicalOffset& point) {
-  const auto& fragments = Fragments();
-  const bool horizontal = IsHorizontalWritingMode(options_.writing_mode);
-  size_t nearest_line = 0;
-  float distance = std::numeric_limits<float>::infinity();
-  for (size_t index : fragments.Lines()) {
-    const auto& rect = fragments[index].RectInContainerFragment();
-    const float candidate = horizontal ? AxisDistance(point.top.ToFloat(), rect.Y(), rect.Bottom()) : AxisDistance(point.left.ToFloat(), rect.X(), rect.Right());
-    if (candidate < distance) {
-      distance = candidate;
-      nearest_line = index;
-    }
-  }
-  const auto& line = fragments[nearest_line];
-  if (line.DescendantsCount() == 1) {
-    auto position = fragments.Mapping().GetPosition(line.TextOffset().start);
-    return position ? position : InlinePosition{root_->Id(), 0};
-  }
-  const FragmentItem* nearest = nullptr;
-  distance = std::numeric_limits<float>::infinity();
-  for (size_t i = nearest_line + 1; i < nearest_line + line.DescendantsCount(); ++i) {
-    const auto& item = fragments[i];
-    const auto& rect = item.RectInContainerFragment();
-    const float candidate = horizontal ? AxisDistance(point.left.ToFloat(), rect.X(), rect.Right()) : AxisDistance(point.top.ToFloat(), rect.Y(), rect.Bottom());
-    if (candidate < distance) {
-      distance = candidate;
-      nearest = &item;
-    }
-  }
-  const auto& rect = nearest->RectInContainerFragment();
-  const float advance = horizontal ? (point.left - rect.X()).ToFloat() : options_.writing_mode == WritingMode::kSidewaysLr ? (rect.Bottom() - point.top).ToFloat()
-                                                                                                                           : (point.top - rect.Y()).ToFloat();
-  unsigned offset = nearest->TextOffsetForPoint(advance, fragments.TextContent());
-  if (nearest->IsGeneratedText()) {
-    const auto* unit = fragments.Mapping().GetUnit(nearest->GetLayoutObject()->Id());
-    return {unit->object->Id(), offset - unit->start, TextAffinity::kUpstream};
-  }
-  if (nearest->IsLineBreak()) offset = nearest->TextOffset().start;
+InlinePosition InlineFormattingContext::HitTest(const PhysicalOffset& point, InlineHitTestOptions options) {
   InlineCursor cursor(*this);
-  cursor.MoveToItem(static_cast<size_t>(nearest - fragments.Items().data()));
-  const auto adjusted = AdjustHitTestForBidi({cursor, nearest->IsAtomicInline() ? (offset == nearest->TextOffset().start ? InlineCaretPositionType::kBeforeBox : InlineCaretPositionType::kAfterBox) : InlineCaretPositionType::kAtTextOffset, offset});
-  nearest = adjusted.cursor.Current();
-  offset = adjusted.text_offset;
-  const auto affinity = offset == nearest->TextOffset().end ? TextAffinity::kUpstream : TextAffinity::kDownstream;
-  const auto* unit = fragments.Mapping().GetUnit(nearest->GetLayoutObject()->Id());
-  return {unit->object->Id(), offset - unit->start, affinity};
+  if (const auto position = cursor.PositionForPointInInlineFormattingContext(point, options)) return position;
+  // PhysicalBoxFragment::PositionForPoint falls back to its container's start
+  // when the inline cursor cannot resolve a position, including empty blocks.
+  return {root_->Id(), 0};
 }
 
 Vector<PhysicalRect> InlineFormattingContext::SelectionRects(const InlineSelection& selection) {
@@ -415,6 +536,9 @@ Vector<PhysicalRect> InlineFormattingContext::CollectSelectionRects(const Inline
   };
   for (const auto& item : fragments.Items()) {
     if (item.Type() == FragmentItem::kLine) continue;
+    // TextFragmentPainter::Paint (and BoxFragmentPainter for boxes) returns
+    // before painting the selection of a hidden item; report no highlight.
+    if (item.Style().Visibility() != EVisibility::kVisible) continue;
     const auto& line = fragments[item.LineIndex()];
     const unsigned from = std::max(start, item.TextOffset().start);
     const unsigned to = std::min(end, item.TextOffset().end);
@@ -436,7 +560,7 @@ Vector<PhysicalRect> InlineFormattingContext::CollectSelectionRects(const Inline
     if (item.IsLineBreak()) {
       // CurrentLocalSelectionRectForText(): preserved newlines get a space
       // width. The last-<br> exception does not apply to this text-only model.
-      end_position = LayoutUnit(item.Style().font.SpaceWidth());
+      end_position = LayoutUnit(item.Style().GetFont()->SpaceWidth());
       if (IsRtl(item.ResolvedDirection())) {
         start_position = -end_position;
         end_position = LayoutUnit();
@@ -454,7 +578,7 @@ Vector<PhysicalRect> InlineFormattingContext::CollectSelectionRects(const Inline
     // extend the last logical text leaf only when the selection crosses the
     // wrap and its direction agrees with the line's base direction.
     if (selected_soft_wrap) {
-      const LayoutUnit space_width(item.Style().font.SpaceWidth());
+      const LayoutUnit space_width(item.Style().GetFont()->SpaceWidth());
       if (IsLtr(item.ResolvedDirection()))
         end_position += space_width;
       else
@@ -477,7 +601,8 @@ void InlineFormattingContext::Paint(PaintCanvas* canvas, const PhysicalOffset& o
   if (!canvas) return;
   const auto& fragments = Fragments();
   for (const auto& item : fragments.Items()) {
-    if (!item.IsText() || item.IsLineBreak() || !item.TextShapeResult()) continue;
+    if (!item.IsText() || item.IsLineBreak() || !item.TextShapeResult() ||
+        item.Style().Visibility() != EVisibility::kVisible) continue;
     // BoxFragmentPainter::PaintLineBoxChildItems passes the line box offset
     // as the parent offset of its children.
     const PhysicalRect box = PhysicalBoxRect(item.RectInContainerFragment(), offset,
@@ -485,7 +610,7 @@ void InlineFormattingContext::Paint(PaintCanvas* canvas, const PhysicalOffset& o
     const auto range = item.TextOffset();
     const TextFragmentPaintInfo info{item.IsGeneratedText() ? StringView(item.GeneratedText()) : StringView(fragments.TextContent()),
                                      item.IsGeneratedText() ? 0 : range.start, item.IsGeneratedText() ? item.GeneratedText().length() : range.end, item.TextShapeResult()};
-    PaintTextFragment(canvas, info, item.Style().font, options_.writing_mode, box, item.Style().paint);
+    PaintTextFragment(canvas, info, *item.Style().GetFont(), options_.writing_mode, box, item.Style().TextPaint());
   }
 }
 

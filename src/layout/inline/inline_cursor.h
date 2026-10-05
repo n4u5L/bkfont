@@ -32,12 +32,23 @@ public:
   void MoveToContainingLine();
   void MoveToNextLine();
   void MoveToPreviousLine();
+  void MoveToFirstLogicalLeaf();
+  void MoveToLastLogicalLeaf();
+  void MoveToFirstNonPseudoLeaf();
+  void MoveToLastNonPseudoLeaf();
   InlineCursor CursorForDescendants() const;
   InlineCursor CursorForRoot() const;
   size_t ItemIndex() const {
     return index_;
   }
   void MoveToItem(size_t);
+
+  InlinePosition PositionForPointInInlineFormattingContext(const PhysicalOffset&, InlineHitTestOptions = {});
+  InlinePosition PositionForPointInInlineBox(const PhysicalOffset&) const;
+  InlinePosition PositionForPointInChild(const PhysicalOffset&) const;
+  InlinePosition PositionForPointInText(unsigned text_offset) const;
+  InlinePosition PositionForStartOfLine() const;
+  InlinePosition PositionForEndOfLine() const;
 
 private:
   bool IsValid() const;

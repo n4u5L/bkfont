@@ -5,35 +5,27 @@
 #include <memory>
 
 #include "base/heap_vector.h"
+#include "base/text/atomic_string.h"
 #include "base/text/wtf_string.h"
+#include "base/vector.h"
 #include "font/font.h"
 #include "geometry/length.h"
 #include "layout/geometry/logical_size.h"
 #include "paint/platform_paint.h"
 #include "text/tab_size.h"
+#include "style/computed_style.h"
+#include "style/style_declaration.h"
 
 namespace bkfont {
 
 class InlineFormattingContext;
 using InlineNodeId = uint64_t;
 
-// Values supplied by the host before page/DSF zoom, without CSS parsing/cascading.
-// A null object style inherits its parent's complete style.
-// The host resolves FontDescription::Orientation for the IFC writing mode.
-struct InlineStyle {
-  explicit InlineStyle(Font font)
-      : font(std::move(font)) {
-  }
-  Font font;
-  Length line_height = Length::Auto();
-  PlatformPaint paint;
-  TabSize tab_size{8};
-  // Positive shifts raise the baseline, in line-relative coordinates.
-  LayoutUnit baseline_shift;
-  // Style resolution boundary: fixed lengths and computed font sizes are
-  // zoomed before shaping/layout. Percentages and specified font size remain
-  // unchanged, including the specified size used for optical sizing.
-  InlineStyle Zoom(float factor) const;
+// Subset of Blink's StyleChangeType.
+enum class StyleChangeType {
+  kNoStyleChange,
+  kLocalStyleChange,
+  kSubtreeStyleChange
 };
 
 class InlineObject final {
@@ -76,11 +68,18 @@ public:
   const String& Text() const {
     return text_;
   }
-  const InlineStyle& Style() const;
+  // The style from the last style recalc, as LayoutObject::Style(). Reading
+  // it never recalculates; after style or tree mutations, call
+  // InlineFormattingContext::UpdateStyle() (or ComputedStyleFor()) first.
+  const ComputedStyle& Style() const;
+  // Own a snapshot when retaining style across explicit update calls.
+  std::shared_ptr<const ComputedStyle> StyleSnapshot() const { return computed_style_; }
+  const StyleDeclaration& InlineDeclaration() const { return declaration_; }
+  const Vector<AtomicString>& Rules() const { return rules_; }
   const std::shared_ptr<const InlineStyle>& SpecifiedStyle() const {
     return style_;
   }
-  const std::shared_ptr<const InlineStyle>& LayoutStyle() const;
+  const std::shared_ptr<const ComputedStyle>& LayoutStyle() const;
   const HeapVector<std::unique_ptr<InlineObject>>& Children() const {
     return children_;
   }
@@ -99,7 +98,6 @@ public:
 
 private:
   friend class InlineFormattingContext;
-  friend class InlineEditor;
   InlineObject(InlineFormattingContext&, InlineNodeId, Type, std::shared_ptr<const InlineStyle>);
   InlineFormattingContext* root_;
   InlineNodeId id_;
@@ -108,9 +106,12 @@ private:
   bool attached_ = true;
   String text_;
   std::shared_ptr<const InlineStyle> style_;
-  mutable std::shared_ptr<const InlineStyle> layout_style_;
-  mutable std::shared_ptr<const InlineStyle> layout_style_source_;
-  mutable float layout_style_zoom_ = 1;
+  StyleDeclaration declaration_;
+  Vector<AtomicString> rules_;
+  std::shared_ptr<const ComputedStyle> computed_style_;
+  // Node::NeedsStyleRecalc()/ChildNeedsStyleRecalc(). New objects need one.
+  StyleChangeType style_change_ = StyleChangeType::kLocalStyleChange;
+  bool child_needs_style_recalc_ = false;
   HeapVector<std::unique_ptr<InlineObject>> children_;
   LogicalSize atomic_size_;
   LayoutUnit atomic_baseline_;

@@ -5,6 +5,8 @@
 #include "base/text/string_builder.h"
 #include "base/vector.h"
 #include "layout/inline/inline_formatting_context.h"
+#include "layout/inline/inline_items_builder.h"
+#include "layout/inline/offset_mapping_builder.h"
 #include "text/bidi_paragraph.h"
 
 namespace bkfont {
@@ -15,17 +17,12 @@ public:
   std::unique_ptr<FragmentItems> Layout();
 
 private:
-  struct Run {
-    unsigned start;
-    unsigned end;
-    UBiDiLevel level;
-    std::shared_ptr<const InlineStyle> style;
-    const InlineObject* object;
-    std::shared_ptr<ShapeResult> shape;
-    bool control;
-  };
-  void Collect(const InlineObject&, std::shared_ptr<const InlineStyle>, StringBuilder&);
+  using Run = InlineItemRun;
+  void Collect(const InlineObject&, InlineItemsBuilder&);
+  LayoutUnit HangingTrailingSpaceWidth(const HeapVector<FragmentItem>&) const;
+  void RemoveTrailingCollapsibleSpace(HeapVector<FragmentItem>&) const;
   void SegmentAndShape();
+  void ReuseCollectedItems(const FragmentItems&);
   HeapVector<FragmentItem> ShapeLine(unsigned start, unsigned end);
   LayoutUnit Measure(unsigned start, unsigned end);
   void PlaceLine(unsigned start, unsigned end, bool soft_wrap);
@@ -35,7 +32,8 @@ private:
   InlineFormattingContext& context_;
   const InlineLayoutOptions& options_;
   std::unique_ptr<FragmentItems> result_;
-  HeapVector<std::shared_ptr<const InlineStyle>> styles_;
+  OffsetMappingBuilder mapping_builder_;
+  HeapVector<std::shared_ptr<const ComputedStyle>> styles_;
   HeapVector<Run> runs_;
   Vector<UBiDiLevel> levels_;
   LayoutUnit block_offset_;

@@ -6,18 +6,18 @@
 #include <algorithm>
 
 #include "editing/bidi_adjustment.h"
+#include "runtime_enabled_features.h"
 
 namespace bkfont {
 namespace {
 
 bool CanResolveBefore(const InlineCursor& cursor, TextAffinity affinity) {
   if (affinity == TextAffinity::kDownstream) return true;
+  if (RuntimeEnabledFeatures::BidiCaretAffinityEnabled()) return false;
   auto line = cursor.CursorForRoot();
   line.MoveToContainingLine();
-  auto first = line.CursorForDescendants();
-  for (auto item = first; item; item.MoveToNext()) {
-    if (item.Current()->TextOffset().start < first.Current()->TextOffset().start) first = item;
-  }
+  auto first = line;
+  first.MoveToFirstLogicalLeaf();
   if (first.Current() != cursor.Current()) return true;
   line.MoveToPreviousLine();
   return !line || !line.Current()->HasSoftWrapToNextLine();
@@ -25,12 +25,11 @@ bool CanResolveBefore(const InlineCursor& cursor, TextAffinity affinity) {
 
 bool CanResolveAfter(const InlineCursor& cursor, TextAffinity affinity) {
   if (affinity == TextAffinity::kUpstream) return true;
+  if (RuntimeEnabledFeatures::BidiCaretAffinityEnabled()) return false;
   auto line = cursor.CursorForRoot();
   line.MoveToContainingLine();
-  auto last = line.CursorForDescendants();
-  for (auto item = last; item; item.MoveToNext()) {
-    if (item.Current()->TextOffset().end > last.Current()->TextOffset().end) last = item;
-  }
+  auto last = line;
+  last.MoveToLastLogicalLeaf();
   if (last.Current() != cursor.Current()) return true;
   return !line.Current()->HasSoftWrapToNextLine();
 }
@@ -40,7 +39,28 @@ bool IsUpstreamAfterLineBreak(const InlineCaretPosition& position) {
          position.text_offset == position.cursor.Current()->TextOffset().end;
 }
 
+InlineCaretPosition AdjustInlineCaretPositionForBidiText(const InlineCaretPosition& position) {
+  if (RuntimeEnabledFeatures::BidiCaretAffinityEnabled()) return position;
+  return AdjustCaretForBidi(position);
+}
+
 } // namespace
+
+InlinePosition InlineCaretPosition::ToPositionInDOMTreeWithAffinity(const OffsetMapping& mapping) const {
+  if (!*this) return {};
+  const FragmentItem& item = *cursor.Current();
+  switch (position_type) {
+    case InlineCaretPositionType::kBeforeBox:
+      return {item.GetLayoutObject()->Id(), 0, TextAffinity::kDownstream};
+    case InlineCaretPositionType::kAfterBox:
+      return {item.GetLayoutObject()->Id(), 1, TextAffinity::kUpstream};
+    case InlineCaretPositionType::kAtTextOffset:
+      break;
+  }
+  const TextAffinity affinity =
+      text_offset == item.TextOffset().end ? TextAffinity::kUpstream : TextAffinity::kDownstream;
+  return mapping.GetPosition(text_offset, affinity);
+}
 
 InlineCaretPosition ComputeInlineCaretPosition(InlineFormattingContext& context, InlinePosition position) {
   const auto& fragments = context.Fragments();
@@ -53,14 +73,8 @@ InlineCaretPosition ComputeInlineCaretPosition(InlineFormattingContext& context,
   if (preferred && preferred->HasInlineFragments()) cursor.MoveTo(*preferred);
   for (; cursor; cursor.MoveToNext()) {
     const FragmentItem& item = *cursor.Current();
-    if (item.IsGeneratedText()) continue;
+    if (item.IsGeneratedText() || item.Type() == FragmentItem::kLine) continue;
     const auto range = item.TextOffset();
-    if (item.Type() == FragmentItem::kLine) {
-      // The standalone editor provides an insertion slot on an empty line.
-      if (range.start == range.end && *offset == range.start)
-        return {cursor, InlineCaretPositionType::kEmptyLine, *offset};
-      continue;
-    }
     if (*offset < range.start && !fragments.Mapping().HasBidiControlCharactersOnly(*offset, range.start)) continue;
     if (*offset > range.end && !fragments.Mapping().HasBidiControlCharactersOnly(range.end, *offset)) continue;
     const unsigned clamped = std::clamp(*offset, range.start, range.end);
@@ -70,12 +84,12 @@ InlineCaretPosition ComputeInlineCaretPosition(InlineFormattingContext& context,
                           (clamped == range.end && !item.IsLineBreak() && CanResolveAfter(cursor, position.affinity));
     if (resolved) {
       candidate = current;
-      if (!preferred || item.GetLayoutObject() == preferred) return AdjustCaretForBidi(current);
+      if (!preferred || item.GetLayoutObject() == preferred) return AdjustInlineCaretPositionForBidiText(current);
       continue;
     }
     if (!candidate || IsUpstreamAfterLineBreak(candidate)) candidate = current;
   }
-  return AdjustCaretForBidi(candidate);
+  return AdjustInlineCaretPositionForBidiText(candidate);
 }
 
 } // namespace bkfont

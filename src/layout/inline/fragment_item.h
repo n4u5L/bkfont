@@ -66,9 +66,10 @@ public:
   const InlineObject* GetLayoutObject() const {
     return object_;
   }
-  const InlineStyle& Style() const {
+  const ComputedStyle& Style() const {
     return *style_;
   }
+  std::shared_ptr<const ComputedStyle> StyleSnapshot() const { return style_; }
   const PhysicalRect& RectInContainerFragment() const {
     return rect_;
   }
@@ -115,9 +116,10 @@ public:
 private:
   friend class FragmentItems;
   friend class InlineLayoutAlgorithm;
+  friend class InlineFormattingContext;
   ItemType type_ = kInvalid;
   const InlineObject* object_ = nullptr;
-  std::shared_ptr<const InlineStyle> style_;
+  std::shared_ptr<const ComputedStyle> style_;
   std::shared_ptr<const ShapeResultView> shape_;
   String generated_text_;
   mutable std::shared_ptr<ShapeResult> caret_shape_;

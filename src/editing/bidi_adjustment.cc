@@ -390,7 +390,7 @@ public:
 };
 
 bool NeedsAdjustment(const InlineCaretPosition& position) {
-  if (!position || position.position_type == InlineCaretPositionType::kEmptyLine) return false;
+  if (!position) return false;
   const auto range = position.cursor.Current()->TextOffset();
   return position.text_offset == range.start || position.text_offset == range.end;
 }

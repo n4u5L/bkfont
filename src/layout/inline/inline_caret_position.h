@@ -8,8 +8,7 @@ namespace bkfont {
 enum class InlineCaretPositionType {
   kBeforeBox,
   kAfterBox,
-  kAtTextOffset,
-  kEmptyLine
+  kAtTextOffset
 };
 struct InlineCaretPosition {
   InlineCursor cursor;
@@ -18,6 +17,10 @@ struct InlineCaretPosition {
   explicit operator bool() const {
     return static_cast<bool>(cursor);
   }
+  // Before/after the box for box positions. A text offset maps through the
+  // OffsetMapping: the last position for downstream affinity (not at the
+  // item's end), the first position for upstream affinity.
+  InlinePosition ToPositionInDOMTreeWithAffinity(const OffsetMapping&) const;
 };
 
 InlineCaretPosition ComputeInlineCaretPosition(InlineFormattingContext&, InlinePosition);
