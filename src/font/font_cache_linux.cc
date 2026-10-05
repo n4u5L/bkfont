@@ -1,5 +1,7 @@
 // Ported from: blink/renderer/platform/fonts/linux/font_cache_linux.cc
 // Ported from: blink/renderer/platform/fonts/skia/font_cache_skia.cc
+// Native matching, file identity, fallback order and system font metadata.
+// Sized font data and rendering policy are shared in font_cache.cc.
 
 /*
  * Copyright (C) 2012 Google Inc. All rights reserved.
@@ -30,12 +32,27 @@
 #include <cassert>
 
 #include "base/text/character_names.h"
+#include "font_description.h"
+#include "font_face_creation_params.h"
 #include "font_fallback_linux.h"
+#include "font_platform_data.h"
 #include "font_unique_name_lookup_linux.h"
 #include "platform/fontconfig_util.h"
-#include "runtime_enabled_features.h"
+#include "platform/font_manager_fontconfig.h"
 
 namespace bkfont {
+
+std::shared_ptr<FontManager> FontCache::CreateFontManager() {
+  return MakeFontManagerFontconfig();
+}
+
+std::shared_ptr<const FontPlatformData> FontCache::PlatformLastResortFont(const FontDescription&) {
+  return nullptr;
+}
+
+bool FontCache::IsFamilyAvailable(const String& family) const {
+  return static_cast<bool>(font_manager_->MatchFamilyStyle(family, FontStyle()));
+}
 
 namespace {
 
@@ -46,8 +63,6 @@ AtomicString& MutableSystemFontFamily() {
 
 } // namespace
 
-float FontCache::device_scale_factor_ = 1.0f;
-
 const AtomicString& FontCache::SystemFontFamily() {
   return MutableSystemFontFamily();
 }
@@ -57,8 +72,8 @@ void FontCache::SetSystemFontFamily(const AtomicString& family_name) {
   MutableSystemFontFamily() = family_name;
 }
 
-std::shared_ptr<Typeface> FontCache::CreateTypeface(const FontDescription& description,
-                                                  const FontFaceCreationParams& params, String& name) {
+std::shared_ptr<Typeface> FontCache::MatchTypeface(const FontDescription& description,
+                                                 const FontFaceCreationParams& params, AlternateFontName, String& name) {
   if (params.CreationType() == kCreateFontByFciIdAndTtcIndex) {
     // This library runs without Chromium's sandbox service, so the returned
     // file identity is opened directly, including its collection/instance index.
@@ -70,32 +85,6 @@ std::shared_ptr<Typeface> FontCache::CreateTypeface(const FontDescription& descr
 
 std::shared_ptr<Typeface> FontCache::CreateTypefaceFromUniqueName(const FontFaceCreationParams& params) {
   return FontUniqueNameLookupLinux::MatchUniqueName(params.Family().GetString());
-}
-
-std::shared_ptr<const FontPlatformData> FontCache::CreateFontPlatformData(
-    const FontDescription& description, const FontFaceCreationParams& params,
-    float font_size, AlternateFontName alternate_name) {
-  String name;
-  std::shared_ptr<Typeface> typeface;
-  if (RuntimeEnabledFeatures::FontSrcLocalMatchingEnabled() && alternate_name == AlternateFontName::kLocalUniqueFace) {
-    typeface = CreateTypefaceFromUniqueName(params);
-  } else {
-    typeface = CreateTypeface(description, params, name);
-  }
-  if (!typeface) return nullptr;
-
-  const bool synthetic_bold =
-      (description.Weight() > FontSelectionValue(200) + FontSelectionValue(typeface->GetFontStyle().GetWeight()) ||
-       description.IsSyntheticBold()) &&
-      description.GetFontSynthesisWeight() == FontDescription::kAutoFontSynthesisWeight;
-  const bool synthetic_italic =
-      ((description.Style() == kItalicSlopeValue && !typeface->IsItalic()) || description.IsSyntheticItalic()) &&
-      description.GetFontSynthesisStyle() == FontDescription::kAutoFontSynthesisStyle;
-  auto result = std::make_shared<FontPlatformData>(
-      typeface, name, font_size, synthetic_bold, synthetic_italic,
-      description.TextRendering(), description.ResolveFontFeatures(), description.Orientation());
-  result->SetAvoidEmbeddedBitmaps(typeface->GetFamilyName() == "Calibri" || typeface->GetFamilyName() == "Courier New");
-  return result;
 }
 
 std::shared_ptr<const SimpleFontData> FontCache::PlatformFallbackFontForCharacter(

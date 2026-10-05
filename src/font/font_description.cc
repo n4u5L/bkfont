@@ -41,9 +41,7 @@
 #include "base/text/string_hasher.h"
 #include "base/notreached.h"
 
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_ANDROID)
 #include "font_cache.h"
-#endif
 
 #include <span>
 namespace bkfont {
@@ -273,11 +271,7 @@ FontCacheKey FontDescription::CacheKey(
       static_cast<unsigned>(fields_.orientation_) << 1 |           // bit 2-3
       static_cast<unsigned>(fields_.subpixel_text_position_);      // bit 1
 
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
   float device_scale_factor_for_key = FontCache::DeviceScaleFactor();
-#else
-  float device_scale_factor_for_key = 1.0f;
-#endif
   FontCacheKey cache_key(creation_params, EffectiveFontSize(), options | font_selection_request_.GetHash() << 13, device_scale_factor_for_key, size_adjust_, variation_settings_, font_palette_, font_variant_alternates_, is_unique_match);
 #if BUILDFLAG(IS_ANDROID)
   if (const LayoutLocale* locale = Locale()) {

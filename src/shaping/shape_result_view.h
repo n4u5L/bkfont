@@ -17,7 +17,7 @@
 #include "glyph_offset_iterator.h"
 #include "shape_result.h"
 #include "font/simple_font_data.h"
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
 
 #include "text/text_direction.h"
 #include "base/vector.h"

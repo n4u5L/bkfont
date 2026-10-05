@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
 #include "platform_export.h"
 #include "base/math_extras.h"
 #include "paint/geometry.h"

@@ -6,7 +6,7 @@
 #pragma once
 
 #include "font_baseline.h"
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
 
 #include <cstdint>
 #include "base/text/wtf_string.h"

@@ -45,7 +45,7 @@
 #include "shaping/opentype/open_type_math_stretch_data.h"
 #include "glyph_index_result.h"
 #include "font/simple_font_data.h"
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
 
 #include "text/text_direction.h"
 

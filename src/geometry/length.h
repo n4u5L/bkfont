@@ -31,7 +31,7 @@
 #include "base/compiler_specific.h"
 #include "base/memory/stack_allocated.h"
 #include "evaluation_input.h"
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
 #include "platform_export.h"
 #include "base/allocator/allocator.h"
 #include "base/forward.h"

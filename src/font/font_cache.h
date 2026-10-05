@@ -28,10 +28,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// Platform matching and shared font-management API.
+// Shared boundary: sized font data, render policy, caches and invalidation.
+// font_cache_win.cc/font_cache_linux.cc own native matching, aliases, fallback
+// order and system UI font metadata. Both return FreeType-backed typefaces;
+// neither supplies glyph metrics or platform rendering preferences.
 #pragma once
 #include <cstdint>
 #include <memory>
+#include "build/build_config.h"
 #include "fallback_list_composite_key.h"
 #include "font_cache_client.h"
 #include "font_data_cache.h"
@@ -86,7 +90,27 @@ public:
   }
   static void PrewarmFamily(const AtomicString&);
   static const AtomicString& SystemFontFamily();
+  // Linux render-style selection is shared by every FreeType platform.
+  // As in LayoutView::LayoutRoot, the host sets the active display's scale
+  // before font lookup/layout. This does not scale font sizes or the canvas.
+  // When changing an existing view, also Invalidate() its thread's FontCache
+  // and rebuild retained shaping/layout results before drawing at the new scale.
+  static float DeviceScaleFactor() {
+    return device_scale_factor_;
+  }
+  static void SetDeviceScaleFactor(float device_scale_factor) {
+    device_scale_factor_ = device_scale_factor;
+  }
+  // Standalone host adapter around the upstream setter. Updates the scale and
+  // invalidates this thread's cached font data and registered layouts. Returns
+  // true if invalidation occurred; an already-applied scale or a non-positive/
+  // non-finite value is a no-op. Rebuild externally retained ShapeResults on true.
+  // The active scale is process-wide, as upstream: hosts must serialize scale
+  // changes with font work, and call this on each font-owning thread.
+  static bool UpdateDeviceScaleFactor(float device_scale_factor);
 #if BUILDFLAG(IS_WIN)
+  // Legacy host metadata. These accessors do not override FontRenderStyle's
+  // common defaults or FreeType metrics.
   static bool AntialiasedTextEnabled() {
     return antialiased_text_enabled_;
   }
@@ -122,12 +146,6 @@ public:
   }
 #elif BUILDFLAG(IS_LINUX)
   static void SetSystemFontFamily(const AtomicString& family_name);
-  static float DeviceScaleFactor() {
-    return device_scale_factor_;
-  }
-  static void SetDeviceScaleFactor(float device_scale_factor) {
-    device_scale_factor_ = device_scale_factor;
-  }
 #endif
   std::shared_ptr<bkfont::FontManager> GetFontManager() const {
     return font_manager_;
@@ -138,8 +156,12 @@ public:
 #endif
 
 private:
-  std::shared_ptr<Typeface> CreateTypeface(const FontDescription&, const FontFaceCreationParams&, String&);
+  // Native hooks select a face; CreateFontPlatformData applies common policy.
+  static std::shared_ptr<bkfont::FontManager> CreateFontManager();
+  std::shared_ptr<Typeface> MatchTypeface(const FontDescription&, const FontFaceCreationParams&, AlternateFontName, String&);
   std::shared_ptr<Typeface> CreateTypefaceFromUniqueName(const FontFaceCreationParams&);
+  bool IsFamilyAvailable(const String&) const;
+  std::shared_ptr<const FontPlatformData> PlatformLastResortFont(const FontDescription&);
   std::shared_ptr<const SimpleFontData> FallbackOnStandardFontStyle(const FontDescription&, UChar32);
   std::shared_ptr<const SimpleFontData> PlatformFallbackFontForCharacter(const FontDescription&, UChar32, std::shared_ptr<const SimpleFontData>, FontFallbackPriority);
   std::shared_ptr<bkfont::FontManager> font_manager_;
@@ -152,7 +174,9 @@ private:
   std::uint64_t next_client_id_ = 0;
   std::unique_ptr<FontFallbackMap> font_fallback_map_;
   uint16_t generation_ = 0;
+  float invalidated_device_scale_factor_ = 1.0f;
   static FontPrewarmer* prewarmer_;
+  static float device_scale_factor_;
 #if BUILDFLAG(IS_WIN)
   static bool antialiased_text_enabled_;
   static bool lcd_text_enabled_;
@@ -162,8 +186,6 @@ private:
   static int32_t menu_font_height_;
   static int32_t small_caption_font_height_;
   static int32_t status_font_height_;
-#elif BUILDFLAG(IS_LINUX)
-  static float device_scale_factor_;
 #endif
 };
 

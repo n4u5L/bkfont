@@ -19,7 +19,7 @@
 #include "geometry/physical_size.h"
 #include "layout/geometry/physical_rect.h"
 #include "paint/line_relative_rect.h"
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
 #include "text/text_direction.h"
 #include "paint/affine_transform.h"
 

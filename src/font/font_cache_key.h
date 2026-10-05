@@ -140,8 +140,8 @@ private:
   unsigned font_size_ = 0;
   unsigned options_ = 0;
   // FontCacheKey is the key to retrieve FontPlatformData entries from the
-  // FontCache. FontPlatformData queries the platform's font render style, which
-  // is dependent on the device scale factor. That's why we need
+  // FontCache. FontPlatformData resolves the common Linux/FreeType render
+  // style, which depends on the device scale factor on both platforms. We need
   // device_scale_factor_ to be a part of computing the cache key.
   float device_scale_factor_ = 0;
 #if BUILDFLAG(IS_ANDROID)

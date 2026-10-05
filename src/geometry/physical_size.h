@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
+#include "paint/geometry.h"
 
 namespace bkfont {
 
@@ -54,6 +55,23 @@ struct PhysicalSize {
   constexpr bool IsEmpty() const {
     return width == LayoutUnit() || height == LayoutUnit();
   }
+
+  explicit PhysicalSize(const Size& size)
+      : width(size.width()),
+        height(size.height()) {
+  }
 };
+
+// TODO(crbug.com/41458361): These functions should upgraded to force correct
+// pixel snapping in a type-safe way.
+inline Size ToRoundedSize(const PhysicalSize& s) {
+  return {s.width.Round(), s.height.Round()};
+}
+inline Size ToFlooredSize(const PhysicalSize& s) {
+  return {s.width.Floor(), s.height.Floor()};
+}
+inline Size ToCeiledSize(const PhysicalSize& s) {
+  return {s.width.Ceil(), s.height.Ceil()};
+}
 
 } // namespace bkfont

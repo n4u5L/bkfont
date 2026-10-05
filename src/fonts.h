@@ -4,6 +4,7 @@
 
 #include "initialize.h"
 #include "paint/canvas_paint_canvas.h"
+#include "paint/device_scale.h"
 #include "font/character_range.h"
 #include "font/font.h"
 #include "font/font_cache.h"

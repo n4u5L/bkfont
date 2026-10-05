@@ -7,7 +7,7 @@
 
 #include <cstdint>
 #include <span>
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
 
 #include "paint/geometry.h"
 

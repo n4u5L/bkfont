@@ -93,6 +93,9 @@ bool FontSelector::IsWebkitBodyFamily(const FontDescription& font_description) {
 FontFallbackMap& FontSelector::GetFontFallbackMap() {
   if (!font_fallback_map_) {
     font_fallback_map_ = std::make_unique<FontFallbackMap>(shared_from_this());
+    // The standalone host has no CSSFontSelector/document bridge to forward
+    // display-scale invalidation. Observe the font cache as well as face events.
+    FontCache::Get().AddClient(font_fallback_map_.get());
     RegisterForInvalidationCallbacks(font_fallback_map_.get());
   }
   return *font_fallback_map_;

@@ -27,6 +27,7 @@
 #include <cstring>
 #include <utility>
 
+#include "font_cache.h"
 #include "runtime_enabled_features.h"
 #include "shaping/harfbuzz_face.h"
 
@@ -69,14 +70,8 @@ FontPlatformData::FontPlatformData(std::shared_ptr<bkfont::Typeface> typeface,
       synthetic_italic_(synthetic_italic),
       text_rendering_(text_rendering),
       orientation_(orientation),
-      resolved_font_features_(std::move(resolved_font_features)) {
-  // QuerySystemRenderStyle's Linux geometric-precision adjustment. System
-  // preference queries are replaced by the same resolved defaults everywhere.
-  if (text_rendering == kGeometricPrecision && style_.use_anti_alias) {
-    style_.use_subpixel_positioning = true;
-    style_.use_hinting = false;
-    style_.hint_style = FontHinting::kNone;
-  }
+      resolved_font_features_(std::move(resolved_font_features)),
+      style_(FontRenderStyle::Resolve(FontCache::DeviceScaleFactor(), text_rendering)) {
 }
 
 FontPlatformData::~FontPlatformData() = default;

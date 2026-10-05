@@ -9,6 +9,9 @@
 // Ported from: chromium/ui/gfx/geometry/insets_outsets_f_base.h
 // Ported from: chromium/ui/gfx/geometry/insets_f.h
 // Ported from: chromium/ui/gfx/geometry/outsets_f.h
+// Ported from: chromium/ui/gfx/geometry/point.h
+// Ported from: chromium/ui/gfx/geometry/size.h
+// Ported from: chromium/ui/gfx/geometry/rect.h
 
 // Copyright 2012 The Chromium Authors
 // Copyright 2022 The Chromium Authors
@@ -18,6 +21,8 @@
 #include <cmath>
 #include <limits>
 #include <string>
+
+#include "base/numerics/clamped_math.h"
 
 // The upstream gfx namespace is flattened into bkfont.
 namespace bkfont {
@@ -478,5 +483,174 @@ inline RectF operator-(RectF rect, const Vector2dF& offset) {
   rect -= offset;
   return rect;
 }
+
+// A point has an x and y coordinate.
+//
+// Only the members used by pixel snapping are ported.
+class Point {
+public:
+  constexpr Point() = default;
+  constexpr Point(int x, int y)
+      : x_(x),
+        y_(y) {
+  }
+  constexpr int x() const {
+    return x_;
+  }
+  constexpr int y() const {
+    return y_;
+  }
+  void set_x(int x) {
+    x_ = x;
+  }
+  void set_y(int y) {
+    y_ = y;
+  }
+  void SetPoint(int x, int y) {
+    x_ = x;
+    y_ = y;
+  }
+  friend constexpr bool operator==(const Point&, const Point&) = default;
+
+private:
+  int x_ = 0;
+  int y_ = 0;
+};
+
+// A size has width and height values.
+//
+// Only the members used by pixel snapping are ported.
+class Size {
+public:
+  constexpr Size() = default;
+  constexpr Size(int width, int height)
+      : width_(std::max(0, width)),
+        height_(std::max(0, height)) {
+  }
+  constexpr int width() const {
+    return width_;
+  }
+  constexpr int height() const {
+    return height_;
+  }
+  void set_width(int width) {
+    width_ = std::max(0, width);
+  }
+  void set_height(int height) {
+    height_ = std::max(0, height);
+  }
+  void SetSize(int width, int height) {
+    set_width(width);
+    set_height(height);
+  }
+  bool IsEmpty() const {
+    return !width() || !height();
+  }
+  bool IsZero() const {
+    return !width() && !height();
+  }
+  friend constexpr bool operator==(const Size&, const Size&) = default;
+
+private:
+  int width_ = 0;
+  int height_ = 0;
+};
+
+// A rectangle with integer coordinates. The width and height are clamped so
+// that right() and bottom() do not overflow.
+//
+// Only the members used by pixel snapping are ported.
+class Rect {
+public:
+  constexpr Rect() = default;
+  constexpr Rect(int width, int height)
+      : size_(width, height) {
+  }
+  constexpr Rect(int x, int y, int width, int height)
+      : origin_(x, y),
+        size_(ClampWidthOrHeight(x, width), ClampWidthOrHeight(y, height)) {
+  }
+  constexpr explicit Rect(const Size& size)
+      : size_(size) {
+  }
+  constexpr Rect(const Point& origin, const Size& size)
+      : origin_(origin),
+        size_(ClampWidthOrHeight(origin.x(), size.width()), ClampWidthOrHeight(origin.y(), size.height())) {
+  }
+
+  constexpr int x() const {
+    return origin_.x();
+  }
+  // Sets the X position while preserving the width.
+  void set_x(int x) {
+    origin_.set_x(x);
+    size_.set_width(ClampWidthOrHeight(x, width()));
+  }
+
+  constexpr int y() const {
+    return origin_.y();
+  }
+  // Sets the Y position while preserving the height.
+  void set_y(int y) {
+    origin_.set_y(y);
+    size_.set_height(ClampWidthOrHeight(y, height()));
+  }
+
+  constexpr int width() const {
+    return size_.width();
+  }
+  void set_width(int width) {
+    size_.set_width(ClampWidthOrHeight(x(), width));
+  }
+
+  constexpr int height() const {
+    return size_.height();
+  }
+  void set_height(int height) {
+    size_.set_height(ClampWidthOrHeight(y(), height));
+  }
+
+  constexpr const Point& origin() const {
+    return origin_;
+  }
+  constexpr const Size& size() const {
+    return size_;
+  }
+
+  constexpr int right() const {
+    return x() + width();
+  }
+  constexpr int bottom() const {
+    return y() + height();
+  }
+
+  constexpr Point top_right() const {
+    return Point(right(), y());
+  }
+  constexpr Point bottom_left() const {
+    return Point(x(), bottom());
+  }
+  constexpr Point bottom_right() const {
+    return Point(right(), bottom());
+  }
+
+  // Returns true if the area of the rectangle is zero.
+  bool IsEmpty() const {
+    return size_.IsEmpty();
+  }
+
+  friend constexpr bool operator==(const Rect&, const Rect&) = default;
+
+private:
+  // Clamp the width/height to avoid integer overflow in bottom() and right().
+  // This returns the clamped width/height given an |x_or_y| and a
+  // |width_or_height|.
+  static constexpr int ClampWidthOrHeight(int x_or_y, int width_or_height) {
+    return base::ClampAdd(x_or_y, width_or_height) - x_or_y;
+  }
+
+  Point origin_;
+  Size size_;
+};
 
 } // namespace bkfont

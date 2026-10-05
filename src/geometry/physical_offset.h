@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
+#include "paint/geometry.h"
 
 namespace bkfont {
 
@@ -47,6 +48,23 @@ struct PhysicalOffset {
     *this = *this - other;
     return *this;
   }
+
+  explicit PhysicalOffset(const Point& point)
+      : left(point.x()),
+        top(point.y()) {
+  }
 };
+
+// TODO(crbug.com/41458361): These functions should upgraded to force correct
+// pixel snapping in a type-safe way.
+inline Point ToRoundedPoint(const PhysicalOffset& o) {
+  return {o.left.Round(), o.top.Round()};
+}
+inline Point ToFlooredPoint(const PhysicalOffset& o) {
+  return {o.left.Floor(), o.top.Floor()};
+}
+inline Point ToCeiledPoint(const PhysicalOffset& o) {
+  return {o.left.Ceil(), o.top.Ceil()};
+}
 
 } // namespace bkfont

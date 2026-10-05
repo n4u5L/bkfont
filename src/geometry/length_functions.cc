@@ -25,7 +25,7 @@
 #include "length_functions.h"
 #include <utility>
 
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
 #include "length_point.h"
 #include "length_size.h"
 #include "paint/geometry.h"

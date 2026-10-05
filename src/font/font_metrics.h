@@ -25,7 +25,7 @@
 #include "font_baseline.h"
 #include "font_height.h"
 #include "font_metrics_override.h"
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
 #include "base/math_extras.h"
 
 #include <memory>

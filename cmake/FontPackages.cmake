@@ -91,7 +91,7 @@ find_package(freetype CONFIG REQUIRED PATHS
 find_package(harfbuzz CONFIG REQUIRED PATHS "${BLINK_FONTS_HARFBUZZ_ROOT}/lib/cmake/harfbuzz" NO_DEFAULT_PATH)
 # This HarfBuzz package was built with FreeType support. Use FreeType's target
 # rather than just its archive path so PNG, ZLIB and Brotli remain transitive.
-# blink_fonts also links FreeType directly for rasterization and metrics.
+# bkfont also links FreeType directly for rasterization and metrics.
 set_property(TARGET harfbuzz::harfbuzz PROPERTY INTERFACE_LINK_LIBRARIES
   "Freetype::Freetype;ICU::uc")
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")

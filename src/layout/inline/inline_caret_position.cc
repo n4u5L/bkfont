@@ -1,0 +1,81 @@
+// Ported from: blink/renderer/core/layout/inline/inline_caret_position.cc
+// Copyright 2018 The Chromium Authors
+// Use of this source code is governed by a BSD-style license in LICENSE.
+#include "inline_caret_position.h"
+
+#include <algorithm>
+
+#include "editing/bidi_adjustment.h"
+
+namespace bkfont {
+namespace {
+
+bool CanResolveBefore(const InlineCursor& cursor, TextAffinity affinity) {
+  if (affinity == TextAffinity::kDownstream) return true;
+  auto line = cursor.CursorForRoot();
+  line.MoveToContainingLine();
+  auto first = line.CursorForDescendants();
+  for (auto item = first; item; item.MoveToNext()) {
+    if (item.Current()->TextOffset().start < first.Current()->TextOffset().start) first = item;
+  }
+  if (first.Current() != cursor.Current()) return true;
+  line.MoveToPreviousLine();
+  return !line || !line.Current()->HasSoftWrapToNextLine();
+}
+
+bool CanResolveAfter(const InlineCursor& cursor, TextAffinity affinity) {
+  if (affinity == TextAffinity::kUpstream) return true;
+  auto line = cursor.CursorForRoot();
+  line.MoveToContainingLine();
+  auto last = line.CursorForDescendants();
+  for (auto item = last; item; item.MoveToNext()) {
+    if (item.Current()->TextOffset().end > last.Current()->TextOffset().end) last = item;
+  }
+  if (last.Current() != cursor.Current()) return true;
+  return !line.Current()->HasSoftWrapToNextLine();
+}
+
+bool IsUpstreamAfterLineBreak(const InlineCaretPosition& position) {
+  return position && position.cursor.Current()->IsLineBreak() &&
+         position.text_offset == position.cursor.Current()->TextOffset().end;
+}
+
+} // namespace
+
+InlineCaretPosition ComputeInlineCaretPosition(InlineFormattingContext& context, InlinePosition position) {
+  const auto& fragments = context.Fragments();
+  const auto offset = fragments.Mapping().GetTextContentOffset(position);
+  if (!offset) return {};
+  const auto* preferred = context.Find(position.node);
+  if (preferred && !preferred->IsText()) preferred = nullptr;
+  InlineCaretPosition candidate;
+  InlineCursor cursor(context);
+  if (preferred && preferred->HasInlineFragments()) cursor.MoveTo(*preferred);
+  for (; cursor; cursor.MoveToNext()) {
+    const FragmentItem& item = *cursor.Current();
+    if (item.IsGeneratedText()) continue;
+    const auto range = item.TextOffset();
+    if (item.Type() == FragmentItem::kLine) {
+      // The standalone editor provides an insertion slot on an empty line.
+      if (range.start == range.end && *offset == range.start)
+        return {cursor, InlineCaretPositionType::kEmptyLine, *offset};
+      continue;
+    }
+    if (*offset < range.start && !fragments.Mapping().HasBidiControlCharactersOnly(*offset, range.start)) continue;
+    if (*offset > range.end && !fragments.Mapping().HasBidiControlCharactersOnly(range.end, *offset)) continue;
+    const unsigned clamped = std::clamp(*offset, range.start, range.end);
+    const InlineCaretPosition current{cursor, item.IsAtomicInline() ? (clamped == range.start ? InlineCaretPositionType::kBeforeBox : InlineCaretPositionType::kAfterBox) : InlineCaretPositionType::kAtTextOffset, clamped};
+    const bool resolved = (clamped > range.start && clamped < range.end) ||
+                          (clamped == range.start && CanResolveBefore(cursor, position.affinity)) ||
+                          (clamped == range.end && !item.IsLineBreak() && CanResolveAfter(cursor, position.affinity));
+    if (resolved) {
+      candidate = current;
+      if (!preferred || item.GetLayoutObject() == preferred) return AdjustCaretForBidi(current);
+      continue;
+    }
+    if (!candidate || IsUpstreamAfterLineBreak(candidate)) candidate = current;
+  }
+  return AdjustCaretForBidi(candidate);
+}
+
+} // namespace bkfont

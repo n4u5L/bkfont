@@ -33,7 +33,7 @@
 #include "font_fallback_iterator.h"
 #include "font_fallback_list.h"
 #include "simple_font_data.h"
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
 #include "text/tab_size.h"
 namespace bkfont {
 

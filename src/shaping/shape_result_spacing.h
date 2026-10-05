@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
 
 #include "text/character.h"
 

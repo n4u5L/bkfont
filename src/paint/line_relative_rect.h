@@ -8,7 +8,7 @@
 #include "layout/geometry/logical_size.h"
 #include "layout/geometry/physical_rect.h"
 #include "geometry.h"
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
 #include "text/writing_mode.h"
 #include "affine_transform.h"
 

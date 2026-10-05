@@ -12,7 +12,7 @@
 #include "shaping/shape_options.h"
 #include "shaping/shape_result_view.h"
 #include "shaping/text_spacing_trim.h"
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
 #include "platform_export.h"
 #include "text/text_direction.h"
 #include "base/text/atomic_string.h"

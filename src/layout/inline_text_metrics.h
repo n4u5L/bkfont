@@ -11,7 +11,7 @@
 #include "font/font_baseline.h"
 #include "font/font_height.h"
 #include "geometry/length.h"
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
 
 namespace bkfont {
 

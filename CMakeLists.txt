@@ -1,6 +1,6 @@
 # Local implementation: standalone font library build configuration.
 cmake_minimum_required(VERSION 3.28)
-project(blink_fonts LANGUAGES CXX)
+project(bkfont LANGUAGES CXX)
 if(DEFINED BLINK_FONTS_SHOWINCLUDES_PREFIX)
   # CMake's compiler probe may misdecode UTF-8 diagnostics from a localized
   # MSVC installation. Ninja needs the exact prefix for header dependencies.
@@ -36,10 +36,10 @@ include(cmake/FontPackages.cmake)
 include(cmake/FontSanitizer.cmake)
 add_subdirectory(tools/character_data)
 
-add_library(blink_fonts STATIC)
-add_library(blink_fonts::blink_fonts ALIAS blink_fonts)
-add_dependencies(blink_fonts generate_character_data)
-target_sources(blink_fonts PRIVATE
+add_library(bkfont STATIC)
+add_library(bkfont::bkfont ALIAS bkfont)
+add_dependencies(bkfont generate_character_data)
+target_sources(bkfont PRIVATE
   src/base/base_export.h
   src/base/bit_cast.h
   src/base/compiler_specific.h
@@ -120,6 +120,7 @@ target_sources(blink_fonts PRIVATE
   src/base/hash_table.h
   src/base/hash_table_deleted_value_type.h
   src/base/hash_traits.h
+  src/base/heap_vector.h
   src/base/key_value_pair.h
   src/base/leak_annotations.h
   src/base/lean_windows.h
@@ -185,6 +186,9 @@ target_sources(blink_fonts PRIVATE
   src/build/build_config.h
   src/third_party/rapidhash/rapidhash.h
   src/fonts.h
+  src/inline_layout.h
+  src/editing/inline_editor.h src/editing/inline_editor.cc
+  src/editing/bidi_adjustment.h src/editing/bidi_adjustment.cc
   src/initialize.h src/initialize.cc
   src/language.h src/language.cc
   src/platform_export.h
@@ -272,9 +276,19 @@ target_sources(blink_fonts PRIVATE
   src/geometry/physical_size.h
   src/layout/geometry/logical_size.h
   src/layout/geometry/physical_rect.h
+  src/layout/layout_unit.h src/layout/layout_unit.cc
   src/layout/inline_text_metrics.h src/layout/inline_text_metrics.cc
+  src/layout/inline/inline_object.h src/layout/inline/inline_object.cc
+  src/layout/inline/offset_mapping.h src/layout/inline/offset_mapping.cc
+  src/layout/inline/fragment_item.h src/layout/inline/fragment_item.cc
+  src/layout/inline/fragment_items.h src/layout/inline/fragment_items.cc
+  src/layout/inline/inline_cursor.h src/layout/inline/inline_cursor.cc
+  src/layout/inline/inline_caret_position.h src/layout/inline/inline_caret_position.cc
+  src/layout/inline/inline_layout_algorithm.h src/layout/inline/inline_layout_algorithm.cc
+  src/layout/inline/inline_formatting_context.h src/layout/inline/inline_formatting_context.cc
   src/layout/text_combine.h src/layout/text_combine.cc
   src/paint/affine_transform.h src/paint/affine_transform.cc
+  src/paint/device_scale.h
   src/paint/bezier_curves.h src/paint/bezier_curves.cc
   src/paint/blend_mode.h src/paint/blend_mode.cc
   src/paint/canvas.h src/paint/canvas.cc
@@ -372,7 +386,6 @@ target_sources(blink_fonts PRIVATE
   src/shaping/shaping_line_breaker.h src/shaping/shaping_line_breaker.cc
   src/shaping/small_caps_iterator.h src/shaping/small_caps_iterator.cc
   src/shaping/stretchy_operator_shaper.h src/shaping/stretchy_operator_shaper.cc
-  src/shaping/support/layout_unit.h src/shaping/support/layout_unit.cc
   src/shaping/symbols_iterator.h src/shaping/symbols_iterator.cc
   src/shaping/text_spacing_trim.h
   src/shaping/utf16_ragel_iterator.h
@@ -405,26 +418,29 @@ target_sources(blink_fonts PRIVATE
 # Ragel output textually included by symbols_iterator.cc.
 set_source_files_properties(src/shaping/emoji_presentation_scanner.c
   PROPERTIES HEADER_FILE_ONLY ON)
-target_include_directories(blink_fonts
+target_include_directories(bkfont
   PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src"
   PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/tools/character_data/generated"
           "${CMAKE_CURRENT_SOURCE_DIR}/src/base/third_party/double_conversion/double-conversion")
-target_compile_features(blink_fonts PUBLIC cxx_std_20)
-target_link_libraries(blink_fonts
+target_compile_features(bkfont PUBLIC cxx_std_20)
+target_link_libraries(bkfont
   PUBLIC harfbuzz::harfbuzz ICU::i18n ICU::uc
-  PRIVATE blink_fonts_ots Freetype::Freetype)
+  PRIVATE bkfont::ots Freetype::Freetype)
+# Native discovery/matching, host font metadata and OS thread storage only.
+# Both backends use the shared font-data, shaping and FreeType raster sources.
 if(WIN32)
-  target_sources(blink_fonts PRIVATE
+  target_sources(bkfont PRIVATE
     src/base/threading/thread_local_storage_win.cc
+    src/font/font_cache_win.cc
     src/font/font_fallback_win.h src/font/font_fallback_win.cc
     src/font/font_unique_name_lookup_win.h src/font/font_unique_name_lookup_win.cc
     src/platform/dwrite_font_file_stream.h src/platform/dwrite_font_file_stream.cc
     src/platform/dwrite_internal.h src/platform/dwrite_internal.cc
     src/platform/font_manager_win.h src/platform/font_manager_win.cc)
-  target_compile_definitions(blink_fonts PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN)
-  target_link_libraries(blink_fonts PRIVATE dwrite user32)
+  target_compile_definitions(bkfont PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN)
+  target_link_libraries(bkfont PRIVATE dwrite user32)
 else()
-  target_sources(blink_fonts PRIVATE
+  target_sources(bkfont PRIVATE
     src/base/threading/thread_local_storage_posix.h
     src/base/threading/thread_local_storage_posix.cc
     src/font/font_cache_linux.cc
@@ -432,10 +448,5 @@ else()
     src/font/font_unique_name_lookup_linux.h src/font/font_unique_name_lookup_linux.cc
     src/platform/fontconfig_util.h src/platform/fontconfig_util.cc
     src/platform/font_manager_fontconfig.h src/platform/font_manager_fontconfig.cc)
-  target_link_libraries(blink_fonts PRIVATE Fontconfig::Fontconfig Threads::Threads)
-endif()
-
-option(BLINK_FONTS_BUILD_EXAMPLES "Build the GLFW text rendering example" ON)
-if(BLINK_FONTS_BUILD_EXAMPLES)
-  add_subdirectory(examples)
+  target_link_libraries(bkfont PRIVATE Fontconfig::Fontconfig Threads::Threads)
 endif()

@@ -11,7 +11,7 @@
 #include "base/containers/flat_map.h"
 #include "base/functional/function_ref.h"
 #include "color_channel_keyword.h"
-#include "shaping/support/layout_unit.h"
+#include "layout/layout_unit.h"
 
 namespace bkfont {
 
