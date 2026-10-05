@@ -12,7 +12,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "graphics/sin_cos_degrees.h"
+#include "paint/sin_cos_degrees.h"
 #include "base/notreached.h"
 
 namespace bkfont {
@@ -111,10 +111,10 @@ ValueType EvaluateTrigonometricFunction(
     std::optional<ValueType>(b) = std::nullopt) {
   switch (op) {
   case OperatorType::kSin: {
-    return gfx::SinCosDegrees(a).sin;
+    return SinCosDegrees(a).sin;
   }
   case OperatorType::kCos: {
-    return gfx::SinCosDegrees(a).cos;
+    return SinCosDegrees(a).cos;
   }
   case OperatorType::kTan: {
     return TanDegrees(a);

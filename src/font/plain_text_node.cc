@@ -289,7 +289,7 @@ void PlainTextNode::Shape(const Font& font, FrameShapeCache* cache) {
     HarfBuzzShaper shaper(item.text_);
     auto shape_result = shaper.Shape(&font, item.Direction());
     assert(shape_result);
-    gfx::RectF ink_bounds;
+    RectF ink_bounds;
     if (!spacing.HasSpacing()) [[likely]] {
       ink_bounds = shape_result->ComputeInkBounds();
     } else {
@@ -311,7 +311,7 @@ void PlainTextNode::Shape(const Font& font, FrameShapeCache* cache) {
           // most cases, but computing it requires re-measuring bounding box
           // of each glyph. Leave it unchanged, which gives an excessive
           // right edge but assures it covers all glyphs.
-          ink_bounds.Outset(gfx::OutsetsF().set_left(ink_bounds.x() - left));
+          ink_bounds.Outset(OutsetsF().set_left(ink_bounds.x() - left));
         }
       }
     }
@@ -324,7 +324,7 @@ void PlainTextNode::Shape(const Font& font, FrameShapeCache* cache) {
   }
 }
 
-float PlainTextNode::AccumulateInlineSize(gfx::RectF* glyph_bounds) const {
+float PlainTextNode::AccumulateInlineSize(RectF* glyph_bounds) const {
   const bool is_rtl = IsRtl(base_direction_);
   float inline_size = 0;
   for (const auto& item : item_list_) {
@@ -339,7 +339,7 @@ float PlainTextNode::AccumulateInlineSize(gfx::RectF* glyph_bounds) const {
       inline_size -= shape_result->Width();
     }
     if (glyph_bounds) {
-      gfx::RectF adjusted_bounds = item.ink_bounds_;
+      RectF adjusted_bounds = item.ink_bounds_;
       // Translate glyph bounds to the current glyph position which
       // is the total width before this glyph.
       adjusted_bounds.set_x(adjusted_bounds.x() + inline_size);

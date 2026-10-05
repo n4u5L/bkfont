@@ -4,7 +4,7 @@
 
 #include <cassert>
 
-#include "platform/canvas.h"
+#include "canvas.h"
 
 namespace bkfont {
 

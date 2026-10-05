@@ -29,7 +29,7 @@
 #include <tuple>
 #include "base/vector.h"
 #include "font_description.h"
-#include "paint_canvas.h"
+#include "paint/paint_canvas.h"
 #include "font_fallback_iterator.h"
 #include "font_fallback_list.h"
 #include "simple_font_data.h"
@@ -62,24 +62,24 @@ public:
 
   void DrawText(PaintCanvas*,
                 const TextFragmentPaintInfo&,
-                const gfx::PointF&,
+                const PointF&,
                 NodeId node_id,
                 const PlatformPaint&,
                 DrawType = DrawType::kGlyphsOnly) const;
   // Deprecated: Use PlainTextPainter.
   bool DeprecatedDrawBidiText(PaintCanvas*,
                               const TextRunPaintInfo&,
-                              const gfx::PointF&,
+                              const PointF&,
                               CustomFontNotReadyAction,
                               const PlatformPaint&,
                               DrawType = DrawType::kGlyphsOnly) const;
   void DrawEmphasisMarks(PaintCanvas*,
                          const TextFragmentPaintInfo&,
                          const AtomicString& mark,
-                         const gfx::PointF&,
+                         const PointF&,
                          const PlatformPaint&) const;
 
-  gfx::RectF TextInkBounds(const TextFragmentPaintInfo&) const;
+  RectF TextInkBounds(const TextFragmentPaintInfo&) const;
 
   struct TextIntercept {
     float begin_, end_;
@@ -115,8 +115,8 @@ public:
   FontFallbackIterator CreateFontFallbackIterator(FontFallbackPriority priority) const {
     return FontFallbackIterator(font_description_, EnsureFontFallbackList(), priority);
   }
-  float DeprecatedWidth(const TextRun&, gfx::RectF* glyph_bounds = nullptr) const;
-  float DeprecatedSubRunWidth(const TextRun&, unsigned from, unsigned to, gfx::RectF* glyph_bounds = nullptr) const;
+  float DeprecatedWidth(const TextRun&, RectF* glyph_bounds = nullptr) const;
+  float DeprecatedSubRunWidth(const TextRun&, unsigned from, unsigned to, RectF* glyph_bounds = nullptr) const;
   float SpaceWidth() const {
     return (PrimaryFont() ? PrimaryFont()->SpaceWidth() : 0) + font_description_.LetterSpacing();
   }

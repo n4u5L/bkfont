@@ -144,7 +144,7 @@ struct TrackEmoji {
 void IdentifyBrokenEmoji(void* context,
                          unsigned character_index,
                          Glyph glyph,
-                         gfx::Vector2dF,
+                         Vector2dF,
                          float,
                          bool,
                          CanvasRotationInVertical,

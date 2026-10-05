@@ -1000,14 +1000,14 @@ void ShapeResult::ApplyVerticalPunctuationCentering(const String& text) {
         continue;
       }
 
-      gfx::RectF ink_bounds;
+      RectF ink_bounds;
       InlineLayoutUnit advance;
       bool missing_glyph = false;
       const auto offsets = run->glyph_data_.Offsets();
       for (unsigned i = begin; i < end; ++i) {
         const auto& glyph = run->glyph_data_[i];
         missing_glyph |= glyph.glyph == 0;
-        gfx::RectF bounds = run->font_data_->BoundsForGlyph(glyph.glyph);
+        RectF bounds = run->font_data_->BoundsForGlyph(glyph.glyph);
         if (!bounds.IsEmpty()) {
           const GlyphOffset offset = offsets.empty() ? GlyphOffset() : offsets[i];
           bounds.Offset(offset.x(), offset.y() + advance.ToFloat());
@@ -1022,7 +1022,7 @@ void ShapeResult::ApplyVerticalPunctuationCentering(const String& text) {
       // Glyph offsets are physical: x=0 is the vertical central baseline,
       // while y runs from zero to the cluster advance. The bloberizer's
       // alphabetic/central baseline conversion must still happen exactly once.
-      const gfx::PointF center = ink_bounds.CenterPoint();
+      const PointF center = ink_bounds.CenterPoint();
       const GlyphOffset adjustment(-center.x(), advance.ToFloat() / 2 - center.y());
       if (adjustment.IsZero()) {
         continue;
@@ -2263,7 +2263,7 @@ float ShapeResult::IndividualCharacterRanges(Vector<CharacterRange>* ranges,
 template <bool is_horizontal_run, bool has_non_zero_glyph_offsets>
 void ShapeResult::ComputeRunInkBounds(const ShapeResultRun& part,
                                       float run_advance,
-                                      gfx::RectF* ink_bounds) const {
+                                      RectF* ink_bounds) const {
   return ComputeRunInkBoundsScalar<is_horizontal_run,
                                    has_non_zero_glyph_offsets>(
       part,
@@ -2274,7 +2274,7 @@ void ShapeResult::ComputeRunInkBounds(const ShapeResultRun& part,
 template <bool is_horizontal_run, bool has_non_zero_glyph_offsets>
 void ShapeResult::ComputeRunInkBoundsScalar(const ShapeResultRun& run,
                                             float run_advance,
-                                            gfx::RectF* ink_bounds) const {
+                                            RectF* ink_bounds) const {
   // Get glyph bounds from DirectWrite. It's a lot faster if we give it list of glyph
   // IDs rather than calling it for each glyph.
   // TODO(kojii): MacOS does not benefit from batching the Skia request due to
@@ -2295,11 +2295,11 @@ void ShapeResult::ComputeRunInkBoundsScalar(const ShapeResultRun& run,
   for (const auto& glyph_data : run.glyph_data_) {
     glyphs[i++] = glyph_data.glyph;
   }
-  std::array<gfx::RectF, 256> stack_bounds;
+  std::array<RectF, 256> stack_bounds;
   auto heap_bounds = num_glyphs > stack_bounds.size()
-                         ? std::make_unique<gfx::RectF[]>(num_glyphs)
+                         ? std::make_unique<RectF[]>(num_glyphs)
                          : nullptr;
-  std::span<gfx::RectF> bounds_list(
+  std::span<RectF> bounds_list(
       heap_bounds ? heap_bounds.get() : stack_bounds.data(),
       num_glyphs);
   current_font_data.BoundsForGlyphs(glyphs, bounds_list);
@@ -2308,7 +2308,7 @@ void ShapeResult::ComputeRunInkBoundsScalar(const ShapeResultRun& run,
   InlineLayoutUnit origin = InlineLayoutUnit::FromFloatCeil(run_advance);
   for (unsigned j = 0; j < num_glyphs; ++j) {
     const HarfBuzzRunGlyphData& glyph_data = run.glyph_data_[j];
-    gfx::RectF glyph_bounds = bounds_list[j];
+    RectF glyph_bounds = bounds_list[j];
     bounds.Unite(glyph_bounds, origin, *glyph_offsets);
     ++glyph_offsets;
     origin += glyph_data.advance;
@@ -2318,8 +2318,8 @@ void ShapeResult::ComputeRunInkBoundsScalar(const ShapeResultRun& run,
       std::move(bounds).BuildBounds(current_font_data.GetFontMetrics()));
 }
 
-gfx::RectF ShapeResult::ComputeInkBounds() const {
-  gfx::RectF ink_bounds;
+RectF ShapeResult::ComputeInkBounds() const {
+  RectF ink_bounds;
   float run_advance = 0.0f;
   for (const auto& run : runs_) {
     if (run->glyph_data_.HasNonZeroOffsets()) {

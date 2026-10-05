@@ -19,7 +19,7 @@
 #include "base/mutex.h"
 #include "base/notreached.h"
 #include "fontconfig_util.h"
-#include "scalar.h"
+#include "paint/scalar.h"
 #include "typeface_cache.h"
 #include "typeface_freetype.h"
 #include "typeface_proxy.h"

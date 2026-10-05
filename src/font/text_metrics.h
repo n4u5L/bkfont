@@ -7,7 +7,7 @@
 #include <hb.h>
 
 #include "glyph.h"
-#include "platform/rect.h"
+#include "paint/rect.h"
 
 namespace bkfont {
 

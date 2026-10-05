@@ -8,9 +8,9 @@
 #include <ft2build.h>
 #include <freetype/freetype.h>
 
-#include "mask_gamma.h"
-#include "matrix.h"
-#include "path.h"
+#include "paint/mask_gamma.h"
+#include "paint/matrix.h"
+#include "paint/path.h"
 #include "platform_glyph.h"
 #include "scaler_context.h"
 

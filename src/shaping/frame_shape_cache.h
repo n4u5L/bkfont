@@ -13,7 +13,7 @@
 #include "base/text/string_hash.h"
 #include "base/text/wtf_string.h"
 #include "base/vector_backed_linked_list.h"
-#include "shaping/support/gfx/geometry/rect_f.h"
+#include "paint/geometry.h"
 
 namespace bkfont {
 
@@ -65,7 +65,7 @@ public:
   struct ShapeEntry {
     // Cached data.
     std::shared_ptr<const ShapeResult> shape_result;
-    gfx::RectF ink_bounds;
+    RectF ink_bounds;
     // A field for LRU management. It's kNotFound for entries created
     // in the initial frame.
     wtf_size_t list_index;

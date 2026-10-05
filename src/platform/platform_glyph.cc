@@ -10,9 +10,9 @@
 
 #include "arena.h"
 #include "base/immediate_crash.h"
-#include "bezier_curves.h"
-#include "picture.h"
-#include "scalar.h"
+#include "paint/bezier_curves.h"
+#include "paint/picture.h"
+#include "paint/scalar.h"
 #include "scaler_context.h"
 #include "strike.h"
 

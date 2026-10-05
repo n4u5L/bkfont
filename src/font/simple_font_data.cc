@@ -48,7 +48,7 @@
 #include "font_cache.h"
 #include "font_description.h"
 #include "font_family_names.h"
-#include "platform/scalar.h"
+#include "paint/scalar.h"
 #include "platform/typeface.h"
 #include "runtime_enabled_features.h"
 #include "shaping/harfbuzz_face.h"
@@ -56,7 +56,7 @@
 #include "shaping/ng_shape_cache.h"
 #include "shaping/opentype/open_type_baseline_metrics.h"
 #include "shaping/opentype/open_type_vertical_data.h"
-#include "shaping/support/gfx/geometry/rect_f.h"
+#include "paint/geometry.h"
 #include "text_metrics.h"
 
 namespace bkfont {
@@ -431,30 +431,30 @@ const HanKerning::FontData& SimpleFontData::HanKerningData(
   return new_entry.data;
 }
 
-gfx::RectF SimpleFontData::PlatformBoundsForGlyph(Glyph glyph) const {
+RectF SimpleFontData::PlatformBoundsForGlyph(Glyph glyph) const {
   if (!platform_data_->size()) {
-    return gfx::RectF();
+    return RectF();
   }
 
   static_assert(sizeof(glyph) == 2, "Glyph id should not be truncated.");
   ScalarRect bounds;
   FontGetBoundsForGlyph(font_, glyph, &bounds);
-  return gfx::RectF(bounds.left, bounds.top, bounds.Width(), bounds.Height());
+  return RectF(bounds.left, bounds.top, bounds.Width(), bounds.Height());
 }
 
 void SimpleFontData::BoundsForGlyphs(std::span<const Glyph> glyphs,
-                                     std::span<gfx::RectF> bounds) const {
+                                     std::span<RectF> bounds) const {
   if (!platform_data_->size()) {
     return;
   }
 
-  // The port's callers use gfx::RectF. Keep the upstream batched metrics call
+  // The port's callers use RectF. Keep the upstream batched metrics call
   // and convert its LTRB rectangles to XYWH only at this boundary.
   Vector<ScalarRect, 256> glyph_bounds(glyphs.size());
   FontGetBoundsForGlyphs(font_, glyphs, glyph_bounds.data());
   for (std::size_t i = 0; i < glyphs.size(); ++i) {
     const ScalarRect& rect = glyph_bounds[i];
-    bounds[i] = gfx::RectF(rect.left, rect.top, rect.Width(), rect.Height());
+    bounds[i] = RectF(rect.left, rect.top, rect.Width(), rect.Height());
   }
 }
 

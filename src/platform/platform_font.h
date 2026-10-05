@@ -9,7 +9,7 @@
 #include <utility>
 
 #include "platform_font_metrics.h"
-#include "rect.h"
+#include "paint/rect.h"
 #include "typeface.h"
 
 namespace bkfont {

@@ -13,9 +13,9 @@
 #include "arena.h"
 #include "base/hash/hash.h"
 #include "base/mutex.h"
-#include "picture.h"
-#include "scalar.h"
-#include "shader.h"
+#include "paint/picture.h"
+#include "paint/scalar.h"
+#include "paint/shader.h"
 
 namespace bkfont {
 

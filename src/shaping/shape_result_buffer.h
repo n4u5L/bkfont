@@ -58,7 +58,7 @@ public:
   };
   // A helper for GetCharacterRange().
   static void ComputeRangeIn(const ShapeResult& result,
-                             const gfx::RectF& ink_bounds,
+                             const RectF& ink_bounds,
                              CharacterRangeContext& context);
 
 private:

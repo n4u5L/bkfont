@@ -7,15 +7,15 @@
 #include <memory>
 #include <optional>
 
-#include "mask_gamma.h"
-#include "matrix.h"
-#include "path.h"
+#include "paint/mask_gamma.h"
+#include "paint/matrix.h"
+#include "paint/path.h"
 #include "platform_font.h"
 #include "platform_font_metrics.h"
 #include "platform_glyph.h"
-#include "platform_paint.h"
-#include "rect.h"
-#include "surface_props.h"
+#include "paint/platform_paint.h"
+#include "paint/rect.h"
+#include "paint/surface_props.h"
 #include "typeface.h"
 
 namespace bkfont {

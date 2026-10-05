@@ -21,7 +21,7 @@
 #include "shaping/shape_result_run.h"
 #include "runtime_enabled_features.h"
 #include "base/text/unicode.h"
-#include "shaping/support/gfx/geometry/rect_f.h"
+#include "paint/geometry.h"
 
 namespace bkfont {
 
@@ -157,7 +157,7 @@ std::shared_ptr<const ShapeResult> StretchyOperatorShaper::Shape(const Font* fon
   for (auto& variant : OpenTypeMathSupport::GetGlyphVariantRecords(
            harfbuzz_face, base_glyph, stretch_axis_)) {
     glyph_variant = variant;
-    gfx::RectF bounds = primary_font->BoundsForGlyph(glyph_variant);
+    RectF bounds = primary_font->BoundsForGlyph(glyph_variant);
     if (metrics) {
       italic_correction =
           OpenTypeMathSupport::MathItalicCorrection(harfbuzz_face, variant)
@@ -190,7 +190,7 @@ std::shared_ptr<const ShapeResult> StretchyOperatorShaper::Shape(const Font* fon
   if (metrics) {
     // The OpenType MATH specification does provide any distinction between
     // the advance width and ink width, so the latter is returned here.
-    gfx::RectF bounds = shape_result_for_glyph_assembly->ComputeInkBounds();
+    RectF bounds = shape_result_for_glyph_assembly->ComputeInkBounds();
     if (stretch_axis_ == OpenTypeMathStretchData::StretchAxis::Horizontal) {
       *metrics = {bounds.width(), -bounds.y(), bounds.bottom(),
                   italic_correction};

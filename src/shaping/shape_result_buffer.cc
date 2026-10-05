@@ -15,7 +15,7 @@
 #include "font/simple_font_data.h"
 #include "text/text_direction.h"
 #include "text/text_run.h"
-#include "shaping/support/gfx/geometry.h"
+#include "paint/geometry.h"
 
 namespace bkfont {
 
@@ -33,7 +33,7 @@ unsigned CharactersInShapeResult(
 } // namespace
 
 void ShapeResultBuffer::ComputeRangeIn(const ShapeResult& result,
-                                       const gfx::RectF& ink_bounds,
+                                       const RectF& ink_bounds,
                                        CharacterRangeContext& context) {
   result.EnsureGraphemes(StringView(context.text, context.total_num_characters, result.NumCharacters()));
   if (context.is_rtl) {

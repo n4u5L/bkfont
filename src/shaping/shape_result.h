@@ -53,7 +53,7 @@
 #include "base/ref_counted.h"
 #include "base/vector_traits.h"
 #include "base/text/wtf_uchar.h"
-#include "shaping/support/gfx/geometry.h"
+#include "paint/geometry.h"
 
 #if defined(ARCH_CPU_X86_64) || defined(ARCH_CPU_ARM64)
 #define USE_SIMD_FOR_COMPUTING_GLYPH_BOUNDS 1
@@ -107,7 +107,7 @@ struct OffsetWithSpacing {
 
 struct DeprecatedInkBounds {
 
-  gfx::RectF ink_bounds;
+  RectF ink_bounds;
 };
 
 // BreakGlyphsOption - allows OffsetForPosition to consider graphemes
@@ -120,7 +120,7 @@ using BreakGlyphsOption = base::StrongAlias<class BreakGlyphsOptionTag, bool>;
 typedef void (*GlyphCallback)(void* context,
                               unsigned character_index,
                               Glyph,
-                              gfx::Vector2dF glyph_offset,
+                              Vector2dF glyph_offset,
                               float total_advance,
                               bool is_horizontal,
                               CanvasRotationInVertical,
@@ -399,17 +399,17 @@ public:
 
   // Computes and returns the ink bounds (or visual overflow rect). This is
   // quite expensive and involves measuring each glyph accumulating the bounds.
-  gfx::RectF ComputeInkBounds() const;
+  RectF ComputeInkBounds() const;
 
   // Only used by CachingWordShapeIterator
   // TODO(eae): Remove once LayoutNG lands. https://crbug.com/591099
-  void SetDeprecatedInkBounds(gfx::RectF ink_bounds) {
+  void SetDeprecatedInkBounds(RectF ink_bounds) {
     if (!deprecated_ink_bounds_) {
       deprecated_ink_bounds_ = std::make_unique<DeprecatedInkBounds>();
     }
     deprecated_ink_bounds_->ink_bounds = ink_bounds;
   }
-  gfx::RectF GetDeprecatedInkBounds() const {
+  RectF GetDeprecatedInkBounds() const {
 
     return deprecated_ink_bounds_->ink_bounds;
   }
@@ -477,12 +477,12 @@ protected:
   template <bool is_horizontal_run, bool has_non_zero_glyph_offsets>
   void ComputeRunInkBounds(const ShapeResultRun&,
                            float run_advance,
-                           gfx::RectF* ink_bounds) const;
+                           RectF* ink_bounds) const;
 
   template <bool is_horizontal_run, bool has_non_zero_glyph_offsets>
   void ComputeRunInkBoundsScalar(const ShapeResultRun&,
                                  float run_advance,
-                                 gfx::RectF* ink_bounds) const;
+                                 RectF* ink_bounds) const;
 
   // Common signatures with ShapeResultView, to templatize algorithms.
   const Vector<std::shared_ptr<ShapeResultRun>, 1>& RunsOrParts() const {

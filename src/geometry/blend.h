@@ -8,7 +8,7 @@
 #include "shaping/support/layout_unit.h"
 #include "platform_export.h"
 #include "base/math_extras.h"
-#include "shaping/support/gfx/geometry.h"
+#include "paint/geometry.h"
 
 #include <type_traits>
 
@@ -38,10 +38,10 @@ inline LayoutUnit Blend(LayoutUnit from, LayoutUnit to, double progress) {
   return LayoutUnit(from + (to - from) * progress);
 }
 
-inline gfx::PointF Blend(const gfx::PointF& from,
-                         const gfx::PointF& to,
+inline PointF Blend(const PointF& from,
+                         const PointF& to,
                          double progress) {
-  return gfx::PointF(Blend(from.x(), to.x(), progress),
+  return PointF(Blend(from.x(), to.x(), progress),
                      Blend(from.y(), to.y(), progress));
 }
 

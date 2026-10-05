@@ -7,7 +7,7 @@
 
 #include <optional>
 
-#include "graphics/color.h"
+#include "paint/color.h"
 #include "base/vector.h"
 
 #include "platform/typeface.h"

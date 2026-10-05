@@ -193,7 +193,6 @@ target_sources(blink_fonts PRIVATE
   src/font/alternate_font_family.h
   src/font/canvas_rotation_in_vertical.h
   src/font/character_range.h
-  src/font/canvas_paint_canvas.h src/font/canvas_paint_canvas.cc
   src/font/color_table_lookup.h src/font/color_table_lookup.cc
   src/font/custom_font_data.h
   src/font/fallback_list_composite_key.h
@@ -242,7 +241,6 @@ target_sources(blink_fonts PRIVATE
   src/font/generic_font_family_settings.h src/font/generic_font_family_settings.cc
   src/font/glyph.h
   src/font/open_type_cpal_lookup.h src/font/open_type_cpal_lookup.cc
-  src/font/paint_canvas.h
   src/font/palette_interpolation.h src/font/palette_interpolation.cc
   src/font/plain_text_node.h src/font/plain_text_node.cc
   src/font/resolved_font_features.h src/font/resolved_font_features.cc
@@ -270,17 +268,45 @@ target_sources(blink_fonts PRIVATE
   src/geometry/length_point.h
   src/geometry/length_size.h
   src/geometry/math_functions.h
-  src/graphics/color.h src/graphics/color.cc
-  src/graphics/color_conversions.h src/graphics/color_conversions.cc
-  src/graphics/color_float.h
-  src/graphics/color_math.h src/graphics/color_math.cc
-  src/graphics/color_names.cc
-  src/graphics/sin_cos_degrees.h
+  src/geometry/physical_offset.h
+  src/geometry/physical_size.h
+  src/layout/geometry/logical_size.h
+  src/layout/geometry/physical_rect.h
+  src/layout/inline_text_metrics.h src/layout/inline_text_metrics.cc
+  src/layout/text_combine.h src/layout/text_combine.cc
+  src/paint/affine_transform.h src/paint/affine_transform.cc
+  src/paint/bezier_curves.h src/paint/bezier_curves.cc
+  src/paint/blend_mode.h src/paint/blend_mode.cc
+  src/paint/canvas.h src/paint/canvas.cc
+  src/paint/canvas_paint_canvas.h src/paint/canvas_paint_canvas.cc
+  src/paint/color.h src/paint/color.cc
+  src/paint/color4f.h
+  src/paint/color_conversions.h src/paint/color_conversions.cc
+  src/paint/color_float.h
+  src/paint/color_math.h src/paint/color_math.cc
+  src/paint/color_names.cc
+  src/paint/geometry.h
+  src/paint/glyph_run.h src/paint/glyph_run.cc
+  src/paint/glyph_run_painter.h src/paint/glyph_run_painter.cc
+  src/paint/line_relative_rect.h src/paint/line_relative_rect.cc
+  src/paint/mask.h src/paint/mask.cc
+  src/paint/mask_gamma.h src/paint/mask_gamma.cc
+  src/paint/matrix.h src/paint/matrix.cc
+  src/paint/paint_canvas.h
+  src/paint/path.h src/paint/path.cc
+  src/paint/path_rasterizer.h src/paint/path_rasterizer.cc
+  src/paint/picture.h src/paint/picture.cc
+  src/paint/pixmap.h src/paint/pixmap.cc
+  src/paint/platform_paint.h
+  src/paint/raster_canvas.h src/paint/raster_canvas.cc
+  src/paint/rect.h
+  src/paint/scalar.h
+  src/paint/shader.h src/paint/shader.cc
+  src/paint/sin_cos_degrees.h
+  src/paint/surface_props.h
+  src/paint/text_blob.h src/paint/text_blob.cc
+  src/paint/text_fragment_painter.h src/paint/text_fragment_painter.cc
   src/platform/arena.h
-  src/platform/bezier_curves.h src/platform/bezier_curves.cc
-  src/platform/blend_mode.h src/platform/blend_mode.cc
-  src/platform/canvas.h src/platform/canvas.cc
-  src/platform/color4f.h
   src/platform/data.h src/platform/data.cc
   src/platform/font_arguments.h
   src/platform/font_descriptor.h src/platform/font_descriptor.cc
@@ -290,33 +316,17 @@ target_sources(blink_fonts PRIVATE
   src/platform/font_manager_custom.h src/platform/font_manager_custom.cc
   src/platform/font_parameters.h
   src/platform/font_style.h
-  src/platform/glyph_run.h src/platform/glyph_run.cc
-  src/platform/glyph_run_painter.h src/platform/glyph_run_painter.cc
-  src/platform/mask.h src/platform/mask.cc
-  src/platform/mask_gamma.h src/platform/mask_gamma.cc
-  src/platform/matrix.h src/platform/matrix.cc
   src/platform/opentype_name.cc
   src/platform/opentype_svg_decoder.h src/platform/opentype_svg_decoder.cc
   src/platform/ot_utils.h src/platform/ot_utils.cc
-  src/platform/path.h src/platform/path.cc
-  src/platform/path_rasterizer.h src/platform/path_rasterizer.cc
-  src/platform/picture.h src/platform/picture.cc
-  src/platform/pixmap.h src/platform/pixmap.cc
   src/platform/platform_font.h src/platform/platform_font.cc
   src/platform/platform_font_metrics.h
   src/platform/platform_glyph.h src/platform/platform_glyph.cc
-  src/platform/platform_paint.h
-  src/platform/raster_canvas.h src/platform/raster_canvas.cc
-  src/platform/rect.h
-  src/platform/scalar.h
   src/platform/scaler_context.h src/platform/scaler_context.cc
-  src/platform/shader.h src/platform/shader.cc
   src/platform/stream.h src/platform/stream.cc
   src/platform/strike.h src/platform/strike.cc
   src/platform/strike_cache.h src/platform/strike_cache.cc
   src/platform/strike_spec.h src/platform/strike_spec.cc
-  src/platform/surface_props.h
-  src/platform/text_blob.h src/platform/text_blob.cc
   src/platform/typeface.h src/platform/typeface.cc
   src/platform/typeface_cache.h src/platform/typeface_cache.cc
   src/platform/typeface_freetype.h
@@ -362,8 +372,6 @@ target_sources(blink_fonts PRIVATE
   src/shaping/shaping_line_breaker.h src/shaping/shaping_line_breaker.cc
   src/shaping/small_caps_iterator.h src/shaping/small_caps_iterator.cc
   src/shaping/stretchy_operator_shaper.h src/shaping/stretchy_operator_shaper.cc
-  src/shaping/support/gfx/geometry.h
-  src/shaping/support/gfx/geometry/rect_f.h
   src/shaping/support/layout_unit.h src/shaping/support/layout_unit.cc
   src/shaping/symbols_iterator.h src/shaping/symbols_iterator.cc
   src/shaping/text_spacing_trim.h
@@ -392,6 +400,7 @@ target_sources(blink_fonts PRIVATE
   src/text/text_break_iterator_internal_icu.h src/text/text_break_iterator_internal_icu.cc
   src/text/text_direction.h src/text/text_direction.cc
   src/text/text_run.h src/text/text_run.cc
+  src/text/writing_mode.h
   "${GENERATED_CHARACTER_DATA}")
 # Ragel output textually included by symbols_iterator.cc.
 set_source_files_properties(src/shaping/emoji_presentation_scanner.c

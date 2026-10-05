@@ -25,16 +25,16 @@
 
 #include "base/immediate_crash.h"
 #include "base/vector.h"
-#include "canvas.h"
+#include "paint/canvas.h"
 #include "font_host_freetype_common.h"
 #include "opentype_svg_decoder.h"
-#include "picture.h"
-#include "pixmap.h"
-#include "raster_canvas.h"
-#include "matrix.h"
+#include "paint/picture.h"
+#include "paint/pixmap.h"
+#include "paint/raster_canvas.h"
+#include "paint/matrix.h"
 #include "ot_utils.h"
-#include "rect.h"
-#include "scalar.h"
+#include "paint/rect.h"
+#include "paint/scalar.h"
 #include "scaler_context.h"
 
 #ifdef TT_SUPPORT_COLRV1

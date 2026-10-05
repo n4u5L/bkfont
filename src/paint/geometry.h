@@ -19,7 +19,8 @@
 #include <limits>
 #include <string>
 
-namespace bkfont::gfx {
+// The upstream gfx namespace is flattened into bkfont.
+namespace bkfont {
 
 // This is the base template class of InsetsF and OutsetsF.
 template <typename T>
@@ -478,4 +479,4 @@ inline RectF operator-(RectF rect, const Vector2dF& offset) {
   return rect;
 }
 
-} // namespace bkfont::gfx
+} // namespace bkfont

@@ -9,7 +9,7 @@
 #include "matrix.h"
 #include "pixmap.h"
 #include "rect.h"
-#include "scaler_context.h"
+#include "platform/scaler_context.h"
 #include "shader.h"
 #include "surface_props.h"
 

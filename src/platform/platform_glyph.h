@@ -8,9 +8,9 @@
 #include <cstdint>
 #include <memory>
 
-#include "mask.h"
-#include "path.h"
-#include "rect.h"
+#include "paint/mask.h"
+#include "paint/path.h"
+#include "paint/rect.h"
 
 namespace bkfont {
 

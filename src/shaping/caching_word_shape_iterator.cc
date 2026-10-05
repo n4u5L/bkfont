@@ -7,7 +7,7 @@
 
 #include "harfbuzz_shaper.h"
 #include "shape_result.h"
-#include "shaping/support/gfx/geometry.h"
+#include "paint/geometry.h"
 
 namespace bkfont {
 
@@ -38,7 +38,7 @@ std::shared_ptr<const ShapeResult> CachingWordShapeIterator::ShapeWord(const Tex
   }
 
   std::shared_ptr<ShapeResult> spacing_result = result->ApplySpacingToCopy(spacing_, word_run);
-  gfx::RectF ink_bounds = spacing_result->ComputeInkBounds();
+  RectF ink_bounds = spacing_result->ComputeInkBounds();
 
   // Return bounds as is because glyph bounding box is in logical space.
   if (spacing_result->Width() >= 0) {
@@ -57,7 +57,7 @@ std::shared_ptr<const ShapeResult> CachingWordShapeIterator::ShapeWord(const Tex
     // but computing it requires re-measuring bounding box of each glyph. Leave
     // it unchanged, which gives an excessive right edge but assures it covers
     // all glyphs.
-    ink_bounds.Outset(gfx::OutsetsF().set_left(ink_bounds.x() - left));
+    ink_bounds.Outset(OutsetsF().set_left(ink_bounds.x() - left));
   }
 
   spacing_result->SetDeprecatedInkBounds(ink_bounds);

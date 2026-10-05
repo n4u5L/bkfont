@@ -14,7 +14,7 @@
 #include <numeric>
 #include <tuple>
 
-namespace bkfont::gfx {
+namespace bkfont {
 
 using namespace bkfont::color_math;
 using bkfont::ColorFloat4;
@@ -750,4 +750,4 @@ ColorFloat4 HWBToColorFloat4(float h, float w, float b, float alpha) {
   return ColorFloat4{red, green, blue, alpha};
 }
 
-} // namespace bkfont::gfx
+} // namespace bkfont

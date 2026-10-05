@@ -10,7 +10,8 @@
 
 #include "color_float.h"
 
-namespace bkfont::gfx {
+// The upstream gfx namespace is flattened into bkfont.
+namespace bkfont {
 
 using bkfont::ColorFloat4;
 
@@ -100,4 +101,4 @@ ColorFloat4 HSLToColorFloat4(float h, float s, float l, float alpha);
 
 ColorFloat4 HWBToColorFloat4(float h, float w, float b, float alpha);
 
-} // namespace bkfont::gfx
+} // namespace bkfont

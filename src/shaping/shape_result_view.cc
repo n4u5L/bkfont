@@ -594,7 +594,7 @@ template <bool is_horizontal_run, bool has_non_zero_glyph_offsets>
 void ShapeResultView::ComputePartInkBounds(
     const ShapeResultView::RunInfoPart& part,
     float run_advance,
-    gfx::RectF* ink_bounds) const {
+    RectF* ink_bounds) const {
   return ComputePartInkBoundsScalar<is_horizontal_run,
                                     has_non_zero_glyph_offsets>(
       part,
@@ -606,7 +606,7 @@ template <bool is_horizontal_run, bool has_non_zero_glyph_offsets>
 void ShapeResultView::ComputePartInkBoundsScalar(
     const ShapeResultView::RunInfoPart& part,
     float run_advance,
-    gfx::RectF* ink_bounds) const {
+    RectF* ink_bounds) const {
   // Get glyph bounds from DirectWrite. It's a lot faster if we give it list of glyph
   // IDs rather than calling it for each glyph.
   // TODO(kojii): MacOS does not benefit from batching the Skia request due to
@@ -627,11 +627,11 @@ void ShapeResultView::ComputePartInkBoundsScalar(
   for (const auto& glyph_data : part) {
     glyphs[i++] = glyph_data.glyph;
   }
-  std::array<gfx::RectF, 256> stack_bounds;
+  std::array<RectF, 256> stack_bounds;
   auto heap_bounds = num_glyphs > stack_bounds.size()
-                         ? std::make_unique<gfx::RectF[]>(num_glyphs)
+                         ? std::make_unique<RectF[]>(num_glyphs)
                          : nullptr;
-  std::span<gfx::RectF> bounds_list(
+  std::span<RectF> bounds_list(
       heap_bounds ? heap_bounds.get() : stack_bounds.data(),
       num_glyphs);
   current_font_data.BoundsForGlyphs(glyphs, bounds_list);
@@ -640,7 +640,7 @@ void ShapeResultView::ComputePartInkBoundsScalar(
   InlineLayoutUnit origin = InlineLayoutUnit::FromFloatCeil(run_advance);
   for (unsigned j = 0; j < num_glyphs; ++j) {
     const HarfBuzzRunGlyphData& glyph_data = part.GlyphAt(j);
-    gfx::RectF glyph_bounds = bounds_list[j];
+    RectF glyph_bounds = bounds_list[j];
     bounds.Unite(glyph_bounds, origin, *glyph_offsets);
     origin += glyph_data.advance;
     ++glyph_offsets;
@@ -650,8 +650,8 @@ void ShapeResultView::ComputePartInkBoundsScalar(
       std::move(bounds).BuildBounds(current_font_data.GetFontMetrics()));
 }
 
-gfx::RectF ShapeResultView::ComputeInkBounds() const {
-  gfx::RectF ink_bounds;
+RectF ShapeResultView::ComputeInkBounds() const {
+  RectF ink_bounds;
 
   float run_advance = 0.0f;
   for (const auto& part : parts_) {

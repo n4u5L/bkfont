@@ -28,15 +28,10 @@
 #include "length.h"
 #include "platform_export.h"
 
-namespace bkfont::gfx {
+namespace bkfont {
 
 class PointF;
 class SizeF;
-
-} // namespace bkfont::gfx
-
-namespace bkfont {
-
 class Length;
 class LengthSize;
 
@@ -64,9 +59,9 @@ inline LayoutUnit MinimumValueForLength(const Length& length,
 LayoutUnit ValueForLength(const Length&,
                           LayoutUnit maximum_value,
                           const EvaluationInput& input = {});
-gfx::SizeF SizeForLengthSize(const LengthSize&,
-                             const gfx::SizeF& box_size);
-gfx::PointF PointForLengthPoint(const LengthPoint&,
-                                const gfx::SizeF& box_size);
+SizeF SizeForLengthSize(const LengthSize&,
+                             const SizeF& box_size);
+PointF PointForLengthPoint(const LengthPoint&,
+                                const SizeF& box_size);
 
 } // namespace bkfont

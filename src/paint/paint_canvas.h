@@ -5,9 +5,9 @@
 
 #include <memory>
 
-#include "platform/matrix.h"
-#include "platform/platform_paint.h"
-#include "platform/text_blob.h"
+#include "matrix.h"
+#include "platform_paint.h"
+#include "text_blob.h"
 
 namespace bkfont {
 

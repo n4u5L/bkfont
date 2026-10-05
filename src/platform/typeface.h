@@ -13,7 +13,7 @@
 #include "font_arguments.h"
 #include "font_parameters.h"
 #include "font_style.h"
-#include "rect.h"
+#include "paint/rect.h"
 #include "stream.h"
 
 namespace bkfont {

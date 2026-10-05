@@ -363,7 +363,7 @@ void DrawColumn(CanvasPaintCanvas* canvas, const Column& column, const Font& fon
   float advance = 0;
   for (const auto& view : column.text->runs) {
     const TextFragmentPaintInfo info{StringView(column.text->text), view->StartIndex(), view->EndIndex(), view.get()};
-    font.DrawText(canvas, info, gfx::PointF(x + advance, top), kInvalidNodeId, PlatformPaint(color));
+    font.DrawText(canvas, info, PointF(x + advance, top), kInvalidNodeId, PlatformPaint(color));
     advance += view->Width();
   }
 }

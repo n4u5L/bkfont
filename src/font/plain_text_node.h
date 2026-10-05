@@ -12,7 +12,7 @@
 #include "platform_export.h"
 #include "text/text_direction.h"
 #include "base/text/wtf_string.h"
-#include "shaping/support/gfx/geometry/rect_f.h"
+#include "paint/geometry.h"
 
 namespace bkfont {
 
@@ -59,7 +59,7 @@ public:
   const String& Text() const {
     return text_;
   }
-  const gfx::RectF& InkBounds() const {
+  const RectF& InkBounds() const {
     return ink_bounds_;
   }
 
@@ -70,7 +70,7 @@ private:
   std::shared_ptr<const ShapeResult> shape_result_;
   // Created on demand and owned by this item. EnsureView() borrows the view.
   mutable std::unique_ptr<ShapeResultView> shape_result_view_;
-  gfx::RectF ink_bounds_;
+  RectF ink_bounds_;
   String text_;
   wtf_size_t start_offset_;
   wtf_size_t length_;
@@ -99,7 +99,7 @@ public:
   PlainTextNode(const PlainTextNode&) = delete;
   PlainTextNode& operator=(const PlainTextNode&) = delete;
 
-  float AccumulateInlineSize(gfx::RectF* glyph_bounds) const;
+  float AccumulateInlineSize(RectF* glyph_bounds) const;
   CharacterRange ComputeCharacterRange(unsigned absolute_from,
                                        unsigned absolute_to) const;
 

@@ -7,7 +7,7 @@
 
 #include <memory>
 #include <memory>
-#include "graphics/color.h"
+#include "paint/color.h"
 #include "base/text/atomic_string.h"
 
 #include <cstdint>

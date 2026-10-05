@@ -4,7 +4,7 @@
 
 #include <utility>
 
-#include "picture.h"
+#include "paint/picture.h"
 #include "strike_cache.h"
 
 namespace bkfont {

@@ -173,7 +173,7 @@ public:
   // Computes and returns the ink bounds (or visual overflow rect). This is
   // quite expensive and involves measuring each glyph and accumulating the
   // bounds.
-  gfx::RectF ComputeInkBounds() const;
+  RectF ComputeInkBounds() const;
 
   void GetRunFontData(Vector<ShapeResult::RunFontData>*) const;
 
@@ -317,12 +317,12 @@ private:
   template <bool is_horizontal_run, bool has_glyph_offsets>
   void ComputePartInkBounds(const ShapeResultView::RunInfoPart&,
                             float run_advance,
-                            gfx::RectF* ink_bounds) const;
+                            RectF* ink_bounds) const;
 
   template <bool is_horizontal_run, bool has_glyph_offsets>
   void ComputePartInkBoundsScalar(const ShapeResultView::RunInfoPart&,
                                   float run_advance,
-                                  gfx::RectF* ink_bounds) const;
+                                  RectF* ink_bounds) const;
 
   // Common signatures with ShapeResult, to templatize algorithms.
   base::span<const RunInfoPart> RunsOrParts() const {

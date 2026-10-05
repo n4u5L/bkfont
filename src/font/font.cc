@@ -205,7 +205,7 @@ namespace bkfont {
 
 void Font::DrawText(PaintCanvas* canvas,
                     const TextFragmentPaintInfo& text_info,
-                    const gfx::PointF& point,
+                    const PointF& point,
                     NodeId node_id,
                     const PlatformPaint& flags,
                     DrawType draw_type) const {
@@ -226,7 +226,7 @@ void Font::DrawText(PaintCanvas* canvas,
 bool Font::DeprecatedDrawBidiText(
     PaintCanvas* canvas,
     const TextRunPaintInfo& run_info,
-    const gfx::PointF& point,
+    const PointF& point,
     CustomFontNotReadyAction custom_font_not_ready_action,
     const PlatformPaint& flags,
     DrawType draw_type) const {
@@ -268,7 +268,7 @@ bool Font::DeprecatedDrawBidiText(
     bidi.GetVisualRuns(text, &bidi_runs);
   }
 
-  gfx::PointF curr_point = point;
+  PointF curr_point = point;
   CachingWordShaper word_shaper(*this);
   for (const BidiParagraph::Run& bidi_run : bidi_runs) {
     if (bidi_run.end <= run_info.from || run_info.to <= bidi_run.start) {
@@ -317,7 +317,7 @@ bool Font::DeprecatedDrawBidiText(
 void Font::DrawEmphasisMarks(PaintCanvas* canvas,
                              const TextFragmentPaintInfo& text_info,
                              const AtomicString& mark,
-                             const gfx::PointF& point,
+                             const PointF& point,
                              const PlatformPaint& flags) const {
   if (ShouldSkipDrawing())
     return;
@@ -334,11 +334,11 @@ void Font::DrawEmphasisMarks(PaintCanvas* canvas,
   DrawTextBlobs(bloberizer.Blobs(), *canvas, point, flags);
 }
 
-gfx::RectF Font::TextInkBounds(const TextFragmentPaintInfo& text_info) const {
+RectF Font::TextInkBounds(const TextFragmentPaintInfo& text_info) const {
   // No need to compute bounds if using custom fonts that are in the process
   // of loading as it won't be painted.
   if (ShouldSkipDrawing())
-    return gfx::RectF();
+    return RectF();
 
   // NOTE(eae): We could use the TextBlob bounds however by default it returns
   // conservative bounds (rather than tight bounds) which are unsuitable for
@@ -408,7 +408,7 @@ void Font::GetTextIntercepts(const TextFragmentPaintInfo& text_info,
 }
 
 float Font::DeprecatedWidth(const TextRun& run,
-                            gfx::RectF* glyph_bounds) const {
+                            RectF* glyph_bounds) const {
   CachingWordShaper shaper(*this);
   return shaper.Width(run, glyph_bounds);
 }
@@ -416,7 +416,7 @@ float Font::DeprecatedWidth(const TextRun& run,
 float Font::DeprecatedSubRunWidth(const TextRun& run,
                                   unsigned from,
                                   unsigned to,
-                                  gfx::RectF* glyph_bounds) const {
+                                  RectF* glyph_bounds) const {
   if (run.length() == 0) {
     return 0;
   }
@@ -453,7 +453,7 @@ float Font::DeprecatedSubRunWidth(const TextRun& run,
 
     // Accumulate the position and the glyph bounding box.
     if (glyph_bounds) {
-      gfx::RectF range_bounds(character_range.start, -character_range.ascent, character_range.Width(), character_range.Height());
+      RectF range_bounds(character_range.start, -character_range.ascent, character_range.Width(), character_range.Height());
       // GetCharacterRange() returns bounds positioned as if the whole run was
       // there, so the rect has to be moved to align with the current position.
       range_bounds.Offset(-range_bounds.x() + x_pos, 0);

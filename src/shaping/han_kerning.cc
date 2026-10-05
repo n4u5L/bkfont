@@ -25,7 +25,7 @@ namespace bkfont {
 namespace {
 
 // This is the four-coordinate subset used by the original GlyphInkBounds path.
-// Keep raw edges here: gfx::SizeF clamps very small positive dimensions.
+// Keep raw edges here: SizeF clamps very small positive dimensions.
 struct GlyphInkBounds {
   float left_value = 0, top_value = 0, right_value = 0, bottom_value = 0;
   float left() const {
@@ -46,7 +46,7 @@ struct GlyphInkBounds {
   float height() const {
     return bottom_value - top_value;
   }
-  void offset(gfx::Vector2dF value) {
+  void offset(Vector2dF value) {
     left_value += value.x();
     right_value += value.x();
     top_value += value.y();

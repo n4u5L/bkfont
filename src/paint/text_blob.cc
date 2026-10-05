@@ -12,7 +12,7 @@
 #include "glyph_run.h"
 #include "matrix.h"
 #include "platform_paint.h"
-#include "strike_spec.h"
+#include "platform/strike_spec.h"
 
 namespace bkfont {
 

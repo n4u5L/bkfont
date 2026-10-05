@@ -2,7 +2,7 @@
 
 #include "font_descriptor.h"
 
-#include "scalar.h"
+#include "paint/scalar.h"
 
 namespace bkfont {
 

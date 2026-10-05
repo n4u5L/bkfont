@@ -37,7 +37,7 @@
 #include <array>
 
 #include "shape_result_run.h"
-#include "shaping/support/gfx/geometry.h"
+#include "paint/geometry.h"
 
 namespace bkfont {
 
@@ -52,7 +52,7 @@ struct GlyphBoundsAccumulator {
   // The accumulated glyph bounding box in physical coordinate, until
   // ConvertVerticalRunToLogicalIfNeeded().
   //
-  // We store this as a set of positions rather than a gfx::RectF,
+  // We store this as a set of positions rather than a RectF,
   // because it is cheaper to do lots of Union operations when stored
   // that way, rather than as the (point, size) storage that RectF uses.
   float min_x = 0;
@@ -61,7 +61,7 @@ struct GlyphBoundsAccumulator {
   float max_y = 0;
 
   // Unite a glyph bounding box to |bounds|.
-  void Unite(gfx::RectF bounds_for_glyph,
+  void Unite(RectF bounds_for_glyph,
              float origin,
              GlyphOffset glyph_offset) {
     if (bounds_for_glyph.IsEmpty()) [[unlikely]] {
@@ -91,7 +91,7 @@ struct GlyphBoundsAccumulator {
     }
   }
 
-  gfx::RectF BuildBounds(const FontMetrics& font_metrics) && {
+  RectF BuildBounds(const FontMetrics& font_metrics) && {
     ConvertVerticalRunToLogicalIfNeeded(font_metrics);
     return Bounds();
   }
@@ -117,9 +117,9 @@ private:
     max_y += baseline_adjust;
   }
 
-  gfx::RectF Bounds() const {
-    return gfx::RectF(gfx::PointF(min_x, min_y),
-                      gfx::SizeF(max_x - min_x, max_y - min_y));
+  RectF Bounds() const {
+    return RectF(PointF(min_x, min_y),
+                      SizeF(max_x - min_x, max_y - min_y));
   }
 };
 

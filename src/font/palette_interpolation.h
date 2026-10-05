@@ -8,7 +8,7 @@
 #include <optional>
 
 #include "font_palette.h"
-#include "graphics/color.h"
+#include "paint/color.h"
 
 #include "platform/typeface.h"
 namespace bkfont {

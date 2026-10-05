@@ -8,7 +8,7 @@
 #include "base/math_extras.h"
 #include "base/vector.h"
 #include "platform/platform_font.h"
-#include "platform/scalar.h"
+#include "paint/scalar.h"
 #include "shaping/harfbuzz_face.h"
 
 namespace bkfont {

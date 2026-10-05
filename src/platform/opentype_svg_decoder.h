@@ -9,7 +9,7 @@
 #include <memory>
 #include <span>
 
-#include "mask_gamma.h"
+#include "paint/mask_gamma.h"
 
 namespace bkfont {
 

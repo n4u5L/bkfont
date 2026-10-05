@@ -3,7 +3,7 @@
 #pragma once
 
 #include "initialize.h"
-#include "font/canvas_paint_canvas.h"
+#include "paint/canvas_paint_canvas.h"
 #include "font/character_range.h"
 #include "font/font.h"
 #include "font/font_cache.h"
@@ -12,7 +12,7 @@
 #include "font/font_selector.h"
 #include "font/plain_text_node.h"
 #include "font/string_truncator.h"
-#include "platform/raster_canvas.h"
+#include "paint/raster_canvas.h"
 #include "shaping/frame_shape_cache.h"
 #include "shaping/harfbuzz_shaper.h"
 #include "shaping/opentype/open_type_math_support.h"

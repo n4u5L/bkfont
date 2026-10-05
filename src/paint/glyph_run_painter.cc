@@ -16,10 +16,10 @@
 #include "canvas.h"
 #include "glyph_run.h"
 #include "picture.h"
-#include "platform_glyph.h"
+#include "platform/platform_glyph.h"
 #include "platform_paint.h"
-#include "strike.h"
-#include "strike_spec.h"
+#include "platform/strike.h"
+#include "platform/strike_spec.h"
 
 namespace bkfont {
 

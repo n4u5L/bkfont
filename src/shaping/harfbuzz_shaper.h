@@ -116,8 +116,8 @@ public:
   struct GlyphData {
     unsigned cluster;
     Glyph glyph;
-    gfx::PointF advance;
-    gfx::PointF offset;
+    PointF advance;
+    PointF offset;
   };
   using GlyphDataList = Vector<GlyphData, 16>;
   void GetGlyphData(const SimpleFontData& font_data,

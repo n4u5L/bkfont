@@ -5,7 +5,7 @@
 #include <utility>
 
 #include "base/immediate_crash.h"
-#include "picture.h"
+#include "paint/picture.h"
 
 namespace bkfont {
 

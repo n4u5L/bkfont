@@ -17,7 +17,7 @@
 #include <utility>
 
 #include "glyph_run.h"
-#include "platform_glyph.h"
+#include "platform/platform_glyph.h"
 #include "text_blob.h"
 
 namespace bkfont {

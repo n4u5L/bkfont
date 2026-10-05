@@ -9,7 +9,7 @@
 #include <span>
 #include "shaping/support/layout_unit.h"
 
-#include "shaping/support/gfx/geometry.h"
+#include "paint/geometry.h"
 
 namespace bkfont {
 
@@ -80,6 +80,6 @@ struct HarfBuzzRunGlyphData {
   TextRunLayoutUnit advance;
 };
 
-using GlyphOffset = gfx::Vector2dF;
+using GlyphOffset = Vector2dF;
 
 } // namespace bkfont

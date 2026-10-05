@@ -44,7 +44,7 @@
 #include "base/casting.h"
 #include "base/text/string_hash.h"
 #include "platform/platform_font.h"
-#include "shaping/support/gfx/geometry/rect_f.h"
+#include "paint/geometry.h"
 
 namespace bkfont {
 
@@ -151,9 +151,9 @@ public:
   const HanKerning::FontData& HanKerningData(const LayoutLocale& locale,
                                              bool is_horizontal) const;
 
-  gfx::RectF BoundsForGlyph(Glyph) const;
-  void BoundsForGlyphs(std::span<const Glyph>, std::span<gfx::RectF>) const;
-  gfx::RectF PlatformBoundsForGlyph(Glyph) const;
+  RectF BoundsForGlyph(Glyph) const;
+  void BoundsForGlyphs(std::span<const Glyph>, std::span<RectF>) const;
+  RectF PlatformBoundsForGlyph(Glyph) const;
   float WidthForGlyph(Glyph) const;
 
   float SpaceWidth() const {
@@ -249,7 +249,7 @@ private:
   mutable FontHeight normalized_typo_ascent_descent_;
 };
 
-inline gfx::RectF SimpleFontData::BoundsForGlyph(Glyph glyph) const {
+inline RectF SimpleFontData::BoundsForGlyph(Glyph glyph) const {
   return PlatformBoundsForGlyph(glyph);
 }
 

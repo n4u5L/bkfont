@@ -8,12 +8,12 @@
 #include <tuple>
 
 #include "base/vector.h"
-#include "matrix.h"
+#include "paint/matrix.h"
 #include "platform_font.h"
 #include "platform_glyph.h"
-#include "platform_paint.h"
+#include "paint/platform_paint.h"
 #include "scaler_context.h"
-#include "surface_props.h"
+#include "paint/surface_props.h"
 #include "typeface.h"
 
 namespace bkfont {

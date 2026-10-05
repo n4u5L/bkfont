@@ -28,7 +28,7 @@
 #include "shaping/support/layout_unit.h"
 #include "length_point.h"
 #include "length_size.h"
-#include "shaping/support/gfx/geometry.h"
+#include "paint/geometry.h"
 #include "base/notreached.h"
 
 namespace bkfont {
@@ -124,16 +124,16 @@ LayoutUnit ValueForLength(const Length& length,
   NOTREACHED();
 }
 
-gfx::SizeF SizeForLengthSize(const LengthSize& length_size,
-                             const gfx::SizeF& box_size) {
-  return gfx::SizeF(
+SizeF SizeForLengthSize(const LengthSize& length_size,
+                             const SizeF& box_size) {
+  return SizeF(
       FloatValueForLength(length_size.Width(), box_size.width()),
       FloatValueForLength(length_size.Height(), box_size.height()));
 }
 
-gfx::PointF PointForLengthPoint(const LengthPoint& length_point,
-                                const gfx::SizeF& box_size) {
-  return gfx::PointF(FloatValueForLength(length_point.X(), box_size.width()),
+PointF PointForLengthPoint(const LengthPoint& length_point,
+                                const SizeF& box_size) {
+  return PointF(FloatValueForLength(length_point.X(), box_size.width()),
                      FloatValueForLength(length_point.Y(), box_size.height()));
 }
 

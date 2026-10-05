@@ -29,7 +29,7 @@
 #include "shape_result_buffer.h"
 #include "text/text_run.h"
 #include "base/vector.h"
-#include "shaping/support/gfx/geometry/rect_f.h"
+#include "paint/geometry.h"
 
 namespace bkfont {
 
@@ -48,7 +48,7 @@ public:
   CachingWordShaper& operator=(const CachingWordShaper&) = delete;
   ~CachingWordShaper() = default;
 
-  float Width(const TextRun&, gfx::RectF* glyph_bounds);
+  float Width(const TextRun&, RectF* glyph_bounds);
 
   void FillResultBuffer(const TextRun&, ShapeResultBuffer*);
   CharacterRange GetCharacterRange(const TextRun&, unsigned from, unsigned to);

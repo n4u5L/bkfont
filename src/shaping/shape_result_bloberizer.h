@@ -13,12 +13,12 @@
 #include "base/vector.h"
 #include "font/canvas_rotation_in_vertical.h"
 #include "font/glyph.h"
-#include "font/paint_canvas.h"
+#include "paint/paint_canvas.h"
 #include "font/simple_font_data.h"
-#include "platform/text_blob.h"
+#include "paint/text_blob.h"
 #include "platform_export.h"
 #include "shaping/shape_result_buffer.h"
-#include "shaping/support/gfx/geometry.h"
+#include "paint/geometry.h"
 
 namespace bkfont {
 
@@ -81,7 +81,7 @@ private:
   void Add(Glyph glyph,
            const SimpleFontData* font_data,
            CanvasRotationInVertical canvas_rotation,
-           const gfx::Vector2dF& offset,
+           const Vector2dF& offset,
            unsigned character_index) {
     // cannot mix x-only/xy offsets
     if (font_data != pending_font_data_ ||
@@ -117,7 +117,7 @@ private:
   static void AddFastHorizontalGlyphToBloberizer(void* context,
                                                  unsigned,
                                                  Glyph,
-                                                 gfx::Vector2dF glyph_offset,
+                                                 Vector2dF glyph_offset,
                                                  float advance,
                                                  bool is_horizontal,
                                                  CanvasRotationInVertical,
@@ -132,7 +132,7 @@ private:
   static void AddGlyphToBloberizer(void* context,
                                    unsigned character_index,
                                    Glyph,
-                                   gfx::Vector2dF glyph_offset,
+                                   Vector2dF glyph_offset,
                                    float advance,
                                    bool is_horizontal,
                                    CanvasRotationInVertical,
@@ -140,7 +140,7 @@ private:
 
   void AddEmphasisMark(const GlyphData& emphasis_data,
                        CanvasRotationInVertical canvas_rotation,
-                       gfx::PointF glyph_center,
+                       PointF glyph_center,
                        float mid_glyph_offset,
                        float letter_spacing);
   static void AddEmphasisMarkToBloberizer(
@@ -235,7 +235,7 @@ private:
 
 void DrawTextBlobs(const ShapeResultBloberizer::BlobBuffer& blobs,
                    PaintCanvas& canvas,
-                   const gfx::PointF& point,
+                   const PointF& point,
                    const PlatformPaint& flags,
                    NodeId node_id = kInvalidNodeId);
 

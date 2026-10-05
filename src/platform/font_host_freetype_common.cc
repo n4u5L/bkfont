@@ -24,13 +24,13 @@
 #include <freetype/otsvg.h>
 #endif
 
-#include "canvas.h"
-#include "mask.h"
+#include "paint/canvas.h"
+#include "paint/mask.h"
 #include "opentype_svg_decoder.h"
-#include "pixmap.h"
-#include "raster_canvas.h"
-#include "scalar.h"
-#include "shader.h"
+#include "paint/pixmap.h"
+#include "paint/raster_canvas.h"
+#include "paint/scalar.h"
+#include "paint/shader.h"
 
 // FT_LOAD_COLOR and the corresponding FT_Pixel_Mode::FT_PIXEL_MODE_BGRA
 // were introduced in FreeType 2.5.0.
