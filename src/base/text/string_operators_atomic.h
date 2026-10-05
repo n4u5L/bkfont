@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/string_operators_atomic.h
+// Ported from: blink/renderer/platform/wtf/text/string_operators_atomic.h
 /*
  * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010 Apple Inc. All rights
  * reserved.

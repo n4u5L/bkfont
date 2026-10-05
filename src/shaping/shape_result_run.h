@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/shaping/shape_result_run.h
+// Ported from: blink/renderer/platform/fonts/shaping/shape_result_run.h
 /*
  * Copyright (c) 2012 Google Inc. All rights reserved.
  * Copyright (C) 2013 BlackBerry Limited. All rights reserved.

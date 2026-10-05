@@ -1,3 +1,5 @@
+// Local implementation: owning callback adapter using the C++ standard library.
+// Upstream reference: chromium/base/functional/callback.h
 // Text predicates keep Chromium's owning callback and Run() calling convention.
 #pragma once
 #include <concepts>
@@ -8,6 +10,7 @@
 #include "base/functional/callback_forward.h"
 #include "base/immediate_crash.h"
 namespace bkfont::base {
+
 template <typename R, typename... Args>
 class RepeatingCallback<R(Args...)> {
 public:
@@ -44,4 +47,5 @@ public:
 private:
   std::shared_ptr<std::function<R(Args...)>> callable_;
 };
+
 } // namespace bkfont::base

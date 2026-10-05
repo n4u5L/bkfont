@@ -1,4 +1,4 @@
-// Source: base/numerics/safe_math_clang_gcc_impl.h
+// Ported from: chromium/base/numerics/safe_math_clang_gcc_impl.h
 // Copyright 2017 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -22,6 +22,7 @@
 #endif
 
 namespace bkfont::base {
+
 namespace internal {
 
 // These are the non-functioning boilerplate implementations of the optimized
@@ -152,4 +153,5 @@ struct ClampedNegFastOp {
 };
 
 } // namespace internal
+
 } // namespace bkfont::base

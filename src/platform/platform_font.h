@@ -1,4 +1,5 @@
-// Ported from: skia/include/core/SkFont.h, skia/include/core/SkFontTypes.h
+// Ported from: skia/include/core/SkFont.h
+// Ported from: skia/include/core/SkFontTypes.h
 
 #pragma once
 
@@ -7,8 +8,9 @@
 #include <span>
 #include <utility>
 
-#include "font_face.h"
+#include "platform_font_metrics.h"
 #include "rect.h"
+#include "typeface.h"
 
 namespace bkfont {
 
@@ -20,7 +22,10 @@ enum class FontHinting : std::uint8_t {
   kFull
 };
 
-// SkFont. A null typeface stands in for SkTypeface::MakeEmpty().
+// SkFont. The typeface is never null; a null argument becomes
+// Typeface::MakeEmpty() as upstream.
+class PlatformPaint;
+
 class PlatformFont {
 public:
   enum class Edging : std::uint8_t {
@@ -30,9 +35,9 @@ public:
   };
 
   PlatformFont();
-  explicit PlatformFont(std::shared_ptr<FontFace> typeface);
-  PlatformFont(std::shared_ptr<FontFace> typeface, float size);
-  PlatformFont(std::shared_ptr<FontFace> typeface, float size, float scale_x, float skew_x);
+  explicit PlatformFont(std::shared_ptr<Typeface> typeface);
+  PlatformFont(std::shared_ptr<Typeface> typeface, float size);
+  PlatformFont(std::shared_ptr<Typeface> typeface, float size, float scale_x, float skew_x);
 
   bool IsForceAutoHinting() const {
     return (flags_ & kForceAutoHintingPrivFlag) != 0;
@@ -66,6 +71,10 @@ public:
   void SetEdging(Edging edging) {
     edging_ = edging;
   }
+  bool HasSomeAntiAliasing() const {
+    Edging edging = GetEdging();
+    return edging == Edging::kAntiAlias || edging == Edging::kSubpixelAntiAlias;
+  }
   FontHinting GetHinting() const {
     return hinting_;
   }
@@ -73,7 +82,7 @@ public:
     hinting_ = hinting;
   }
 
-  const std::shared_ptr<FontFace>& GetTypeface() const {
+  const std::shared_ptr<Typeface>& GetTypeface() const {
     return typeface_;
   }
   float GetSize() const {
@@ -86,15 +95,21 @@ public:
     return skew_x_;
   }
 
-  void SetTypeface(std::shared_ptr<FontFace> typeface) {
-    typeface_ = std::move(typeface);
-  }
+  bool operator==(const PlatformFont& other) const;
+
+  void SetTypeface(std::shared_ptr<Typeface> typeface);
   void SetSize(float text_size);
   void SetScaleX(float scale_x) {
     scale_x_ = scale_x;
   }
   void SetSkewX(float skew_x) {
     skew_x_ = skew_x;
+  }
+
+  // Returns glyph index for Unicode character. If the character is not
+  // supported by the Typeface, returns 0.
+  std::uint16_t UnicharToGlyph(std::int32_t uni) const {
+    return typeface_->UnicharToGlyph(uni);
   }
 
   float GetWidth(std::uint16_t glyph) const {
@@ -106,6 +121,26 @@ public:
     GetWidthsBounds(glyphs, widths, {});
   }
   void GetWidthsBounds(std::span<const std::uint16_t> glyphs, std::span<float> widths, std::span<ScalarRect> bounds) const;
+
+  // Retrieves the bounds for each glyph in glyphs. Only the null-paint form
+  // is used here.
+  void GetBounds(std::span<const std::uint16_t> glyphs, std::span<ScalarRect> bounds) const {
+    GetWidthsBounds(glyphs, {}, bounds);
+  }
+  ScalarRect GetBounds(std::uint16_t glyph) const {
+    ScalarRect bounds;
+    GetBounds({&glyph, 1}, {&bounds, 1});
+    return bounds;
+  }
+
+  // Returns the advance width of the glyphs, and their bounds relative to
+  // the origin when bounds is not null. Only the glyph encoding is used.
+  float MeasureText(std::span<const std::uint16_t> glyphs, ScalarRect* bounds, const PlatformPaint* paint = nullptr) const;
+
+  // Returns PlatformFontMetrics associated with Typeface. The return value is
+  // the recommended spacing between lines: the sum of metrics descent,
+  // ascent, and leading.
+  float GetMetrics(PlatformFontMetrics* metrics) const;
 
   // Sets up the font for paths: canonical size, no hinting, subpixel. Returns
   // the strike-to-source scale. Only the null-paint form is used here.
@@ -121,7 +156,7 @@ private:
     kBaselineSnapPrivFlag = 1 << 5,
   };
 
-  std::shared_ptr<FontFace> typeface_;
+  std::shared_ptr<Typeface> typeface_;
   float size_;
   float scale_x_;
   float skew_x_;

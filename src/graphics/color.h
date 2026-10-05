@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/graphics/color.h
+// Ported from: blink/renderer/platform/graphics/color.h
 /*
  * Copyright (C) 2003, 2004, 2005, 2006, 2010 Apple Inc. All rights reserved.
  *
@@ -27,6 +27,7 @@
 #pragma once
 
 #include <array>
+#include <cmath>
 #include <iosfwd>
 #include <optional>
 #include <string_view>

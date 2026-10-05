@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/dtoa.cc
+// Ported from: blink/renderer/platform/wtf/dtoa.cc
 /****************************************************************
  *
  * The author of this software is David M. Gay.

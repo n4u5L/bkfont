@@ -1,11 +1,11 @@
-// Port source: third_party/blink/renderer/platform/fonts/opentype/open_type_cpal_lookup.cc
+// Ported from: blink/renderer/platform/fonts/opentype/open_type_cpal_lookup.cc
 // Copyright 2021 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 #include "open_type_cpal_lookup.h"
 
-#include "font_table_harfbuzz.h"
+#include "shaping/harfbuzz_face_from_typeface.h"
 
 // clang-format off
 #include <hb.h>
@@ -14,22 +14,21 @@
 // clang-format on
 
 namespace {
+
 uint32_t kCpalTag = HB_TAG('C', 'P', 'A', 'L');
 
 } // namespace
 
-#include "platform/font_face.h"
-#include "font_table_harfbuzz.h"
 namespace bkfont {
 
 /* static */
 std::optional<uint16_t> OpenTypeCpalLookup::FirstThemedPalette(
-    std::shared_ptr<FontFace> typeface,
+    std::shared_ptr<Typeface> typeface,
     PaletteUse palette_use) {
-  if (!typeface || !typeface->HasTable(kCpalTag))
+  if (!typeface || !typeface->GetTableSize(kCpalTag))
     return std::nullopt;
 
-  hb::unique_ptr<hb_face_t> face(HbFaceFromFontFace(typeface));
+  hb::unique_ptr<hb_face_t> face(HbFaceFromTypeface(typeface));
 
   if (!face || !hb_ot_color_has_palettes(face.get()))
     return std::nullopt;
@@ -48,9 +47,9 @@ std::optional<uint16_t> OpenTypeCpalLookup::FirstThemedPalette(
 }
 
 Vector<Color> OpenTypeCpalLookup::RetrieveColorRecords(
-    std::shared_ptr<FontFace> typeface,
+    std::shared_ptr<Typeface> typeface,
     unsigned palette_index) {
-  hb::unique_ptr<hb_face_t> face(HbFaceFromFontFace(typeface));
+  hb::unique_ptr<hb_face_t> face(HbFaceFromTypeface(typeface));
 
   if (!face) {
     return Vector<Color>();

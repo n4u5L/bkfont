@@ -4,6 +4,7 @@
 
 #include <algorithm>
 
+#include "strike.h"
 #include "strike_spec.h"
 
 namespace bkfont {
@@ -27,9 +28,28 @@ ScalarRect ScalePos(ScalarRect r, float s) {
   return {r.left * s, r.top * s, r.right * s, r.bottom * s};
 }
 
+// SkFontPriv::ScaleFontMetrics.
+void ScaleFontMetrics(PlatformFontMetrics* metrics, float scale) {
+  metrics->top *= scale;
+  metrics->ascent *= scale;
+  metrics->descent *= scale;
+  metrics->bottom *= scale;
+  metrics->leading *= scale;
+  metrics->avg_char_width *= scale;
+  metrics->max_char_width *= scale;
+  metrics->x_min *= scale;
+  metrics->x_max *= scale;
+  metrics->x_height *= scale;
+  metrics->cap_height *= scale;
+  metrics->underline_thickness *= scale;
+  metrics->underline_position *= scale;
+  metrics->strikeout_thickness *= scale;
+  metrics->strikeout_position *= scale;
+}
+
 } // namespace
 
-PlatformFont::PlatformFont(std::shared_ptr<FontFace> typeface, float size, float scale_x, float skew_x)
+PlatformFont::PlatformFont(std::shared_ptr<Typeface> typeface, float size, float scale_x, float skew_x)
     : typeface_(std::move(typeface)),
       size_(ValidSize(size)),
       scale_x_(scale_x),
@@ -37,18 +57,38 @@ PlatformFont::PlatformFont(std::shared_ptr<FontFace> typeface, float size, float
       flags_(kBaselineSnapPrivFlag),
       edging_(Edging::kAntiAlias),
       hinting_(FontHinting::kNormal) {
+  if (!typeface_) {
+    typeface_ = Typeface::MakeEmpty();
+  }
 }
 
-PlatformFont::PlatformFont(std::shared_ptr<FontFace> typeface, float size)
+PlatformFont::PlatformFont(std::shared_ptr<Typeface> typeface, float size)
     : PlatformFont(std::move(typeface), size, 1, 0) {
 }
 
-PlatformFont::PlatformFont(std::shared_ptr<FontFace> typeface)
+PlatformFont::PlatformFont(std::shared_ptr<Typeface> typeface)
     : PlatformFont(std::move(typeface), kDefaultSize, 1, 0) {
 }
 
 PlatformFont::PlatformFont()
     : PlatformFont(nullptr, kDefaultSize) {
+}
+
+bool PlatformFont::operator==(const PlatformFont& b) const {
+  return typeface_.get() == b.typeface_.get() &&
+         size_ == b.size_ &&
+         scale_x_ == b.scale_x_ &&
+         skew_x_ == b.skew_x_ &&
+         flags_ == b.flags_ &&
+         edging_ == b.edging_ &&
+         hinting_ == b.hinting_;
+}
+
+void PlatformFont::SetTypeface(std::shared_ptr<Typeface> tf) {
+  typeface_ = std::move(tf);
+  if (!typeface_) {
+    typeface_ = Typeface::MakeEmpty();
+  }
 }
 
 void PlatformFont::SetForceAutoHinting(bool force_auto_hinting) {
@@ -107,6 +147,64 @@ void PlatformFont::GetWidthsBounds(std::span<const std::uint16_t> glyph_ids, std
       widths[i] = glyphs[i]->AdvanceX() * strike_to_source_scale;
     }
   }
+}
+
+float PlatformFont::MeasureText(std::span<const std::uint16_t> glyph_ids, ScalarRect* bounds, const PlatformPaint* paint) const {
+  if (glyph_ids.size() == 0) {
+    if (bounds) {
+      *bounds = ScalarRect();
+    }
+    return 0;
+  }
+
+  auto [strike_spec, strike_to_source_scale] = StrikeSpec::MakeCanonicalized(*this, paint);
+  BulkGlyphMetrics metrics{strike_spec};
+  std::span<const PlatformGlyph*> glyphs = metrics.Glyphs(glyph_ids);
+
+  float width = 0;
+  if (bounds) {
+    *bounds = glyphs[0]->Rect();
+    width = glyphs[0]->AdvanceX();
+    for (std::size_t i = 1; i < glyph_ids.size(); ++i) {
+      ScalarRect r = glyphs[i]->Rect();
+      r.Offset(width, 0);
+      bounds->Join(r);
+      width += glyphs[i]->AdvanceX();
+    }
+  } else {
+    for (const PlatformGlyph* glyph : glyphs) {
+      width += glyph->AdvanceX();
+    }
+  }
+
+  if (strike_to_source_scale != 1) {
+    width *= strike_to_source_scale;
+    if (bounds) {
+      bounds->left *= strike_to_source_scale;
+      bounds->top *= strike_to_source_scale;
+      bounds->right *= strike_to_source_scale;
+      bounds->bottom *= strike_to_source_scale;
+    }
+  }
+
+  return width;
+}
+
+float PlatformFont::GetMetrics(PlatformFontMetrics* metrics) const {
+  auto [strike_spec, strike_to_source_scale] = StrikeSpec::MakeCanonicalized(*this);
+
+  PlatformFontMetrics storage;
+  if (nullptr == metrics) {
+    metrics = &storage;
+  }
+
+  auto cache = strike_spec.FindOrCreateStrike();
+  *metrics = cache->GetFontMetrics();
+
+  if (strike_to_source_scale != 1) {
+    ScaleFontMetrics(metrics, strike_to_source_scale);
+  }
+  return metrics->descent - metrics->ascent + metrics->leading;
 }
 
 } // namespace bkfont

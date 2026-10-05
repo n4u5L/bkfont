@@ -1,7 +1,9 @@
+// Ported from: blink/renderer/platform/exported/platform.cc
+// InitializeBlink and
+// InitializeMainThreadCommon. Only the font/string initialization is retained.
+
 // Copyright 2026 The Chromium Authors
 // Use of this source code is governed by a BSD-style license in LICENSE.
-// Source: Blink platform/exported/platform.cc, InitializeBlink and
-// InitializeMainThreadCommon. Only the font/string initialization is retained.
 #include "initialize.h"
 
 #include "font/font_family_names.h"

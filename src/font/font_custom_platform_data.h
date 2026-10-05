@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_custom_platform_data.h
+// Ported from: blink/renderer/platform/fonts/font_custom_platform_data.h
 /*
  * Copyright (C) 2007 Apple Computer, Inc.
  * Copyright (c) 2007, 2008, 2009, Google Inc. All rights reserved.
@@ -43,7 +43,7 @@
 #include "base/text/wtf_string.h"
 
 #include <span>
-#include "platform/font_face.h"
+#include "platform/typeface.h"
 namespace bkfont {
 
 class FontPlatformData;
@@ -53,9 +53,9 @@ class FontCustomPlatformData {
 public:
   static std::shared_ptr<FontCustomPlatformData> Create(std::span<const uint8_t>,
                                                         String& ots_parse_message);
-  static std::shared_ptr<FontCustomPlatformData> Create(std::shared_ptr<FontFace>, size_t data_size);
+  static std::shared_ptr<FontCustomPlatformData> Create(std::shared_ptr<Typeface>, size_t data_size);
 
-  FontCustomPlatformData(std::shared_ptr<FontFace>, size_t data_size);
+  FontCustomPlatformData(std::shared_ptr<Typeface>, size_t data_size);
   FontCustomPlatformData(const FontCustomPlatformData&) = delete;
   FontCustomPlatformData& operator=(const FontCustomPlatformData&) = delete;
   ~FontCustomPlatformData();
@@ -89,7 +89,7 @@ public:
   }
 
 private:
-  std::shared_ptr<FontFace> base_typeface_;
+  std::shared_ptr<Typeface> base_typeface_;
   size_t data_size_;
 };
 

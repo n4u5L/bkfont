@@ -1,6 +1,7 @@
+// Ported from: blink/renderer/platform/fonts/shaping/harfbuzz_face.h
+
 // Copyright 2012 Google Inc. All rights reserved.
 // BSD license retained in the companion harfbuzz_face.cc from Chromium.
-// Port source: platform/fonts/shaping/harfbuzz_face.h.
 #pragma once
 #include <cstdint>
 #include <memory>
@@ -12,6 +13,7 @@
 #include "variation_selector_mode.h"
 
 namespace bkfont {
+
 class FontPlatformData;
 class OpenTypeVerticalData;
 struct HarfBuzzFontData;
@@ -43,4 +45,5 @@ private:
   std::shared_ptr<HarfBuzzFontData> harfbuzz_font_data_;
 };
 inline constexpr hb_codepoint_t kUnmatchedVSGlyphId = static_cast<hb_codepoint_t>(-1);
+
 } // namespace bkfont

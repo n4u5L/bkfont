@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/opentype/open_type_baseline_metrics.cc
+// Ported from: blink/renderer/platform/fonts/opentype/open_type_baseline_metrics.cc
 // Copyright 2023 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -13,6 +13,7 @@
 #include "shaping/harfbuzz_face.h"
 
 namespace {
+
 // HarfBuzz' hb_position_t is a 16.16 fixed-point value.
 float HarfBuzzUnitsToFloat(hb_position_t value) {
   static const float kFloatToHbRatio = 1.0f / (1 << 16);
@@ -22,6 +23,7 @@ float HarfBuzzUnitsToFloat(hb_position_t value) {
 } // namespace
 
 namespace bkfont {
+
 OpenTypeBaselineMetrics::OpenTypeBaselineMetrics(HarfBuzzFace* harf_buzz_face,
                                                  FontOrientation orientation) {
   hb_dir_ =

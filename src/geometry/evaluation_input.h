@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/geometry/evaluation_input.h
+// Ported from: blink/renderer/platform/geometry/evaluation_input.h
 // Copyright 2024 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -35,4 +35,5 @@ public:
       CalcSizeKeywordBehavior::kAsSpecified;
   base::flat_map<ColorChannelKeyword, float> color_channel_keyword_values;
 };
+
 } // namespace bkfont

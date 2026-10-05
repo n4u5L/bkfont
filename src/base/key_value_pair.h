@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/key_value_pair.h
+// Ported from: blink/renderer/platform/wtf/key_value_pair.h
 /*
  * Copyright (C) 2007 Apple Inc.  All rights reserved.
  *

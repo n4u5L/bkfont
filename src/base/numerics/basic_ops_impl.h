@@ -1,4 +1,4 @@
-// Source: base/numerics/basic_ops_impl.h
+// Ported from: chromium/base/numerics/basic_ops_impl.h
 // Copyright 2024 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -153,4 +153,5 @@ template <class T>
 inline constexpr std::array<uint8_t, sizeof(T)> ToLittleEndian(T val) {
   return ToLittleEndian(static_cast<std::make_unsigned_t<T>>(val));
 }
+
 } // namespace bkfont::base::internal

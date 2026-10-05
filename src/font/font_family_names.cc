@@ -1,9 +1,10 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_family_names.json5
+// Ported from: blink/renderer/platform/fonts/font_family_names.json5
 // Initialization mirrors Blink generated names; call after bkfont::Initialize.
 #include "font_family_names.h"
 #include "base/static_constructors.h"
 #include <new>
 namespace bkfont::font_family_names {
+
 DEFINE_GLOBAL(, AtomicString, kWebkitStandard);
 DEFINE_GLOBAL(, AtomicString, kSystemUi);
 DEFINE_GLOBAL(, AtomicString, kArial);
@@ -56,4 +57,5 @@ void Init() {
   new (static_cast<void*>(kMathStorage)) AtomicString("math");
   new (static_cast<void*>(kBlinkMacSystemFontStorage)) AtomicString("BlinkMacSystemFont");
 }
+
 } // namespace bkfont::font_family_names

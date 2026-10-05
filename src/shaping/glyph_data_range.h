@@ -1,11 +1,10 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/shaping/glyph_data_range.h
+// Ported from: blink/renderer/platform/fonts/shaping/glyph_data_range.h
 // Copyright 2024 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 #pragma once
 
-#include <memory>
 #include "base/containers/span.h"
 #include "base/forward.h"
 #include "glyph_data.h"
@@ -17,6 +16,8 @@ struct ShapeResultRun;
 // Represents a range of HarfBuzzRunGlyphData. |begin| and |end| follow the
 // iterator pattern; i.e., |begin| is lower or equal to |end| in the address
 // space regardless of LTR/RTL. |begin| is inclusive, |end| is exclusive.
+// This is a borrowed view: the run and its glyph storage must outlive the range
+// and must not be resized while the range is used.
 class GlyphDataRange {
 
 public:
@@ -51,7 +52,7 @@ private:
                  const_iterator begin,
                  const_iterator end);
 
-  std::shared_ptr<const ShapeResultRun> run_;
+  const ShapeResultRun* run_ = nullptr;
   wtf_size_t index_ = 0;
   wtf_size_t size_ = 0;
 };

@@ -4,6 +4,7 @@
 // found in the LICENSE file.
 
 #include "han_kerning.h"
+#include "font/text_metrics.h"
 
 #include <unicode/uchar.h>
 #include <array>
@@ -489,19 +490,11 @@ HanKerning::FontData::FontData(const SimpleFontData& font,
 
   // Compute glyph bounds for all glyphs.
   std::array<GlyphInkBounds, std::size(kChars)> bounds{};
-  const FontPlatformData& platform = font.PlatformData();
+  std::array<ScalarRect, std::size(kChars)> glyph_bounds;
+  FontGetBoundsForGlyphs(font.PlatformData().CreatePlatformFont(), glyphs, glyph_bounds.data());
   for (wtf_size_t i = 0; i < glyphs.size(); ++i) {
-    PlatformGlyphMetrics metrics;
-    platform.MeasureGlyph(glyphs[i], &metrics);
-    float left = metrics.left, top = metrics.top;
-    float right = left + metrics.width, bottom = top + metrics.height;
-    if (!platform.ShouldSubpixelPosition()) {
-      left = std::floor(left);
-      top = std::floor(top);
-      right = std::ceil(right);
-      bottom = std::ceil(bottom);
-    }
-    bounds[i] = {left, top, right, bottom};
+    const ScalarRect& rect = glyph_bounds[i];
+    bounds[i] = {rect.left, rect.top, rect.right, rect.bottom};
   }
 
   // `bounds` are relative to the glyph origin. Adjust them to be relative to

@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_platform_data_cache.h
+// Ported from: blink/renderer/platform/fonts/font_platform_data_cache.h
 /*
  * Copyright (C) 2006, 2008 Apple Computer, Inc.  All rights reserved.
  * Copyright (C) 2007-2008 Torch Mobile, Inc.

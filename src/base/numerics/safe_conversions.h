@@ -1,4 +1,4 @@
-// Source: base/numerics/safe_conversions.h
+// Ported from: chromium/base/numerics/safe_conversions.h
 // Copyright 2014 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -22,6 +22,7 @@
 #endif
 
 namespace bkfont::base {
+
 namespace internal {
 
 #if !BASE_HAS_OPTIMIZED_SAFE_CONVERSIONS

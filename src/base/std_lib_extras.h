@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/std_lib_extras.h
+// Ported from: blink/renderer/platform/wtf/std_lib_extras.h
 /*
  * Copyright (C) 2008 Apple Inc. All Rights Reserved.
  *
@@ -38,14 +38,14 @@
 #include "threading.h"
 #endif
 
-#define DEFINE_STATIC_LOCAL_IMPL(Type, Name, Arguments, allow_cross_thread)   \
+#define DEFINE_STATIC_LOCAL_IMPL(Type, Name, Arguments, allow_cross_thread)    \
   static bkfont::StaticSingleton<Type> s_##Name(                               \
-      [&]() {                                                                 \
+      [&]() {                                                                  \
         return new bkfont::StaticSingleton<Type>::WrapperType Arguments;       \
-      },                                                                      \
-      [&](void* leaked_ptr) {                                                 \
+      },                                                                       \
+      [&](void* leaked_ptr) {                                                  \
         new (leaked_ptr) bkfont::StaticSingleton<Type>::WrapperType Arguments; \
-      });                                                                     \
+      });                                                                      \
   Type& Name = s_##Name.Get(allow_cross_thread)
 
 // Use |DEFINE_STATIC_LOCAL()| to declare and define a static local variable

@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/atomic_string.h
+// Ported from: blink/renderer/platform/wtf/text/atomic_string.h
 /*
  * Copyright (C) 2004, 2005, 2006, 2008 Apple Inc. All rights reserved.
  *
@@ -41,8 +41,10 @@
 // `AtomicString` is interned, so it's safe to hash; allow conversion to a byte
 // span to facilitate this.
 namespace bkfont::base {
+
 template <>
 inline constexpr bool kCanSafelyConvertToByteSpan<::bkfont::AtomicString> = true;
+
 } // namespace bkfont::base
 
 namespace bkfont {

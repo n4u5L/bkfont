@@ -1,4 +1,4 @@
-// Source: base/numerics/safe_conversions_impl.h
+// Ported from: chromium/base/numerics/safe_conversions_impl.h
 // Copyright 2014 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -414,11 +414,9 @@ template <typename Lhs,
               std::is_integral_v<MaxExponentPromotion<Lhs, Rhs>> && kIntegerBitsPlusSign<MaxExponentPromotion<Lhs, Rhs>> == kIntegerBitsPlusSign<intmax_t>,
           bool is_max_exponent =
               kStaticDstRangeRelationToSrcRange<MaxExponentPromotion<Lhs, Rhs>,
-                                                Lhs>
-                  == NumericRangeRepresentation::kContained
-              && kStaticDstRangeRelationToSrcRange<MaxExponentPromotion<Lhs, Rhs>,
-                                                   Rhs>
-                     == NumericRangeRepresentation::kContained>
+                                                Lhs> == NumericRangeRepresentation::kContained &&
+              kStaticDstRangeRelationToSrcRange<MaxExponentPromotion<Lhs, Rhs>,
+                                                Rhs> == NumericRangeRepresentation::kContained>
 struct BigEnoughPromotionImpl {
   using type = MaxExponentPromotion<Lhs, Rhs>;
   static constexpr bool kContained = true;

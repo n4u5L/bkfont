@@ -1,3 +1,5 @@
+// Local implementation: non-owning callable adapter.
+// Upstream reference: chromium/base/functional/function_ref.h
 // Non-owning synchronous callable reference; no allocation or container policy.
 #pragma once
 #include <functional>
@@ -5,6 +7,7 @@
 #include <type_traits>
 #include <utility>
 namespace bkfont::base {
+
 template <typename Signature>
 class FunctionRef;
 template <typename R, typename... Args>
@@ -27,4 +30,5 @@ private:
   void* object_;
   R (*invoke_)(void*, Args...);
 };
+
 } // namespace bkfont::base

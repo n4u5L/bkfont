@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/geometry/layout_unit.h
+// Ported from: blink/renderer/platform/geometry/layout_unit.h
 /*
  * Copyright (c) 2012, Google Inc. All rights reserved.
  *
@@ -593,8 +593,8 @@ inline FixedPoint<fractional_bits, RawValue> operator/(
     const FixedPoint<fractional_bits, RawValue>& b) {
   int64_t raw_val =
       static_cast<int64_t>(
-          FixedPoint<fractional_bits, RawValue>::kFixedPointDenominator)
-      * a.RawValue() / b.RawValue();
+          FixedPoint<fractional_bits, RawValue>::kFixedPointDenominator) *
+      a.RawValue() / b.RawValue();
   return FixedPoint<fractional_bits, RawValue>::FromRawValueWithClamp(raw_val);
 }
 

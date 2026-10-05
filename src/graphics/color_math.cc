@@ -1,3 +1,7 @@
+// Ported from: skia/modules/skcms/skcms.cc
+// Ported from: skia/modules/skcms/src/skcms_internals.h
+// (scalar transfer and matrix routines).
+
 /*
  * Copyright 2018 Google Inc.
  *
@@ -5,7 +9,6 @@
  * found in the LICENSE file.
  */
 
-// Source: third_party/skia/modules/skcms/skcms.cc (scalar transfer and matrix routines).
 #include "color_math.h"
 #include <cstdint>
 #include <cstring>
@@ -14,8 +17,8 @@
 #include <limits>
 
 namespace bkfont::color_math {
+
 constexpr float INFINITY_ = std::numeric_limits<float>::infinity();
-// Source: modules/skcms/src/skcms_internals.h.
 static inline float floorf_(float x) {
   float roundtrip = (float)((int)x);
   return roundtrip > x ? roundtrip - 1 : roundtrip;
@@ -35,9 +38,7 @@ static float log2f_(float x) {
   float m;
   memcpy(&m, &m_bits, sizeof(m));
 
-  return (e - 124.225514990f
-          - 1.498030302f * m
-          - 1.725879990f / (0.3520887068f + m));
+  return (e - 124.225514990f - 1.498030302f * m - 1.725879990f / (0.3520887068f + m));
 }
 static float logf_(float x) {
   const float ln2 = 0.69314718f;
@@ -159,10 +160,7 @@ static skcms_TFType classify(const skcms_TransferFunction& tf, TF_PQish* pq = nu
   // Basic soundness checks for sRGBish transfer functions.
   if (isfinitef_(tf.a + tf.b + tf.c + tf.d + tf.e + tf.f + tf.g)
       // a,c,d,g should be non-negative to make any sense.
-      && tf.a >= 0
-      && tf.c >= 0
-      && tf.d >= 0
-      && tf.g >= 0
+      && tf.a >= 0 && tf.c >= 0 && tf.d >= 0 && tf.g >= 0
       // Raising a negative value to a fractional tf->g produces complex numbers.
       && tf.a * tf.d + tf.b >= 0) {
     return skcms_TFType_sRGBish;
@@ -230,9 +228,7 @@ typedef struct {
 static skcms_Vector3 mv_mul(const skcms_Matrix3x3* m, const skcms_Vector3* v) {
   skcms_Vector3 dst = {{0, 0, 0}};
   for (int row = 0; row < 3; ++row) {
-    dst.vals[row] = m->vals[row][0] * v->vals[0]
-                    + m->vals[row][1] * v->vals[1]
-                    + m->vals[row][2] * v->vals[2];
+    dst.vals[row] = m->vals[row][0] * v->vals[0] + m->vals[row][1] * v->vals[1] + m->vals[row][2] * v->vals[2];
   }
   return dst;
 }
@@ -335,9 +331,7 @@ bool skcms_Matrix3x3_invert(const skcms_Matrix3x3* src, skcms_Matrix3x3* dst) {
          b4 = a21,
          b5 = a22;
 
-  double determinant = b0 * b5
-                       - b1 * b4
-                       + b2 * b3;
+  double determinant = b0 * b5 - b1 * b4 + b2 * b3;
 
   if (determinant == 0) {
     return false;
@@ -378,9 +372,7 @@ skcms_Matrix3x3 skcms_Matrix3x3_concat(const skcms_Matrix3x3* A, const skcms_Mat
   skcms_Matrix3x3 m = {{{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}};
   for (int r = 0; r < 3; r++)
     for (int c = 0; c < 3; c++) {
-      m.vals[r][c] = A->vals[r][0] * B->vals[0][c]
-                     + A->vals[r][1] * B->vals[1][c]
-                     + A->vals[r][2] * B->vals[2][c];
+      m.vals[r][c] = A->vals[r][0] * B->vals[0][c] + A->vals[r][1] * B->vals[1][c] + A->vals[r][2] * B->vals[2][c];
     }
   return m;
 }

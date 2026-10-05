@@ -1,3 +1,6 @@
+// Ported from: blink/renderer/platform/fonts/font.h
+// The painting APIs draw through PaintCanvas (see CanvasPaintCanvas).
+
 /*
  * Copyright (C) 2000 Lars Knoll (knoll@kde.org)
  *           (C) 2000 Antti Koivisto (koivisto@kde.org)
@@ -22,16 +25,21 @@
  *
  */
 
-// Port source: platform/fonts/font.h; painting APIs excluded from the font core.
 #pragma once
+#include <tuple>
+#include "base/vector.h"
 #include "font_description.h"
+#include "paint_canvas.h"
 #include "font_fallback_iterator.h"
 #include "font_fallback_list.h"
 #include "simple_font_data.h"
 #include "shaping/support/layout_unit.h"
 #include "text/tab_size.h"
 namespace bkfont {
+
 class TextRun;
+struct TextFragmentPaintInfo;
+struct TextRunPaintInfo;
 class Font {
 public:
   Font();
@@ -44,6 +52,49 @@ public:
   const FontDescription& GetFontDescription() const {
     return font_description_;
   }
+
+  enum class DrawType { kGlyphsOnly, kGlyphsAndClusters };
+
+  enum CustomFontNotReadyAction {
+    kDoNotPaintIfFontNotReady,
+    kUseFallbackIfFontNotReady
+  };
+
+  void DrawText(PaintCanvas*,
+                const TextFragmentPaintInfo&,
+                const gfx::PointF&,
+                NodeId node_id,
+                const PlatformPaint&,
+                DrawType = DrawType::kGlyphsOnly) const;
+  // Deprecated: Use PlainTextPainter.
+  bool DeprecatedDrawBidiText(PaintCanvas*,
+                              const TextRunPaintInfo&,
+                              const gfx::PointF&,
+                              CustomFontNotReadyAction,
+                              const PlatformPaint&,
+                              DrawType = DrawType::kGlyphsOnly) const;
+  void DrawEmphasisMarks(PaintCanvas*,
+                         const TextFragmentPaintInfo&,
+                         const AtomicString& mark,
+                         const gfx::PointF&,
+                         const PlatformPaint&) const;
+
+  gfx::RectF TextInkBounds(const TextFragmentPaintInfo&) const;
+
+  struct TextIntercept {
+    float begin_, end_;
+  };
+
+  // Compute the text intercepts along the axis of the advance and write them
+  // into the specified Vector of TextIntercepts. The number of those is zero
+  // or a multiple of two, and is at most the number of glyphs * 2 in the text
+  // part of TextFragmentPaintInfo. Specify bounds for the upper and lower
+  // extend of a line crossing through the text, parallel to the baseline.
+  // TODO(drott): crbug.com/655154 Fix this for upright in vertical.
+  void GetTextIntercepts(const TextFragmentPaintInfo&,
+                         const PlatformPaint&,
+                         const std::tuple<float, float>& bounds,
+                         Vector<TextIntercept>&) const;
   const SimpleFontData* PrimaryFont() const {
     return EnsureFontFallbackList()->PrimarySimpleFontDataWithSpace(font_description_).get();
   }
@@ -98,4 +149,5 @@ private:
   FontDescription font_description_;
   mutable std::shared_ptr<FontFallbackList> font_fallback_list_;
 };
+
 } // namespace bkfont

@@ -1,3 +1,5 @@
+// Ported from: blink/renderer/platform/fonts/opentype/open_type_caps_support_mpl.cc
+
 /* ***** BEGIN LICENSE BLOCK *****
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -5,7 +7,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * ***** END LICENSE BLOCK ***** */
-// Source: third_party/blink/renderer/platform/fonts/opentype/open_type_caps_support_mpl.cc
 
 #include <hb-ot.h>
 #include <iterator>

@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_fallback_list.cc
+// Ported from: blink/renderer/platform/fonts/font_fallback_list.cc
 /*
  * Copyright (C) 2006 Apple Computer, Inc.  All rights reserved.
  *

@@ -1,3 +1,4 @@
+// Ported from: blink/renderer/platform/wtf/hash_table_deleted_value_type.h
 /*
  * Copyright (C) 2013 Google Inc. All rights reserved.
  *
@@ -31,7 +32,9 @@
 // From Blink platform/wtf/hash_table_deleted_value_type.h.
 #pragma once
 namespace bkfont {
+
 enum HashTableDeletedValueType {
   kHashTableDeletedValue
 };
+
 } // namespace bkfont

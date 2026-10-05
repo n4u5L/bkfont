@@ -1,11 +1,12 @@
-# Source lists: Chromium third_party/ots/BUILD.gn and
-# third_party/woff2/BUILD.gn (woff2_dec).
+# Ported from: chromium/third_party/ots/BUILD.gn
+# Ported from: chromium/third_party/woff2/BUILD.gn
+# Local CMake adaptation of the OTS and woff2_dec source lists.
 include_guard(GLOBAL)
 
 if(NOT DEFINED BLINK_FONTS_CHROMIUM_ROOT)
   message(FATAL_ERROR "BLINK_FONTS_CHROMIUM_ROOT must name the Chromium source root")
 endif()
-if(NOT DEFINED BLINK_FONTS_PACKAGES_ROOT)
+if(WIN32 AND NOT DEFINED BLINK_FONTS_PACKAGES_ROOT)
   message(FATAL_ERROR "BLINK_FONTS_PACKAGES_ROOT must name the prebuilt package directory")
 endif()
 
@@ -21,9 +22,11 @@ if(NOT TARGET Brotli::brotlidec)
 endif()
 
 # The installed packages contain separate Debug and Release static libraries.
-set_target_properties(ZLIB::ZLIB PROPERTIES
-  MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE
-  MAP_IMPORTED_CONFIG_MINSIZEREL RELEASE)
+if(WIN32)
+  set_target_properties(ZLIB::ZLIB PROPERTIES
+    MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE
+    MAP_IMPORTED_CONFIG_MINSIZEREL RELEASE)
+endif()
 
 set(_blink_fonts_woff2_root
   "${BLINK_FONTS_CHROMIUM_ROOT}/third_party/woff2")

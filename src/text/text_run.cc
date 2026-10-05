@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/text/text_run.cc
+// Ported from: blink/renderer/platform/text/text_run.cc
 /*
  * Copyright (C) 2011 Apple Inc. All rights reserved.
  *

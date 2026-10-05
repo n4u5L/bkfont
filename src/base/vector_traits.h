@@ -1,3 +1,5 @@
+// Ported from: blink/renderer/platform/wtf/vector_traits.h
+
 /*
  * Copyright (C) 2006, 2007, 2008 Apple Inc. All rights reserved.
  *
@@ -16,7 +18,6 @@
  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  * Boston, MA 02110-1301, USA.
  */
-// Source: third_party/blink/renderer/platform/wtf/vector_traits.h
 #pragma once
 
 #include <memory>
@@ -86,24 +87,30 @@ struct VectorTraits<std::pair<First, Second>> {
 } // namespace bkfont
 
 #define BASE_ALLOW_MOVE_INIT_AND_COMPARE_WITH_MEM_FUNCTIONS(ClassName)    \
-  namespace bkfont {                                                       \
+  namespace bkfont {                                                      \
+                                                                          \
   template <>                                                             \
   struct VectorTraits<ClassName> : SimpleClassVectorTraits<ClassName> {}; \
+                                                                          \
   }
 
 #define BASE_ALLOW_MOVE_AND_INIT_WITH_MEM_FUNCTIONS(ClassName)   \
-  namespace bkfont {                                              \
+  namespace bkfont {                                             \
+                                                                 \
   template <>                                                    \
   struct VectorTraits<ClassName> : VectorTraitsBase<ClassName> { \
     static const bool kCanInitializeWithMemset = true;           \
     static const bool kCanMoveWithMemcpy = true;                 \
   };                                                             \
+                                                                 \
   }
 
 #define BASE_ALLOW_INIT_WITH_MEM_FUNCTIONS(ClassName)            \
-  namespace bkfont {                                              \
+  namespace bkfont {                                             \
+                                                                 \
   template <>                                                    \
   struct VectorTraits<ClassName> : VectorTraitsBase<ClassName> { \
     static const bool kCanInitializeWithMemset = true;           \
   };                                                             \
+                                                                 \
   }

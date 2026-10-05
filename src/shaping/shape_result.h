@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/shaping/shape_result.h
+// Ported from: blink/renderer/platform/fonts/shaping/shape_result.h
 /*
  * Copyright (C) 2012 Google Inc. All rights reserved.
  *
@@ -289,6 +289,16 @@ public:
   float ApplySpacing(ShapeResultSpacing<String>&, int text_start_offset = 0);
   std::shared_ptr<ShapeResult> ApplySpacingToCopy(ShapeResultSpacing<TextRun>&,
                                                   const TextRun&) const;
+
+  // Local, opt-in layout extension; HarfBuzz shaping keeps upstream behavior.
+  // Centers the ink of single-character clusters for U+3001, U+3002, U+FF0C,
+  // U+FF0E, U+FF1A and U+FF1B in upright vertical runs. Advances, character
+  // indexes and other punctuation (including brackets) are preserved.
+  // `text` uses the same offsets as the original shaping input. Call before
+  // ApplySpacing() and creating views. Use TextSpacingTrim::kSpaceAll when
+  // shaping to retain the full cells in which punctuation is centered.
+  void ApplyVerticalPunctuationCentering(const String& text);
+
   // Add `expansion` space before the first glyph.
   void ApplyLeadingExpansion(LayoutUnit expansion);
   // Add `expansion` space after the last glyph.
@@ -327,12 +337,13 @@ public:
     ShapeRange(unsigned start, unsigned end, ShapeResult* target)
         : start(start),
           end(end),
-          target(target->shared_from_this()) {
+          target(target) {
     }
 
     unsigned start;
     unsigned end;
-    std::shared_ptr<ShapeResult> target;
+    // Borrowed output; the caller keeps it alive through CopyRanges().
+    ShapeResult* target;
   };
 
   // Copy a set of sequential ranges. The ranges may not overlap and the offsets
@@ -394,7 +405,7 @@ public:
   // TODO(eae): Remove once LayoutNG lands. https://crbug.com/591099
   void SetDeprecatedInkBounds(gfx::RectF ink_bounds) {
     if (!deprecated_ink_bounds_) {
-      deprecated_ink_bounds_ = std::make_shared<DeprecatedInkBounds>();
+      deprecated_ink_bounds_ = std::make_unique<DeprecatedInkBounds>();
     }
     deprecated_ink_bounds_->ink_bounds = ink_bounds;
   }
@@ -448,7 +459,7 @@ protected:
   float ApplySpacingImpl(ShapeResultSpacing<TextContainerType>&,
                          int text_start_offset = 0);
   template <bool is_horizontal_run>
-  void ComputeGlyphPositions(std::shared_ptr<ShapeResultRun>,
+  void ComputeGlyphPositions(ShapeResultRun*,
                              unsigned start_glyph,
                              unsigned num_glyphs,
                              hb_buffer_t*);
@@ -494,7 +505,7 @@ protected:
   // Only used by CachingWordShapeIterator and stored here for memory reduction
   // reasons. See https://crbug.com/955776
   // TODO(eae): Remove once LayoutNG lands. https://crbug.com/591099
-  std::shared_ptr<DeprecatedInkBounds> deprecated_ink_bounds_ = nullptr;
+  std::unique_ptr<DeprecatedInkBounds> deprecated_ink_bounds_;
 
   // The total width. This is the sum of `ShapeResultRun::width_`.
   // It's mutable because `RecalcCharacterPositions()` recalculates this.

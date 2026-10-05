@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/text/han_kerning_char_type.h
+// Ported from: blink/renderer/platform/text/han_kerning_char_type.h
 // Copyright 2023 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.

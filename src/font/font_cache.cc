@@ -1,3 +1,8 @@
+// Ported from: blink/renderer/platform/fonts/font_cache.cc
+// Ported from: blink/renderer/platform/fonts/win/font_cache_skia_win.cc
+// Ported from: blink/renderer/platform/fonts/skia/font_cache_skia.cc
+// Ported from: chromium/ui/gfx/font_list.cc
+
 /*
  * Copyright (C) 2006, 2008 Apple Inc. All rights reserved.
  * Copyright (C) 2007 Nicholas Shanks <webkit@nickshanks.com>
@@ -30,20 +35,30 @@
 // Backend adaptation preserves Blink matching/fallback order.
 #include "font_cache.h"
 #include "font_fallback_map.h"
-#include "font_fallback_win.h"
 #include "alternate_font_family.h"
 #include "shaping/shape_cache.h"
 #include "runtime_enabled_features.h"
 #include "text/character.h"
-#include <windows.h>
 #include "font_prewarmer.h"
+#if BUILDFLAG(IS_WIN)
+#include <windows.h>
+#include "font_fallback_win.h"
+#include "font_unique_name_lookup_win.h"
+#include "platform/font_manager_win.h"
+#else
+#include "platform/font_manager_fontconfig.h"
+#endif
 #include "base/hash_set.h"
 #include <unicode/uscript.h>
 namespace bkfont {
+
 const char kColorEmojiLocale[] = "und-Zsye";
 const char kMonoEmojiLocale[] = "und-Zsym";
+#if BUILDFLAG(IS_WIN)
 static const char kChineseSimplified[] = "zh-Hant";
+#endif
 FontPrewarmer* FontCache::prewarmer_ = nullptr;
+#if BUILDFLAG(IS_WIN)
 bool FontCache::antialiased_text_enabled_ = false;
 bool FontCache::lcd_text_enabled_ = false;
 std::unique_ptr<AtomicString> FontCache::menu_font_family_name_;
@@ -52,28 +67,40 @@ std::unique_ptr<AtomicString> FontCache::status_font_family_name_;
 int32_t FontCache::menu_font_height_ = 0;
 int32_t FontCache::small_caption_font_height_ = 0;
 int32_t FontCache::status_font_height_ = 0;
+#endif
 FontCache& FontCache::Get() {
   static thread_local FontCache cache;
   return cache;
 }
 FontCache::FontCache()
-    : font_manager_(bkfont::FontManager::Create()) {
+#if BUILDFLAG(IS_WIN)
+    : font_manager_(MakeFontManagerDirectWrite()) {
+#else
+    : font_manager_(MakeFontManagerFontconfig()) {
+#endif
 }
-FontCache::~FontCache() = default;
+FontCache::~FontCache() {
+  for (auto& entry : font_cache_clients_) {
+    auto& caches = entry.key->font_caches_;
+    caches.EraseAt(caches.Find(this));
+  }
+}
 std::shared_ptr<const FontPlatformData> FontCache::GetFontPlatformData(const FontDescription& description,
                                                                        const FontFaceCreationParams& params, AlternateFontName alternate) {
   if (params.CreationType() == kCreateFontByFamily && params.Family() == font_family_names::kSystemUi)
     return GetFontPlatformData(description, FontFaceCreationParams(SystemFontFamily()), AlternateFontName::kNoAlternate);
   return font_platform_data_cache_.GetOrCreateFontPlatformData(this, description, params, alternate);
 }
-std::shared_ptr<FontFace> FontCache::CreateTypeface(const FontDescription& description,
+#if BUILDFLAG(IS_WIN)
+std::shared_ptr<Typeface> FontCache::CreateTypeface(const FontDescription& description,
                                                     const FontFaceCreationParams& params, String& name) {
   name = params.Family().GetString();
-  return font_manager_->MatchFamily(name, description.PlatformFontStyle());
+  return font_manager_->LegacyMakeTypeface(name, description.PlatformFontStyle());
 }
-std::shared_ptr<FontFace> FontCache::CreateTypefaceFromUniqueName(const FontFaceCreationParams& params) {
-  return font_manager_->MatchUniqueName(params.Family().GetString());
+std::shared_ptr<Typeface> FontCache::CreateTypefaceFromUniqueName(const FontFaceCreationParams& params) {
+  return FontUniqueNameLookupWin::MatchUniqueName(params.Family().GetString());
 }
+#endif
 std::shared_ptr<ShapeCache> FontCache::GetShapeCache(const FallbackListCompositeKey& key) {
   // Upstream Oilpan weak processing removed unreachable ShapeCache entries.
   fallback_list_shaper_cache_.erase_if([](const auto& entry) { return entry.value.expired(); });
@@ -83,9 +110,20 @@ std::shared_ptr<ShapeCache> FontCache::GetShapeCache(const FallbackListComposite
   result.stored_value->value = cache;
   return cache;
 }
-void FontCache::AddClient(const std::shared_ptr<FontCacheClient>& client) {
-  font_cache_clients_.erase_if([](const auto& entry) { return entry.value.expired(); });
-  font_cache_clients_.insert(client.get(), std::weak_ptr<FontCacheClient>(client));
+void FontCache::AddClient(FontCacheClient* client) {
+  if (!client || font_cache_clients_.Contains(client)) {
+    return;
+  }
+  font_cache_clients_.insert(client, ++next_client_id_);
+  client->font_caches_.push_back(this);
+}
+void FontCache::RemoveClient(FontCacheClient* client) {
+  if (!client || !font_cache_clients_.Contains(client)) {
+    return;
+  }
+  font_cache_clients_.erase(client);
+  auto& caches = client->font_caches_;
+  caches.EraseAt(caches.Find(this));
 }
 void FontCache::InvalidateShapeCache() {
   fallback_list_shaper_cache_.erase_if([](const auto& entry) { return entry.value.expired(); });
@@ -97,20 +135,33 @@ void FontCache::Invalidate() {
   font_platform_data_cache_.Clear();
   font_data_cache_.Clear();
   ++generation_;
-  // GC cleared dead clients upstream; weak clients are discarded on access here.
-  font_cache_clients_.erase_if([](const auto& entry) { return entry.value.expired(); });
-  for (auto& entry : font_cache_clients_)
-    if (auto client = entry.value.lock()) client->FontCacheInvalidated();
+  // A callback may destroy, unregister, or add clients. Snapshot registration
+  // IDs and recheck them without keeping iterators alive across callbacks.
+  Vector<std::pair<FontCacheClient*, std::uint64_t>> clients;
+  clients.ReserveInitialCapacity(font_cache_clients_.size());
+  for (const auto& entry : font_cache_clients_) {
+    clients.emplace_back(entry.key, entry.value);
+  }
+  for (const auto& [client, registration_id] : clients) {
+    bool registered;
+    {
+      auto it = font_cache_clients_.find(client);
+      registered = it != font_cache_clients_.end() && it->value == registration_id;
+    }
+    if (registered) {
+      client->FontCacheInvalidated();
+    }
+  }
   InvalidateShapeCache();
 }
 FontFallbackMap& FontCache::GetFontFallbackMap() {
   if (!font_fallback_map_) {
-    font_fallback_map_ = std::make_shared<FontFallbackMap>(nullptr);
-    AddClient(font_fallback_map_);
+    font_fallback_map_ = std::make_unique<FontFallbackMap>(nullptr);
+    AddClient(font_fallback_map_.get());
   }
   return *font_fallback_map_;
 }
-// Port source: third_party/blink/renderer/platform/fonts/font_cache.cc + win/font_cache_skia_win.cc + skia/font_cache_skia.cc
+#if BUILDFLAG(IS_WIN)
 int32_t EnsureMinimumFontHeightIfNeeded(int32_t font_height) {
   // Adjustment for codepage 936 to make the fonts more legible in Simplified
   // Chinese.  Please refer to LayoutThemeFontProviderWin.cpp for more
@@ -256,14 +307,14 @@ std::shared_ptr<const SimpleFontData> FontCache::GetFallbackFamilyNameFromHardco
 std::shared_ptr<const SimpleFontData> FontCache::GetDWriteFallbackFamily(const FontDescription& description,
                                                                          UChar32 codepoint, FontFallbackPriority priority) {
   const LayoutLocale* locale = FallbackLocaleForCharacter(description, priority, codepoint);
-  auto face = font_manager_->MatchCharacter(description.Family().FamilyName().GetString(),
-                                            description.PlatformFontStyle(),
-                                            locale->LocaleString().GetString(),
-                                            codepoint);
+  const String locales[] = {locale->LocaleString().GetString()};
+  auto face = font_manager_->MatchFamilyStyleCharacter(
+      description.Family().FamilyName().GetString(),
+      description.PlatformFontStyle(), locales, codepoint);
   if (!face) return nullptr;
   FontDescription fallback_description(description);
-  fallback_description.UpdateFromPlatformFontStyle(face->Style());
-  const FontFaceCreationParams params(AtomicString(face->FamilyName()));
+  fallback_description.UpdateFromPlatformFontStyle(face->GetFontStyle());
+  const FontFaceCreationParams params(AtomicString(face->GetFamilyName()));
   auto data = GetFontPlatformData(fallback_description, params);
   if (!data || !data->FontContainsCharacter(codepoint)) return nullptr;
   return FontDataFromFontPlatformData(data);
@@ -302,10 +353,12 @@ std::shared_ptr<const SimpleFontData> FontCache::PlatformFallbackFontForCharacte
   return hardcoded_list_fallback_font;
 }
 
-static bool TypefacesMatchesFamily(const FontFace* face, const AtomicString& family) {
-  for (const auto& actual : face->FamilyNames())
-    if (DeprecatedEqualIgnoringCase(family, actual.name)) return true;
-  return DeprecatedEqualIgnoringCase(family, face->FamilyName());
+static bool TypefacesMatchesFamily(const Typeface* face, const AtomicString& family) {
+  auto names = face->CreateFamilyNameIterator();
+  Typeface::LocalizedString actual;
+  while (names->Next(&actual))
+    if (DeprecatedEqualIgnoringCase(family, actual.string)) return true;
+  return DeprecatedEqualIgnoringCase(family, face->GetFamilyName());
 }
 
 static bool TypefacesHasWeightSuffix(const AtomicString& family,
@@ -389,7 +442,7 @@ std::shared_ptr<const FontPlatformData> FontCache::CreateFontPlatformData(
     float font_size,
     AlternateFontName alternate_font_name) {
 
-  std::shared_ptr<FontFace> typeface;
+  std::shared_ptr<Typeface> typeface;
 
   String name;
 
@@ -459,10 +512,10 @@ std::shared_ptr<const FontPlatformData> FontCache::CreateFontPlatformData(
   }
 
   bool synthetic_bold_requested =
-      (font_description.Weight() >= kBoldThreshold && typeface->Style().weight < kBoldThreshold) || font_description.IsSyntheticBold();
+      (font_description.Weight() >= kBoldThreshold && typeface->GetFontStyle().GetWeight() < kBoldThreshold) || font_description.IsSyntheticBold();
 
   bool synthetic_italic_requested =
-      ((font_description.Style() == kItalicSlopeValue) && typeface->Style().slant == FontSlant::kNormal) || font_description.IsSyntheticItalic();
+      ((font_description.Style() == kItalicSlopeValue) && !typeface->IsItalic()) || font_description.IsSyntheticItalic();
 
   std::shared_ptr<FontPlatformData> result = std::make_shared<FontPlatformData>(
       typeface,
@@ -475,10 +528,12 @@ std::shared_ptr<const FontPlatformData> FontCache::CreateFontPlatformData(
       font_description.Orientation());
 
   result->SetAvoidEmbeddedBitmaps(
-      typeface->FamilyName() == "Calibri" || typeface->FamilyName() == "Courier New");
+      typeface->GetFamilyName() == "Calibri" || typeface->GetFamilyName() == "Courier New");
 
   return result;
 }
+
+#endif // BUILDFLAG(IS_WIN)
 
 std::shared_ptr<const SimpleFontData> FontCache::FallbackOnStandardFontStyle(
     const FontDescription& font_description,
@@ -633,6 +688,7 @@ bool FontCache::IsPlatformFontUniqueNameMatchAvailable(
 } // namespace bkfont
 
 namespace bkfont {
+
 void FontCache::PrewarmFamily(const AtomicString& family) {
   if (!prewarmer_) return;
   static HashSet<AtomicString> prewarmed_families;
@@ -640,10 +696,12 @@ void FontCache::PrewarmFamily(const AtomicString& family) {
   if (!result.is_new_entry) return;
   prewarmer_->PrewarmFamily(family.GetString());
 }
+
 } // namespace bkfont
 
 namespace bkfont {
-// Source: ui/gfx/font_list.cc::FirstAvailableOrFirst. The source trims only
+
+// FirstAvailableOrFirst. The source trims only
 // ASCII whitespace and drops empty comma-separated entries before matching.
 String FontCache::FirstAvailableOrFirst(const String& font_name_list) {
   Vector<String> families;
@@ -663,8 +721,13 @@ String FontCache::FirstAvailableOrFirst(const String& font_name_list) {
   if (families.empty()) return g_empty_string;
   if (families.size() == 1) return families[0];
   for (const auto& family : families) {
-    if (Get().GetFontManager()->MatchFamily(family, FontStyle())) return family;
+#if BUILDFLAG(IS_LINUX)
+    if (Get().GetFontManager()->MatchFamilyStyle(family, FontStyle())) return family;
+#else
+    if (Get().GetFontManager()->MatchFamily(family)->Count() > 0) return family;
+#endif
   }
   return families[0];
 }
+
 } // namespace bkfont

@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/text/character_property.h
+// Ported from: blink/renderer/platform/text/character_property.h
 // Copyright 2016 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.

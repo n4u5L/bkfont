@@ -1,3 +1,5 @@
+// Ported from: blink/renderer/platform/fonts/font_platform_data.h
+
 /*
  * Copyright (c) 2006, 2007, 2008, Google Inc. All rights reserved.
  *
@@ -28,27 +30,33 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// Port source: platform/fonts/font_platform_data.h; DirectWrite replaces the typeface boundary.
+
 #pragma once
+
 #include <cstdint>
 #include <memory>
+
+#include "base/hash_table_deleted_value_type.h"
 #include "font_orientation.h"
+#include "font_render_style.h"
 #include "resolved_font_features.h"
 #include "text_rendering_mode.h"
 #include "typesetting_features.h"
-#include "platform/font_face.h"
 #include "platform/platform_font.h"
-#include "base/hash_table_deleted_value_type.h"
+#include "platform/typeface.h"
+
 namespace bkfont {
+
 class HarfBuzzFace;
 class FontDescription;
+
 class FontPlatformData {
 public:
   FontPlatformData();
   explicit FontPlatformData(HashTableDeletedValueType);
   FontPlatformData(const FontPlatformData&);
   FontPlatformData(const FontPlatformData&, float text_size);
-  FontPlatformData(std::shared_ptr<FontFace>, const String& family, float text_size,
+  FontPlatformData(std::shared_ptr<bkfont::Typeface>, const String& family, float text_size,
                    bool synthetic_bold, bool synthetic_italic,
                    TextRenderingMode, ResolvedFontFeatures,
                    FontOrientation = FontOrientation::kHorizontal);
@@ -63,14 +71,13 @@ public:
   float Size() const {
     return text_size_;
   }
-  FontRenderOptions RenderOptions() const;
-  // CreateSkFont (win/font_platform_data_win.cc). Named CreatePlatformFont
-  // because wingdi.h defines CreateFont as a macro.
+  // CreateSkFont's Linux branch, shared by every rasterization platform.
   PlatformFont CreatePlatformFont(const FontDescription* = nullptr) const;
-  bool MeasureGlyph(uint16_t glyph, PlatformGlyphMetrics* metrics) const;
-  PlatformFontMetrics GetFontMetrics() const;
   bool ShouldSubpixelPosition() const {
-    return use_anti_alias_;
+    return CreatePlatformFont().IsSubpixel();
+  }
+  const FontRenderStyle& GetFontRenderStyle() const {
+    return style_;
   }
   bool SyntheticBold() const {
     return synthetic_bold_;
@@ -78,15 +85,12 @@ public:
   bool SyntheticItalic() const {
     return synthetic_italic_;
   }
-  const std::shared_ptr<FontFace>& GetFontFace() const {
-    return typeface_;
-  }
-  const std::shared_ptr<FontFace>& Face() const {
+  const std::shared_ptr<bkfont::Typeface>& Typeface() const {
     return typeface_;
   }
   HarfBuzzFace* GetHarfBuzzFace() const;
   bool HasSpaceInLigaturesOrKerning(TypesettingFeatures) const;
-  uint64_t UniqueID() const;
+  std::uint32_t UniqueID() const;
   unsigned GetHash() const;
   FontOrientation Orientation() const {
     return orientation_;
@@ -122,7 +126,7 @@ public:
   bool FontContainsCharacter(UChar32) const;
 
 private:
-  const std::shared_ptr<FontFace> typeface_;
+  const std::shared_ptr<bkfont::Typeface> typeface_;
 
 public:
   float text_size_ = 0;
@@ -134,10 +138,11 @@ public:
   ResolvedFontFeatures resolved_font_features_;
 
 private:
+  FontRenderStyle style_;
+
   // HarfBuzzFace borrows this platform record. No shared ownership back-edge.
   mutable std::unique_ptr<HarfBuzzFace> harfbuzz_face_;
   bool is_hash_table_deleted_value_ = false;
-  bool use_anti_alias_ = false;
-  bool use_subpixel_rendering_ = false;
 };
+
 } // namespace bkfont

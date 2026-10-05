@@ -1,7 +1,10 @@
+// Local implementation: Chromium lock API adapter using the C++ standard library.
+// Upstream reference: chromium/base/synchronization/lock.h
 // AtomicStringTable retains its upstream single shared lock and weak entries.
 #pragma once
 #include <mutex>
 namespace bkfont::base {
+
 class Lock {
 public:
   void Acquire() {
@@ -29,7 +32,9 @@ public:
 private:
   Lock& lock_;
 };
+
 } // namespace bkfont::base
+
 #define GUARDED_BY(...)
 #define EXCLUSIVE_LOCKS_REQUIRED(...)
 #define LOCKS_EXCLUDED(...)

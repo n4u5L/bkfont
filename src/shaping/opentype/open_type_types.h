@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/opentype/open_type_types.h
+// Ported from: blink/renderer/platform/fonts/opentype/open_type_types.h
 /*
  * Copyright (C) 2012 Koji Ishii <kojiishi@gmail.com>
  *
@@ -31,6 +31,7 @@
 #include "base/vector.h"
 
 namespace bkfont {
+
 namespace open_type {
 
 struct Int16 {
@@ -117,4 +118,5 @@ protected:
 };
 
 } // namespace open_type
+
 } // namespace bkfont

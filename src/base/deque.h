@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/deque.h
+// Ported from: blink/renderer/platform/wtf/deque.h
 /*
  * Copyright (C) 2007, 2008 Apple Inc. All rights reserved.
  * Copyright (C) 2009 Google Inc. All rights reserved.

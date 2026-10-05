@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/utf16_text_iterator.cc
+// Ported from: blink/renderer/platform/fonts/utf16_text_iterator.cc
 /*
  * Copyright (C) 2003, 2006, 2008, 2009, 2010, 2011 Apple Inc. All rights
  * reserved.

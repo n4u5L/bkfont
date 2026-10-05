@@ -1,3 +1,5 @@
+// Ported from: blink/renderer/platform/wtf/forward.h
+// Ported from: blink/renderer/platform/wtf/wtf_size_t.h
 /*
  *  Copyright (C) 2006, 2009, 2011 Apple Inc. All rights reserved.
  *
@@ -56,4 +58,5 @@ class HashSet;
 template <typename Value, typename Traits = HashTraits<Value>,
           typename Allocator = PartitionAllocator>
 class LinkedHashSet;
+
 } // namespace bkfont

@@ -1,4 +1,4 @@
-// Source: base/containers/adapters_internal.h
+// Ported from: chromium/base/containers/adapters_internal.h
 // Copyright 2014 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -14,10 +14,12 @@
 #include "base/compiler_specific.h"
 
 namespace bkfont::base::internal {
+
 template <typename Range>
 class RangeOfRvaluesAdapter;
 template <typename Range>
 class ReversedAdapter;
+
 } // namespace bkfont::base::internal
 
 // This is technically correct, but presently always evaluates to false since

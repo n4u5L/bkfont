@@ -1,9 +1,10 @@
-// Source: platform/wtf/allocator/partitions.h.
+// Ported from: blink/renderer/platform/wtf/allocator/partitions.h
 // The font port uses CRT storage instead of Chromium's process-wide partitions.
 // Requested capacities are exact; no PartitionAlloc bucket rounding is applied.
 #pragma once
 #include <cstddef>
 namespace bkfont {
+
 class Partitions {
 public:
   // Original MaxDirectMapped(): (1 << 31) - kSuperPageSize (1 << 21).
@@ -23,4 +24,5 @@ public:
   static void* FastZeroedMalloc(std::size_t, const char*);
   static void FastFree(void*);
 };
+
 } // namespace bkfont

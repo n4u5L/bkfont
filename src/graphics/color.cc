@@ -1,4 +1,6 @@
-// Source: third_party/blink/renderer/platform/graphics/color.cc
+// Ported from: blink/renderer/platform/graphics/color.cc
+// Ported from: blink/common/features.cc
+
 /*
  * Copyright (C) 2003, 2004, 2005, 2006, 2008 Apple Inc. All rights reserved.
  *
@@ -56,7 +58,7 @@ const Color Color::kTransparent = Color(0x00000000);
 
 namespace {
 
-// Source: blink/public/common/features.cc, kBakedGamutMapping defaults disabled.
+// kBakedGamutMapping defaults disabled.
 std::atomic_bool g_baked_gamut_mapping_enabled{false};
 
 // For lch/oklch colors, the value of chroma underneath which the color is

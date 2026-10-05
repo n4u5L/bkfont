@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/opentype/font_format_check.cc
+// Ported from: blink/renderer/platform/fonts/opentype/font_format_check.cc
 // Copyright 2017 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -15,10 +15,11 @@
 #include <memory>
 #include <span>
 
-#include "platform/font_face.h"
+#include "platform/typeface.h"
 namespace bkfont {
 
 namespace {
+
 bool ContainsTableTag(std::span<const uint32_t> tags, uint32_t tag) {
   return std::find(tags.begin(), tags.end(), tag) != tags.end();
 }
@@ -128,11 +129,11 @@ bool FontFormatCheck::IsColorFont() const {
 }
 
 FontFormatCheck::VariableFontSubType FontFormatCheck::ProbeVariableFont(
-    std::shared_ptr<FontFace> typeface) {
-  if (!typeface->HasTable(HB_TAG('f', 'v', 'a', 'r')))
+    std::shared_ptr<Typeface> typeface) {
+  if (!typeface->GetTableSize(HB_TAG('f', 'v', 'a', 'r')))
     return VariableFontSubType::kNotVariable;
 
-  if (typeface->HasTable(HB_TAG('C', 'F', 'F', '2')))
+  if (typeface->GetTableSize(HB_TAG('C', 'F', 'F', '2')))
     return VariableFontSubType::kVariableCFF2;
   return VariableFontSubType::kVariableTrueType;
 }

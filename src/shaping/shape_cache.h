@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/shaping/shape_cache.h
+// Ported from: blink/renderer/platform/fonts/shaping/shape_cache.h
 /*
  * Copyright (C) 2012 Apple Inc. All rights reserved.
  * Copyright (C) 2015 Google Inc. All rights reserved.

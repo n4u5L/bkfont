@@ -1,3 +1,5 @@
+// Ported from: skia/src/utils/win/SkDWrite.h
+
 /*
  * Copyright 2012, 2014 Google Inc.
  * Copyright (c) 2011 Google Inc. All rights reserved.
@@ -24,11 +26,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * Source: third_party/skia/src/ports/SkTypeface_win_dw.cpp,
- * SkFontMgr_win_dw.cpp, SkScalerContext_win_dw.cpp and
- * third_party/skia/src/utils/win/SkDWriteFontFileStream.cpp.
- * This port replaces Skia ownership/containers with COM RAII, shared ownership,
- * and the port's WTF containers.
+ * Also from skia/src/utils/win/SkDWrite.cpp and DWriteFontTypeface::GetStyle
+ * in skia/src/ports/SkTypeface_win_dw.cpp. COM RAII replaces SkTScopedComPtr.
  */
 #pragma once
 
@@ -45,25 +44,17 @@
 #include <dwrite_3.h>
 #include <wrl/client.h>
 
-#include <algorithm>
-#include <atomic>
-#include <cstring>
-#include <cwchar>
-#include <limits>
+#include <cstddef>
 #include <memory>
-#include <mutex>
-#include <utility>
 
-#include "font_face.h"
-#include "font_manager.h"
+#include "base/text/wtf_string.h"
+#include "font_style.h"
 
 namespace bkfont {
+
 using Microsoft::WRL::ComPtr;
 
-inline std::uint32_t SwapFontTag(std::uint32_t tag) {
-  return ((tag & 0xffu) << 24) | ((tag & 0xff00u) << 8) | ((tag & 0xff0000u) >> 8) | (tag >> 24);
-}
-
+// sk_cstring_to_wchar.
 inline std::unique_ptr<wchar_t[]> ToWide(const String& value) {
   std::unique_ptr<wchar_t[]> result =
       std::make_unique<wchar_t[]>(value.length() + 1);
@@ -75,60 +66,17 @@ inline std::unique_ptr<wchar_t[]> ToWide(const String& value) {
   return result;
 }
 
+// sk_wchar_to_skstring.
 inline String FromWide(const wchar_t* value, std::size_t length) {
   return String(base::span(reinterpret_cast<const char16_t*>(value), length));
 }
 
+// sk_get_locale_string. Returns a null String where upstream returns a
+// failed HRESULT.
 String DWriteLocalizedString(IDWriteLocalizedStrings* strings,
                              const wchar_t* locale = nullptr);
-FontStyle DWriteStyle(IDWriteFont* font, IDWriteFontFace* face);
-Vector<LocalizedFontName> FamilyNamesFromNameTable(
-    std::span<const std::uint8_t> table);
 
-class FontCollectionLoaders;
-
-// SkScalerContext_win_dw.cpp::maybe_dw_mutex protects a process-wide DWrite
-// implementation on Windows 8/8.1. Face4 makes that protection unnecessary.
-// A recursive exclusive lock replaces the old shared/exclusive helper so nested
-// font-table/metric adapter calls retain the same protection without deadlock.
-class DWriteMutexLock final {
-public:
-  explicit DWriteMutexLock(IDWriteFontFace* face) {
-    ComPtr<IDWriteFontFace4> face4;
-    if (FAILED(face->QueryInterface(IID_PPV_ARGS(&face4)))) {
-      mutex_ = &GlobalMutex();
-      mutex_->lock();
-    }
-  }
-  ~DWriteMutexLock() {
-    if (mutex_)
-      mutex_->unlock();
-  }
-  DWriteMutexLock(const DWriteMutexLock&) = delete;
-  DWriteMutexLock& operator=(const DWriteMutexLock&) = delete;
-
-private:
-  static std::recursive_mutex& GlobalMutex() {
-    static std::recursive_mutex mutex;
-    return mutex;
-  }
-  std::recursive_mutex* mutex_ = nullptr;
-};
-
-struct FontFace::Impl {
-  ComPtr<IDWriteFactory> factory;
-  // Declared before the face so registration outlives all COM face references.
-  std::shared_ptr<FontCollectionLoaders> loaders;
-  ComPtr<IDWriteFontFace> face;
-  ComPtr<IDWriteFont> font;
-  ComPtr<IDWriteFontFamily> family;
-  std::uint16_t palette_index = 0;
-  std::unique_ptr<PlatformPaletteOverride[]> palette_overrides;
-  std::size_t palette_override_count = 0;
-  std::unique_ptr<std::uint32_t[]> palette_colors;
-  std::size_t palette_color_count = 0;
-  std::uint32_t unique_id = 0;
-  void InitializePalette();
-};
+// DWriteFontTypeface::GetStyle.
+FontStyle DWriteFontStyle(IDWriteFont* font, IDWriteFontFace* font_face);
 
 } // namespace bkfont

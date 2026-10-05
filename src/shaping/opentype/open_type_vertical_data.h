@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/opentype/open_type_vertical_data.h
+// Ported from: blink/renderer/platform/fonts/opentype/open_type_vertical_data.h
 /*
  * Copyright (C) 2012 Koji Ishii <kojiishi@gmail.com>
  *
@@ -27,20 +27,19 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
-#include "font/glyph.h"
 
 #include "base/hash_map.h"
 #include "base/vector.h"
+#include "font/glyph.h"
 
 namespace bkfont {
-class FontPlatformData;
-class FontFace;
 
-class OpenTypeVerticalData
-    : public std::enable_shared_from_this<OpenTypeVerticalData> {
+class PlatformFont;
+class Typeface;
+
+class OpenTypeVerticalData {
 public:
-  explicit OpenTypeVerticalData(std::shared_ptr<FontFace>);
+  explicit OpenTypeVerticalData(const Typeface&);
 
   void SetScaleAndFallbackMetrics(float size_per_unit,
                                   float ascent,
@@ -54,13 +53,13 @@ public:
   }
   float AdvanceHeight(Glyph) const;
 
-  void GetVerticalTranslationsForGlyphs(const FontPlatformData&,
+  void GetVerticalTranslationsForGlyphs(const PlatformFont&,
                                         const Glyph*,
                                         size_t,
                                         float* out_xy_array) const;
 
 private:
-  void LoadMetrics(std::shared_ptr<FontFace>);
+  void LoadMetrics(const Typeface&);
   bool HasVORG() const {
     return !vert_origin_y_.empty();
   }

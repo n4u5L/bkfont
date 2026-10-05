@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/dtoa.h
+// Ported from: blink/renderer/platform/wtf/dtoa.h
 /*
  *  Copyright (C) 2003, 2008, 2012 Apple Inc. All rights reserved.
  *

@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/utf8.cc
+// Ported from: blink/renderer/platform/wtf/text/utf8.cc
 /*
  * Copyright (C) 2007 Apple Inc.  All rights reserved.
  * Copyright (C) 2010 Patrick Gansterer <paroga@paroga.com>

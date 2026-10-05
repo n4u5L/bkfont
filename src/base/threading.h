@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/threading.h
+// Ported from: blink/renderer/platform/wtf/threading.h
 /*
  * Copyright (C) 2007, 2008, 2010 Apple Inc. All rights reserved.
  * Copyright (C) 2007 Justin Haygood (jhaygood@reaktix.com)

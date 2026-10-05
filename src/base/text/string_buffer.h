@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/string_buffer.h
+// Ported from: blink/renderer/platform/wtf/text/string_buffer.h
 /*
  * Copyright (C) 2008, 2010 Apple Inc. All rights reserved.
  *

@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/string_builder.cc
+// Ported from: blink/renderer/platform/wtf/text/string_builder.cc
 /*
  * Copyright (C) 2010 Apple Inc. All rights reserved.
  * Copyright (C) 2012 Google Inc. All rights reserved.

@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/emoji-segmenter/src/emoji_presentation_scanner.c
+// Ported from: chromium/third_party/emoji-segmenter/src/emoji_presentation_scanner.c
 
 #line 1 "emoji_presentation_scanner.rl"
 /* Copyright 2019 Google LLC

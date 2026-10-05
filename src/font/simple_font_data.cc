@@ -1,4 +1,5 @@
-// Port source: third_party/blink/renderer/platform/fonts/simple_font_data.cc
+// Ported from: blink/renderer/platform/fonts/simple_font_data.cc
+// (Linux branch)
 /*
  * Copyright (C) 2005, 2008, 2010 Apple Inc. All rights reserved.
  * Copyright (C) 2006 Alexey Proskuryakov
@@ -33,26 +34,43 @@
 #include <unicode/utf16.h>
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <utility>
 
-#include "target_platform.h"
-#include "font_family_names.h"
+#include "base/allocator/partitions.h"
+#include "base/math_extras.h"
+#include "base/notreached.h"
+#include "base/numerics/byte_conversions.h"
+#include "base/text/character_names.h"
+#include "base/text/unicode.h"
+#include "font_cache.h"
 #include "font_description.h"
-#include "shaping/opentype/open_type_baseline_metrics.h"
-#include "shaping/opentype/open_type_vertical_data.h"
+#include "font_family_names.h"
+#include "platform/scalar.h"
+#include "platform/typeface.h"
+#include "runtime_enabled_features.h"
 #include "shaping/harfbuzz_face.h"
 #include "shaping/harfbuzz_shaper.h"
 #include "shaping/ng_shape_cache.h"
-#include "runtime_enabled_features.h"
-#include "base/allocator/partitions.h"
-#include "base/math_extras.h"
-#include "base/text/character_names.h"
-#include "base/text/unicode.h"
+#include "shaping/opentype/open_type_baseline_metrics.h"
+#include "shaping/opentype/open_type_vertical_data.h"
 #include "shaping/support/gfx/geometry/rect_f.h"
-#include "base/notreached.h"
+#include "text_metrics.h"
 
 namespace bkfont {
+
+namespace {
+
+// skia::DefaultFont()/DefaultTypeface(): the zero-size constructor still owns
+// a default-size font. PlatformFont substitutes MakeEmpty() if matching fails.
+PlatformFont DefaultFont() {
+  return PlatformFont(FontCache::Get().GetFontManager()->LegacyMakeTypeface(
+      String(), FontStyle()));
+}
+
+} // namespace
 
 constexpr float kSmallCapsFontSizeMultiplier = 0.7f;
 constexpr float kEmphasisMarkFontSizeMultiplier = 0.5f;
@@ -68,6 +86,8 @@ SimpleFontData::SimpleFontData(std::shared_ptr<const FontPlatformData> platform_
       shape_cache_(RuntimeEnabledFeatures::LayoutNGShapeCacheEnabled()
                        ? std::make_unique<NGShapeCache>(this)
                        : nullptr),
+      font_(platform_data_->size() ? platform_data_->CreatePlatformFont()
+                                   : DefaultFont()),
       custom_font_data_(std::move(custom_data)) {
   PlatformInit(subpixel_ascent_descent, metrics_override);
   PlatformGlyphInit();
@@ -83,37 +103,56 @@ void SimpleFontData::PlatformInit(bool subpixel_ascent_descent,
     max_char_width_ = 0;
     return;
   }
-  const PlatformFontMetrics metrics = platform_data_->GetFontMetrics();
+  PlatformFontMetrics metrics;
+  font_.GetMetrics(&metrics);
+
   float ascent;
   float descent;
-  FontMetrics::AscentDescentWithHacks(ascent, descent, *platform_data_, subpixel_ascent_descent, metrics_override.ascent_override, metrics_override.descent_override);
+  FontMetrics::AscentDescentWithHacks(
+      ascent, descent, *platform_data_, font_, subpixel_ascent_descent,
+      metrics_override.ascent_override, metrics_override.descent_override);
   font_metrics_.SetAscent(ascent);
   font_metrics_.SetDescent(descent);
   font_metrics_.SetCapHeight(metrics.cap_height);
-  font_metrics_.SetUnderlinePosition(-metrics.underline_position);
-  font_metrics_.SetUnderlineThickness(metrics.underline_thickness);
+
+  float underline_value;
+  if (metrics.HasUnderlinePosition(&underline_value)) {
+    font_metrics_.SetUnderlinePosition(underline_value);
+  }
+  if (metrics.HasUnderlineThickness(&underline_value)) {
+    font_metrics_.SetUnderlineThickness(underline_value);
+  }
+
   float x_height;
   if (metrics.x_height) {
     x_height = metrics.x_height;
     font_metrics_.SetXHeight(x_height);
   } else {
-    x_height = ascent * 0.56f;
+    x_height = ascent * 0.56; // Best guess from Windows font metrics.
     font_metrics_.SetXHeight(x_height);
     font_metrics_.SetHasXHeight(false);
   }
   const float line_gap = metrics_override.line_gap_override
                              ? *metrics_override.line_gap_override * platform_data_->size()
-                             : metrics.line_gap;
+                             : metrics.leading;
   font_metrics_.SetLineGap(line_gap);
   font_metrics_.SetLineSpacing(lroundf(ascent) + lroundf(descent) + lroundf(line_gap));
-  max_char_width_ = std::floor(metrics.max_char_width + 0.5f);
-  if (max_char_width_ < 1) max_char_width_ = ascent * 2;
+
+  // Linux/FreeType's widget-width estimate, shared on every platform.
+  // Better would be to rely on either max_char_width or avg_char_width.
+  // skbug.com/3087
+  max_char_width_ = FloatRoundToInt(metrics.x_max - metrics.x_min);
+
   if (metrics.avg_char_width) {
     avg_char_width_ = metrics.avg_char_width;
   } else {
     avg_char_width_ = x_height;
-    if (const Glyph x_glyph = GlyphForCharacter('x')) avg_char_width_ = WidthForGlyph(x_glyph);
+    const Glyph x_glyph = GlyphForCharacter('x');
+    if (x_glyph) {
+      avg_char_width_ = WidthForGlyph(x_glyph);
+    }
   }
+
   OpenTypeBaselineMetrics m(PlatformData().GetHarfBuzzFace(), PlatformData().Orientation());
   font_metrics_.SetIdeographicBaseline(m.OpenTypeIdeographicBaseline());
   font_metrics_.SetAlphabeticBaseline(m.OpenTypeAlphabeticBaseline());
@@ -122,9 +161,9 @@ void SimpleFontData::PlatformInit(bool subpixel_ascent_descent,
 
 void SimpleFontData::PlatformGlyphInit() {
   const FontPlatformData& platform_data = PlatformData();
-  FontFace* typeface = platform_data.GetFontFace().get();
+  Typeface* typeface = platform_data.Typeface().get();
 
-  if (!typeface->GlyphCount()) {
+  if (!typeface->CountGlyphs()) {
     space_glyph_ = 0;
     space_width_ = 0;
     zero_glyph_ = 0;
@@ -259,19 +298,19 @@ LayoutUnit SimpleFontData::NormalizedTypoDescent(
   return NormalizedTypoAscentAndDescent(baseline_type).descent;
 }
 
-static std::pair<int16_t, int16_t> TypoAscenderAndDescender(FontFace* typeface) {
-  uint8_t bytes[4];
-  const size_t size = typeface->ReadTable(0x4f532f32, 68, std::span<uint8_t>(bytes));
-  if (size == sizeof(bytes)) {
-    return {static_cast<int16_t>((bytes[0] << 8) | bytes[1]),
-            static_cast<int16_t>(-static_cast<int16_t>((bytes[2] << 8) | bytes[3]))};
+static std::pair<std::int16_t, std::int16_t> TypoAscenderAndDescender(Typeface* typeface) {
+  std::int16_t buffer[2];
+  std::size_t size = typeface->GetTableData(0x4f532f32, 68, sizeof(buffer), buffer); // 'OS/2'
+  if (size == sizeof(buffer)) {
+    // The buffer values are in big endian.
+    return std::make_pair(base::ByteSwap(buffer[0]), -base::ByteSwap(buffer[1]));
   }
   return {0, 0};
 }
 
 void SimpleFontData::ComputeNormalizedTypoAscentAndDescent() const {
   // Compute em height metrics from OS/2 sTypoAscender and sTypoDescender.
-  FontFace* typeface = platform_data_->GetFontFace().get();
+  Typeface* typeface = platform_data_->Typeface().get();
   auto [typo_ascender, typo_descender] = TypoAscenderAndDescender(typeface);
   if (typo_ascender > 0 && TrySetNormalizedTypoAscentAndDescent(typo_ascender, typo_descender)) {
     return;
@@ -393,25 +432,39 @@ const HanKerning::FontData& SimpleFontData::HanKerningData(
 }
 
 gfx::RectF SimpleFontData::PlatformBoundsForGlyph(Glyph glyph) const {
-  if (!platform_data_->size()) return gfx::RectF();
-  PlatformGlyphMetrics metrics;
-  if (!platform_data_->MeasureGlyph(glyph, &metrics)) return gfx::RectF();
-  return gfx::RectF(metrics.left, metrics.top, metrics.width, metrics.height);
+  if (!platform_data_->size()) {
+    return gfx::RectF();
+  }
+
+  static_assert(sizeof(glyph) == 2, "Glyph id should not be truncated.");
+  ScalarRect bounds;
+  FontGetBoundsForGlyph(font_, glyph, &bounds);
+  return gfx::RectF(bounds.left, bounds.top, bounds.Width(), bounds.Height());
 }
 
 void SimpleFontData::BoundsForGlyphs(std::span<const Glyph> glyphs,
                                      std::span<gfx::RectF> bounds) const {
-  if (!platform_data_->size()) return;
-  for (size_t i = 0; i < glyphs.size(); ++i) bounds[i] = PlatformBoundsForGlyph(glyphs[i]);
+  if (!platform_data_->size()) {
+    return;
+  }
+
+  // The port's callers use gfx::RectF. Keep the upstream batched metrics call
+  // and convert its LTRB rectangles to XYWH only at this boundary.
+  Vector<ScalarRect, 256> glyph_bounds(glyphs.size());
+  FontGetBoundsForGlyphs(font_, glyphs, glyph_bounds.data());
+  for (std::size_t i = 0; i < glyphs.size(); ++i) {
+    const ScalarRect& rect = glyph_bounds[i];
+    bounds[i] = gfx::RectF(rect.left, rect.top, rect.Width(), rect.Height());
+  }
 }
 
 float SimpleFontData::WidthForGlyph(Glyph glyph) const {
-  if (!platform_data_->size()) return 0;
-  PlatformGlyphMetrics metrics;
-  // The native scaler computes advance before bounds. Preserve the advance if
-  // outline/raster bounds acquisition subsequently fails.
-  platform_data_->MeasureGlyph(glyph, &metrics);
-  return metrics.advance_x;
+  if (!platform_data_->size()) {
+    return 0;
+  }
+
+  static_assert(sizeof(glyph) == 2, "Glyph id should not be truncated.");
+  return FontGetWidthForGlyph(font_, glyph);
 }
 
 float SimpleFontData::ZeroInlineSize() const {
@@ -437,7 +490,7 @@ float SimpleFontData::ZeroInlineSize() const {
   // tall. Thus, the ch unit falls back to 0.5em in the general case, and to
   // 1em when it would be typeset upright (i.e. writing-mode is vertical-rl or
   // vertical-lr and text-orientation is upright).
-  const float size = platform_data_->size();
+  const float size = font_.GetSize();
   if (!platform_data_->IsVerticalNonCJKUpright()) {
     if (RuntimeEnabledFeatures::CSSChUnitSpecCompliantFallbackEnabled()) {
       return size * 0.5f;

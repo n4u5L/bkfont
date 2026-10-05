@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/text/text_break_iterator_internal_icu.h
+// Ported from: blink/renderer/platform/text/text_break_iterator_internal_icu.h
 /*
  * Copyright (C) 2007 Apple Inc. All rights reserved.
  *
@@ -30,4 +30,5 @@ namespace bkfont {
 
 const char* CurrentSearchLocaleID();
 const char* CurrentTextBreakLocaleID();
+
 } // namespace bkfont

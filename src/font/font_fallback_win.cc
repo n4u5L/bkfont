@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/win/font_fallback_win.cc
+// Ported from: blink/renderer/platform/fonts/win/font_fallback_win.cc
 /*
  * Copyright (c) 2006, 2007, 2008, 2009, 2010, 2012 Google Inc. All rights
  * reserved.
@@ -54,12 +54,14 @@ namespace bkfont {
 namespace {
 
 inline bool IsFontPresent(const char* font_name_utf8, const FontManager& font_manager) {
-  auto face = font_manager.MatchFamily(String::FromUTF8(font_name_utf8), FontStyle());
+  auto face = font_manager.MatchFamilyStyle(String::FromUTF8(font_name_utf8), FontStyle());
   if (!face) return false;
   if (RuntimeEnabledFeatures::FontPresentWinEnabled()) return true;
   const String font_name = String::FromUTF8(font_name_utf8);
-  for (const auto& family : face->FamilyNames())
-    if (DeprecatedEqualIgnoringCase(font_name, family.name)) return true;
+  auto names = face->CreateFamilyNameIterator();
+  Typeface::LocalizedString family;
+  while (names->Next(&family))
+    if (DeprecatedEqualIgnoringCase(font_name, family.string)) return true;
   return false;
 }
 

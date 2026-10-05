@@ -1,4 +1,4 @@
-// Source: base/containers/span.h
+// Ported from: chromium/base/containers/span.h
 // Copyright 2017 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -113,8 +113,8 @@ concept CompatibleRange =
     // `span`s should go through the copy constructor.
     (!kIsSpan<std::remove_cvref_t<R>> &&
      // Arrays should go through the array constructors.
-     (!std::is_array_v<std::remove_cvref_t<R>>))
-    && LegalDataConversion<
+     (!std::is_array_v<std::remove_cvref_t<R>>)) &&
+    LegalDataConversion<
         std::remove_reference_t<std::ranges::range_reference_t<R>>,
         T>;
 
@@ -171,11 +171,14 @@ concept CanSafelyConvertNonUniqueToByteSpan =
 // which is not trivially copyable on MSVC
 #define SKIP_BYTE_SPAN_SAFETY_CHECK_FOR(X)      \
   namespace bkfont::base::internal {            \
+                                                \
   template <>                                   \
   struct ByteSpanSafetyCheckSkippedForType<X> { \
     static constexpr bool value = true;         \
   };                                            \
+                                                \
   } // namespace bkfont::base::internal
+
 #endif // !defined(_MSC_VER)
 
 template <typename T>

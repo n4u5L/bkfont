@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/atomic_string.cc
+// Ported from: blink/renderer/platform/wtf/text/atomic_string.cc
 /*
  * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2013 Apple Inc. All rights
  * reserved.

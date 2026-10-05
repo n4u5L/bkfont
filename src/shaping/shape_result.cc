@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/shaping/shape_result.cc
+// Ported from: blink/renderer/platform/fonts/shaping/shape_result.cc
 /*
  * Copyright (c) 2012 Google Inc. All rights reserved.
  * Copyright (C) 2013 BlackBerry Limited. All rights reserved.
@@ -889,6 +889,7 @@ inline bool IsCursiveScript(hb_script_t script) {
     return false;
   }
 }
+
 } // anonymous namespace
 
 // TODO(kojii): VC2015 fails to explicit instantiation of a member function.
@@ -957,6 +958,92 @@ std::shared_ptr<ShapeResult> ShapeResult::ApplySpacingToCopy(
   if (index_of_sub_run != std::numeric_limits<unsigned>::max())
     result->ApplySpacingImpl(spacing, index_of_sub_run);
   return result;
+}
+
+void ShapeResult::ApplyVerticalPunctuationCentering(const String& text) {
+  // This is an application-selected layout policy, not a replacement for
+  // OpenType vertical substitution, origin calculation, or locale selection.
+  const auto is_centered_punctuation = [](UChar character) {
+    switch (character) {
+    case uchar::kIdeographicComma:
+    case uchar::kIdeographicFullStop:
+    case uchar::kFullwidthComma:
+    case uchar::kFullwidthFullStop:
+    case uchar::kFullwidthColon:
+    case uchar::kFullwidthSemicolon:
+      return true;
+    default:
+      return false;
+    }
+  };
+
+  bool changed = false;
+  for (auto& run : runs_) {
+    if (!run || run->IsHorizontal() || !IsCanvasRotationInVerticalUpright(run->canvas_rotation_)) {
+      continue;
+    }
+    for (unsigned begin = 0, end; begin < run->NumGlyphs(); begin = end) {
+      const unsigned character_index = run->glyph_data_[begin].character_index;
+      end = begin + 1;
+      while (end < run->NumGlyphs() && run->glyph_data_[end].character_index == character_index) {
+        ++end;
+      }
+      const unsigned text_index = run->start_index_ + character_index;
+      if (text_index >= text.length() || !is_centered_punctuation(text[text_index])) {
+        continue;
+      }
+      // A ligature spanning punctuation and another character must stay intact.
+      const unsigned character_end = run->IsLtr()
+                                         ? (end < run->NumGlyphs() ? run->glyph_data_[end].character_index : run->num_characters_)
+                                         : (begin ? run->glyph_data_[begin - 1].character_index : run->num_characters_);
+      if (character_end != character_index + 1) {
+        continue;
+      }
+
+      gfx::RectF ink_bounds;
+      InlineLayoutUnit advance;
+      bool missing_glyph = false;
+      const auto offsets = run->glyph_data_.Offsets();
+      for (unsigned i = begin; i < end; ++i) {
+        const auto& glyph = run->glyph_data_[i];
+        missing_glyph |= glyph.glyph == 0;
+        gfx::RectF bounds = run->font_data_->BoundsForGlyph(glyph.glyph);
+        if (!bounds.IsEmpty()) {
+          const GlyphOffset offset = offsets.empty() ? GlyphOffset() : offsets[i];
+          bounds.Offset(offset.x(), offset.y() + advance.ToFloat());
+          ink_bounds.Union(bounds);
+        }
+        advance += glyph.advance;
+      }
+      if (missing_glyph || ink_bounds.IsEmpty() || advance <= InlineLayoutUnit()) {
+        continue;
+      }
+
+      // Glyph offsets are physical: x=0 is the vertical central baseline,
+      // while y runs from zero to the cluster advance. The bloberizer's
+      // alphabetic/central baseline conversion must still happen exactly once.
+      const gfx::PointF center = ink_bounds.CenterPoint();
+      const GlyphOffset adjustment(-center.x(), advance.ToFloat() / 2 - center.y());
+      if (adjustment.IsZero()) {
+        continue;
+      }
+      // Existing views or copied ranges may share a run with this result.
+      if (run.use_count() > 1) {
+        run = std::make_shared<ShapeResultRun>(*run);
+      }
+      for (unsigned i = begin; i < end; ++i) {
+        run->glyph_data_.AddOffsetWidthAt(i, adjustment.x());
+        run->glyph_data_.AddOffsetHeightAt(i, adjustment.y());
+      }
+      changed = true;
+    }
+  }
+  if (changed) {
+    has_vertical_offsets_ = true;
+    if (deprecated_ink_bounds_) {
+      SetDeprecatedInkBounds(ComputeInkBounds());
+    }
+  }
 }
 
 void ShapeResult::ApplyLeadingExpansion(LayoutUnit expansion) {
@@ -1389,7 +1476,7 @@ void ShapeResultRun::LimitNumGlyphs(unsigned start_glyph,
 // Computes glyph positions, sets advance and offset of each glyph to
 // ShapeResultRun.
 template <bool is_horizontal_run>
-void ShapeResult::ComputeGlyphPositions(std::shared_ptr<ShapeResultRun> run,
+void ShapeResult::ComputeGlyphPositions(ShapeResultRun* run,
                                         unsigned start_glyph,
                                         unsigned num_glyphs,
                                         hb_buffer_t* harfbuzz_buffer) {
@@ -1460,14 +1547,14 @@ void ShapeResult::InsertRun(std::shared_ptr<ShapeResultRun> run,
 
   if (run->IsHorizontal()) {
     // Inserting a horizontal run into a horizontal or vertical result.
-    ComputeGlyphPositions<true>(run, start_glyph, num_glyphs, harfbuzz_buffer);
+    ComputeGlyphPositions<true>(run.get(), start_glyph, num_glyphs, harfbuzz_buffer);
   } else {
     // Inserting a vertical run to a vertical result.
-    ComputeGlyphPositions<false>(run, start_glyph, num_glyphs, harfbuzz_buffer);
+    ComputeGlyphPositions<false>(run.get(), start_glyph, num_glyphs, harfbuzz_buffer);
   }
   width_ += run->width_;
 
-  InsertRun(run);
+  InsertRun(std::move(run));
 }
 
 void ShapeResult::InsertRun(std::shared_ptr<ShapeResultRun> run) {
@@ -1567,7 +1654,7 @@ void ShapeResult::CopyRanges(const ShapeRange* ranges,
     for (unsigned i = 0; i < num_ranges; i++) {
       const ShapeRange& range = ranges[last_range - i];
       run_index =
-          CopyRangeInternal(run_index, range.start, range.end, range.target.get());
+          CopyRangeInternal(run_index, range.start, range.end, range.target);
     }
     return;
   }
@@ -1576,7 +1663,7 @@ void ShapeResult::CopyRanges(const ShapeRange* ranges,
   for (unsigned i = 0; i < num_ranges; i++) {
     const ShapeRange& range = ranges[i];
     run_index =
-        CopyRangeInternal(run_index, range.start, range.end, range.target.get());
+        CopyRangeInternal(run_index, range.start, range.end, range.target);
   }
 }
 

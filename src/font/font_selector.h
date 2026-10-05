@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_selector.h
+// Ported from: blink/renderer/platform/fonts/font_selector.h
 /*
  * Copyright (C) 2007, 2008 Apple Inc. All rights reserved.
  *
@@ -52,7 +52,8 @@ class UseCounter;
 
 class FontSelector : public FontCacheClient, public std::enable_shared_from_this<FontSelector> {
 public:
-  ~FontSelector() override = default;
+  FontSelector();
+  ~FontSelector() override;
   virtual std::shared_ptr<const FontData> GetFontData(const FontDescription&,
                                                       const FontFamily&) = 0;
 
@@ -120,7 +121,7 @@ protected:
   static bool IsWebkitBodyFamily(const FontDescription& font_description);
 
 private:
-  std::shared_ptr<FontFallbackMap> font_fallback_map_;
+  std::unique_ptr<FontFallbackMap> font_fallback_map_;
 };
 
 } // namespace bkfont

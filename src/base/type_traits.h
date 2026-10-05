@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/type_traits.h
+// Ported from: blink/renderer/platform/wtf/type_traits.h
 /*
  * Copyright (C) 2006, 2007, 2008 Apple Inc. All rights reserved.
  * Copyright (C) 2009, 2010 Google Inc. All rights reserved.

@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/unicode_string.h
+// Ported from: blink/renderer/platform/wtf/text/unicode_string.h
 /*
  *  Copyright (C) 2006 George Staikos <staikos@kde.org>
  *  Copyright (C) 2006, 2008, 2009 Apple Inc. All rights reserved.
@@ -34,6 +34,7 @@
 #endif
 
 namespace bkfont {
+
 namespace unicode {
 
 inline int FoldCase(UChar* result,
@@ -62,4 +63,5 @@ inline base::span<const UChar> ToSpan(const icu::UnicodeString& ustring) {
 }
 
 } // namespace unicode
+
 } // namespace bkfont

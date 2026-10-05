@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/string_hash.h
+// Ported from: blink/renderer/platform/wtf/text/string_hash.h
 /*
  * Copyright (C) 2006, 2007, 2008, 2012, 2013 Apple Inc. All rights reserved
  * Copyright (C) Research In Motion Limited 2009. All rights reserved.
@@ -121,10 +121,12 @@ struct HashTraits<String> : SimpleClassHashTraits<String> {
 } // namespace bkfont
 
 namespace std {
+
 template <>
 struct hash<bkfont::String> {
   size_t operator()(const bkfont::String& string) const {
     return bkfont::GetHash(string);
   }
 };
+
 } // namespace std

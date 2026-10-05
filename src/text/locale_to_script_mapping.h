@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/text/locale_to_script_mapping.h
+// Ported from: blink/renderer/platform/text/locale_to_script_mapping.h
 /*
  * Copyright (C) 2011 Google Inc. All rights reserved.
  *
@@ -50,4 +50,5 @@ inline bool IsUnambiguousHanScript(UScriptCode script) {
   ;
   return script == USCRIPT_KATAKANA_OR_HIRAGANA || script == USCRIPT_SIMPLIFIED_HAN || script == USCRIPT_TRADITIONAL_HAN || script == USCRIPT_HANGUL;
 }
+
 } // namespace bkfont

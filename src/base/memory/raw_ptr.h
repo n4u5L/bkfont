@@ -1,3 +1,5 @@
+// Local implementation: non-owning pointer adapter without Chromium instrumentation.
+// Upstream reference: chromium/base/memory/raw_ptr.h
 // Non-owning pointer; Chromium's instrumentation and backup-reference allocator
 // are not part of this port. Owning edges use explicit reference ownership.
 #pragma once

@@ -1,3 +1,4 @@
+// Ported from: chromium/base/third_party/double_conversion/double-conversion/string-to-double.cc
 // Copyright 2010 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -97,6 +98,7 @@ __pragma(warning(disable : 4244))
                                     bool case_insensitivity) {
     return case_insensitivity ? ToLower(ch) == str[0] : ch == str[0];
   }
+
   } // namespace
 
   // Maximum number of significant digits in decimal representation.
@@ -158,9 +160,7 @@ __pragma(warning(disable : 4244))
   }
 
   static bool isDigit(int x, int radix) {
-    return (x >= '0' && x <= '9' && x < '0' + radix)
-           || (radix > 10 && x >= 'a' && x < 'a' + radix - 10)
-           || (radix > 10 && x >= 'A' && x < 'A' + radix - 10);
+    return (x >= '0' && x <= '9' && x < '0' + radix) || (radix > 10 && x >= 'a' && x < 'a' + radix - 10) || (radix > 10 && x >= 'A' && x < 'A' + radix - 10);
   }
 
   static double SignedZero(bool sign) {
@@ -682,8 +682,7 @@ static bool inline IsDecimalDigitForRadix(int c, int radix) {
       do {
         // Check overflow.
         int digit = *current - '0';
-        if (num >= max_exponent / 10
-            && !(num == max_exponent / 10 && digit <= max_exponent % 10)) {
+        if (num >= max_exponent / 10 && !(num == max_exponent / 10 && digit <= max_exponent % 10)) {
           num = max_exponent;
         } else {
           num = num * 10 + digit;

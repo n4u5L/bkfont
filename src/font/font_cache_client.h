@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_cache_client.h
+// Ported from: blink/renderer/platform/fonts/font_cache_client.h
 /*
  * Copyright (C) 2014 Google Inc. All rights reserved.
  *
@@ -31,15 +31,27 @@
 
 #pragma once
 
-#include <memory>
-#include "base/hash_map.h"
+#include "base/vector.h"
+
 namespace bkfont {
 
+class FontCache;
+
+// Non-owning registrations with FontCaches on the same thread. Destruction
+// unregisters the client; destroying a cache first also detaches its clients.
 class FontCacheClient {
 public:
-  virtual ~FontCacheClient() = default;
+  FontCacheClient() = default;
+  virtual ~FontCacheClient();
+
+  FontCacheClient(const FontCacheClient&) = delete;
+  FontCacheClient& operator=(const FontCacheClient&) = delete;
 
   virtual void FontCacheInvalidated() = 0;
+
+private:
+  friend class FontCache;
+  Vector<FontCache*, 1> font_caches_;
 };
 
 } // namespace bkfont

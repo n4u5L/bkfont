@@ -1,3 +1,4 @@
+// Ported from: chromium/base/third_party/double_conversion/double-conversion/bignum.cc
 // Copyright 2010 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are

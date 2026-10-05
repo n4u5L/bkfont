@@ -1,4 +1,7 @@
-// Ported from: skia/include/private/base/SkFloatingPoint.h, skia/include/private/base/SkFixed.h, skia/src/core/SkFDot6.h
+// Ported from: skia/include/core/SkScalar.h
+// Ported from: skia/include/private/base/SkFloatingPoint.h
+// Ported from: skia/include/private/base/SkFixed.h
+// Ported from: skia/src/core/SkFDot6.h
 
 #pragma once
 
@@ -9,6 +12,9 @@ namespace bkfont {
 
 // SK_ScalarNearlyZero.
 inline constexpr float kScalarNearlyZero = 1.0f / (1 << 12);
+
+// SK_ScalarSinCosNearlyZero, used by SkMatrix's rotation snapping.
+inline constexpr float kScalarSinCosNearlyZero = 1.0f / (1 << 16);
 
 inline constexpr int kMaxS32FitsInFloat = 2147483520;
 inline constexpr int kMinS32FitsInFloat = -kMaxS32FitsInFloat;

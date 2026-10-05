@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_face_creation_params.h
+// Ported from: blink/renderer/platform/fonts/font_face_creation_params.h
 /*
  * Copyright (c) 2009, Google Inc. All rights reserved.
  *

@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/unicode.h
+// Ported from: blink/renderer/platform/wtf/text/unicode.h
 /*
  *  Copyright (C) 2006 George Staikos <staikos@kde.org>
  *  Copyright (C) 2006, 2008, 2009 Apple Inc. All rights reserved.

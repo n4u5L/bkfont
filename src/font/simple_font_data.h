@@ -1,4 +1,5 @@
-// Port source: third_party/blink/renderer/platform/fonts/simple_font_data.h
+// Ported from: blink/renderer/platform/fonts/simple_font_data.h
+// (Linux branch)
 /*
  * This file is part of the internal font implementation.
  *
@@ -29,7 +30,6 @@
 #include <span>
 #include <utility>
 
-#include "target_platform.h"
 #include "canvas_rotation_in_vertical.h"
 #include "custom_font_data.h"
 #include "font_baseline.h"
@@ -43,11 +43,8 @@
 #include "typesetting_features.h"
 #include "base/casting.h"
 #include "base/text/string_hash.h"
+#include "platform/platform_font.h"
 #include "shaping/support/gfx/geometry/rect_f.h"
-
-#if BUILDFLAG(IS_APPLE)
-#include "font/glyph_metrics_map.h"
-#endif
 
 namespace bkfont {
 
@@ -221,6 +218,7 @@ private:
 
   std::shared_ptr<const FontPlatformData> platform_data_;
   std::unique_ptr<NGShapeCache> shape_cache_;
+  const PlatformFont font_;
 
   Glyph space_glyph_ = 0;
   float space_width_ = 0;
@@ -249,34 +247,10 @@ private:
   mutable HanKerningCacheEntry han_kerning_cache_[2];
 
   mutable FontHeight normalized_typo_ascent_descent_;
-
-// See discussion on crbug.com/631032 and Skia issue
-// https://bugs.chromium.org/p/skia/issues/detail?id=5328 :
-// On Mac we're still using path based glyph metrics, and they seem to be
-// too slow to be able to remove the caching layer we have here.
-#if BUILDFLAG(IS_APPLE)
-  mutable std::unique_ptr<GlyphMetricsMap<gfx::RectF>> glyph_to_bounds_map_;
-#endif
 };
 
 inline gfx::RectF SimpleFontData::BoundsForGlyph(Glyph glyph) const {
-#if !BUILDFLAG(IS_APPLE)
   return PlatformBoundsForGlyph(glyph);
-#else
-  if (glyph_to_bounds_map_) {
-    if (std::optional<gfx::RectF> glyph_bounds =
-            glyph_to_bounds_map_->MetricsForGlyph(glyph)) {
-      return *glyph_bounds;
-    }
-  }
-
-  gfx::RectF bounds_result = PlatformBoundsForGlyph(glyph);
-  if (!glyph_to_bounds_map_)
-    glyph_to_bounds_map_ = std::make_unique<GlyphMetricsMap<gfx::RectF>>();
-  glyph_to_bounds_map_->SetMetricsForGlyph(glyph, bounds_result);
-
-  return bounds_result;
-#endif
 }
 
 template <>

@@ -1,3 +1,5 @@
+// Ported from: blink/renderer/platform/fonts/shaping/harfbuzz_face.cc
+
 /*
  * Copyright (c) 2012 Google Inc. All rights reserved.
  *
@@ -33,32 +35,24 @@
 #include <limits>
 #include <span>
 #include <hb-ot.h>
+#include "base/allocator/partitions.h"
+#include "font/color_table_lookup.h"
 #include "font/font_platform_data.h"
 #include "font/font_metrics.h"
-#include "platform/font_face.h"
+#include "harfbuzz_face_from_typeface.h"
 #include "harfbuzz_font_data.h"
 #include "harfbuzz_font_cache.h"
+#include "platform/typeface.h"
 #include "runtime_enabled_features.h"
 #include "text/character.h"
 #include "base/text/character_names.h"
 #include "base/vector.h"
 #include "base/math_extras.h"
-#include "font/font_table_harfbuzz.h"
 #include "font/text_metrics.h"
 
 namespace bkfont {
 
 namespace {
-
-hb_position_t FloatToHarfBuzzPosition(float value) {
-  return ClampTo<int>(value * (1 << 16));
-}
-
-bool HasSupportedColorTable(const FontFace* face) {
-  if (!face) return false;
-  // Same table pairs as ColorTableLookup::TypefaceHasAnySupportedColorTable.
-  return face->HasTable(HB_TAG('s', 'b', 'i', 'x')) || (face->HasTable(HB_TAG('C', 'P', 'A', 'L')) && face->HasTable(HB_TAG('C', 'O', 'L', 'R'))) || (face->HasTable(HB_TAG('C', 'B', 'D', 'T')) && face->HasTable(HB_TAG('C', 'B', 'L', 'C')));
-}
 
 VariationSelectorMode& VariationMode() {
   static thread_local VariationSelectorMode mode = kUseSpecifiedVariationSelector;
@@ -175,12 +169,12 @@ static hb_bool_t HarfBuzzGetGlyph(hb_font_t* hb_font,
     // sequence. We set `glyph` to `kUnmatchedVSGlyphId` only when font has a
     // wrong presentation for base character.
     if (RuntimeEnabledFeatures::SystemFallbackEmojiVSSupportEnabled() && (text_presentation_requested || emoji_presentation_requested)) {
-      const FontFace* typeface = hb_font_data->platform_data_->Face().get();
+      const Typeface* typeface = hb_font_data->font_.GetTypeface().get();
       // TODO(https://bugs.skia.org/374078818): Ideally we also want to check
       // weather the base codepoint is present in the found color table,
       // requested API from Skia.
       bool has_color_table =
-          HasSupportedColorTable(typeface);
+          ColorTableLookup::TypefaceHasAnySupportedColorTable(typeface);
       if ((has_color_table && text_presentation_requested) || (!has_color_table && emoji_presentation_requested)) {
         *glyph = kUnmatchedVSGlyphId;
       }
@@ -217,60 +211,68 @@ static hb_position_t HarfBuzzGetGlyphHorizontalAdvance(hb_font_t*,
   return advance;
 }
 
-static void HarfBuzzGetGlyphHorizontalAdvances(hb_font_t* font, void* data,
-                                               unsigned count, const hb_codepoint_t* glyph, unsigned glyph_stride,
-                                               hb_position_t* advance, unsigned advance_stride, void* user) {
-  for (unsigned i = 0; i < count; ++i) {
-    const FontPlatformData& platform = *static_cast<HarfBuzzFontData*>(data)->platform_data_;
-    PlatformGlyphMetrics metrics;
-    platform.MeasureGlyph(static_cast<Glyph>(*glyph), &metrics);
-    float width = metrics.advance_x;
-    if (!platform.ShouldSubpixelPosition()) width = std::floor(width + 0.5f);
-    *advance = FloatToHarfBuzzPosition(width);
-    glyph = reinterpret_cast<const hb_codepoint_t*>(reinterpret_cast<const uint8_t*>(glyph) + glyph_stride);
-    advance = reinterpret_cast<hb_position_t*>(reinterpret_cast<uint8_t*>(advance) + advance_stride);
-  }
+static void HarfBuzzGetGlyphHorizontalAdvances(
+    hb_font_t* font,
+    void* font_data,
+    unsigned count,
+    const hb_codepoint_t* first_glyph,
+    unsigned int glyph_stride,
+    hb_position_t* first_advance,
+    unsigned int advance_stride,
+    void* user_data) {
+  HarfBuzzFontData* hb_font_data =
+      reinterpret_cast<HarfBuzzFontData*>(font_data);
+  FontGetGlyphWidthForHarfBuzz(hb_font_data->font_, count, first_glyph,
+                               glyph_stride, first_advance, advance_stride);
 }
 
-static hb_bool_t HarfBuzzGetGlyphVerticalOrigin(hb_font_t*, void* data,
-                                                hb_codepoint_t glyph, hb_position_t* x, hb_position_t* y, void*) {
-  auto* font_data = static_cast<HarfBuzzFontData*>(data);
-  OpenTypeVerticalData* vertical = font_data->VerticalData();
-  if (!vertical) return false;
-  float translations[] = {0, 0};
-  Glyph value = static_cast<Glyph>(glyph);
-  vertical->GetVerticalTranslationsForGlyphs(*font_data->platform_data_, &value, 1, translations);
-  *x = FloatToHarfBuzzPosition(-translations[0]);
-  *y = FloatToHarfBuzzPosition(-translations[1]);
+static hb_bool_t HarfBuzzGetGlyphVerticalOrigin(hb_font_t* hb_font,
+                                                void* font_data,
+                                                hb_codepoint_t glyph,
+                                                hb_position_t* x,
+                                                hb_position_t* y,
+                                                void* user_data) {
+  HarfBuzzFontData* hb_font_data =
+      reinterpret_cast<HarfBuzzFontData*>(font_data);
+  OpenTypeVerticalData* vertical_data = hb_font_data->VerticalData();
+  if (!vertical_data) {
+    return false;
+  }
+
+  float result[] = {0, 0};
+  Glyph the_glyph = static_cast<Glyph>(glyph);
+  vertical_data->GetVerticalTranslationsForGlyphs(hb_font_data->font_,
+                                                  &the_glyph, 1, result);
+  *x = ScalarToHarfBuzzPosition(-result[0]);
+  *y = ScalarToHarfBuzzPosition(-result[1]);
   return true;
 }
 
-static hb_position_t HarfBuzzGetGlyphVerticalAdvance(hb_font_t*, void* data,
-                                                     hb_codepoint_t glyph, void*) {
-  auto* font_data = static_cast<HarfBuzzFontData*>(data);
-  OpenTypeVerticalData* vertical = font_data->VerticalData();
-  if (!vertical) return FloatToHarfBuzzPosition(font_data->height_fallback_);
-  return FloatToHarfBuzzPosition(-vertical->AdvanceHeight(static_cast<Glyph>(glyph)));
+static hb_position_t HarfBuzzGetGlyphVerticalAdvance(hb_font_t* hb_font,
+                                                     void* font_data,
+                                                     hb_codepoint_t glyph,
+                                                     void* user_data) {
+  HarfBuzzFontData* hb_font_data =
+      reinterpret_cast<HarfBuzzFontData*>(font_data);
+  OpenTypeVerticalData* vertical_data = hb_font_data->VerticalData();
+  if (!vertical_data) {
+    return ScalarToHarfBuzzPosition(hb_font_data->height_fallback_);
+  }
+
+  Glyph the_glyph = static_cast<Glyph>(glyph);
+  float advance_height = -vertical_data->AdvanceHeight(the_glyph);
+  return ScalarToHarfBuzzPosition(advance_height);
 }
 
-static hb_bool_t HarfBuzzGetGlyphExtents(hb_font_t*, void* data,
-                                         hb_codepoint_t glyph, hb_glyph_extents_t* extents, void*) {
-  if (glyph == kUnmatchedVSGlyphId) return true;
-  const FontPlatformData& platform = *static_cast<HarfBuzzFontData*>(data)->platform_data_;
-  PlatformGlyphMetrics bounds;
-  if (!platform.MeasureGlyph(static_cast<Glyph>(glyph), &bounds)) return false;
-  float left = bounds.left, top = bounds.top;
-  float right = left + bounds.width, bottom = top + bounds.height;
-  if (!platform.ShouldSubpixelPosition()) {
-    left = std::floor(left);
-    top = std::floor(top);
-    right = std::ceil(right);
-    bottom = std::ceil(bottom);
-  }
-  extents->x_bearing = FloatToHarfBuzzPosition(left);
-  extents->y_bearing = FloatToHarfBuzzPosition(-top);
-  extents->width = FloatToHarfBuzzPosition(right - left);
-  extents->height = FloatToHarfBuzzPosition(top - bottom);
+static hb_bool_t HarfBuzzGetGlyphExtents(hb_font_t* hb_font,
+                                         void* font_data,
+                                         hb_codepoint_t glyph,
+                                         hb_glyph_extents_t* extents,
+                                         void* user_data) {
+  HarfBuzzFontData* hb_font_data =
+      reinterpret_cast<HarfBuzzFontData*>(font_data);
+
+  FontGetGlyphExtentsForHarfBuzz(hb_font_data->font_, glyph, extents);
   return true;
 }
 
@@ -300,6 +302,80 @@ HarfBuzzFace::HarfBuzzFace(const FontPlatformData* platform_data, uint64_t uniqu
           unique_id ? unique_id : platform_data->UniqueID(), platform_data)) {
 }
 
+static hb_blob_t* HarfBuzzGetTable(hb_face_t* face,
+                                       hb_tag_t tag,
+                                       void* user_data) {
+  const auto& typeface = *static_cast<std::shared_ptr<Typeface>*>(user_data);
+
+  const wtf_size_t table_size =
+      base::checked_cast<wtf_size_t>(typeface->GetTableSize(tag));
+  if (!table_size) {
+    return nullptr;
+  }
+
+  char* buffer = reinterpret_cast<char*>(Partitions::FastMalloc(
+      table_size, "HarfBuzzFontData"));
+  if (!buffer) {
+    return nullptr;
+  }
+  std::size_t actual_size = typeface->GetTableData(tag, 0, table_size, buffer);
+  if (table_size != actual_size) {
+    Partitions::FastFree(buffer);
+    return nullptr;
+  }
+  return hb_blob_create(const_cast<char*>(buffer), table_size,
+                        HB_MEMORY_MODE_WRITABLE, buffer, Partitions::FastFree);
+}
+
+// The table callback borrows the typeface; the returned face owns a strong
+// reference to it, as the GC keeps the SkTypeface alive upstream.
+static hb::unique_ptr<hb_face_t> CreateFace(
+    const FontPlatformData* platform_data) {
+  hb::unique_ptr<hb_face_t> face;
+
+  std::shared_ptr<Typeface> typeface = platform_data->Typeface();
+  // The IS_APPLE exclusion only concerns CoreText typefaces.
+  face = HbFaceFromTypeface(typeface);
+
+  // Fallback to table copies if there is no in-memory access.
+  if (!face) {
+    auto* owner = new std::shared_ptr<Typeface>(typeface);
+    face = hb::unique_ptr<hb_face_t>(hb_face_create_for_tables(
+        HarfBuzzGetTable, owner,
+        [](void* value) { delete static_cast<std::shared_ptr<Typeface>*>(value); }));
+  }
+
+  return face;
+}
+
+namespace {
+
+std::shared_ptr<HarfBuzzFontData> CreateHarfBuzzFontData(hb_face_t* face,
+                                                         Typeface* typeface) {
+  hb::unique_ptr<hb_font_t> ot_font(hb_font_create(face));
+  hb_ot_font_set_funcs(ot_font.get());
+
+  int axis_count = typeface->GetVariationDesignPosition({});
+  if (axis_count > 0) {
+    Vector<FontArguments::VariationPosition::Coordinate> axis_values;
+    axis_values.resize(static_cast<wtf_size_t>(axis_count));
+    if (typeface->GetVariationDesignPosition(std::span(axis_values.data(), axis_values.size())) > 0) {
+      hb_font_set_variations(
+          ot_font.get(), reinterpret_cast<hb_variation_t*>(axis_values.data()),
+          axis_values.size());
+    }
+  }
+
+  // Creating a sub font means that non-available functions
+  // are found from the parent.
+  hb_font_t* const unscaled_font = hb_font_create_sub_font(ot_font.get());
+  auto data = std::make_shared<HarfBuzzFontData>(unscaled_font);
+  hb_font_set_funcs(unscaled_font, FontFunctions(), data.get(), nullptr);
+  return data;
+}
+
+} // namespace
+
 std::shared_ptr<HarfBuzzFontData> HarfBuzzFontCache::GetOrCreate(
     uint64_t unique_id, const FontPlatformData* platform_data) {
   // GC removes dead weak values upstream. In this non-GC port, remove them
@@ -308,47 +384,26 @@ std::shared_ptr<HarfBuzzFontData> HarfBuzzFontCache::GetOrCreate(
   const auto result = font_map_.insert(unique_id, std::weak_ptr<HarfBuzzFontData>{});
   if (auto existing = result.stored_value->value.lock()) return existing;
 
-  hb::unique_ptr<hb_face_t> face(HbFaceFromFontFace(platform_data->Face()));
-  hb::unique_ptr<hb_font_t> ot_font(hb_font_create(face.get()));
-  hb_ot_font_set_funcs(ot_font.get());
-  const auto coordinates = platform_data->Face()->VariationCoordinates();
-  const auto variation_storage = coordinates.empty()
-                                     ? nullptr
-                                     : std::make_unique<hb_variation_t[]>(coordinates.size());
-  const std::span<hb_variation_t> variations(variation_storage.get(), coordinates.size());
-  for (wtf_size_t i = 0; i < coordinates.size(); ++i) {
-    const auto& coordinate = coordinates[i];
-    variations[i] = {coordinate.tag, coordinate.value};
-  }
-  if (!variations.empty()) hb_font_set_variations(ot_font.get(), variations.data(), variations.size());
-  hb_font_t* font = hb_font_create_sub_font(ot_font.get());
-  auto data = std::make_shared<HarfBuzzFontData>(font);
-  data->platform_data_ = std::make_unique<FontPlatformData>(*platform_data);
-  hb_font_set_funcs(font, FontFunctions(), data.get(), nullptr);
+  hb::unique_ptr<hb_face_t> face = CreateFace(platform_data);
+  std::shared_ptr<HarfBuzzFontData> data =
+      CreateHarfBuzzFontData(face.get(), platform_data->Typeface().get());
 
   result.stored_value->value = data;
   return data;
 }
 
-HarfBuzzFace::~HarfBuzzFace() = default;
+static_assert(
+    std::is_same<decltype(FontArguments::VariationPosition::Coordinate::axis),
+                 decltype(hb_variation_t::tag)>::value &&
+        std::is_same<
+            decltype(FontArguments::VariationPosition::Coordinate::value),
+            decltype(hb_variation_t::value)>::value &&
+        sizeof(FontArguments::VariationPosition::Coordinate) ==
+            sizeof(hb_variation_t),
+    "Typeface and HarfBuzz Variation parameter types must match in structure "
+    "and size.");
 
-void HarfBuzzFontData::UpdateFallbackMetricsAndScale(
-    const FontPlatformData& platform_data, HarfBuzzFace::VerticalLayoutCallbacks vertical_layout) {
-  platform_data_ = std::make_unique<FontPlatformData>(platform_data);
-  font_ = platform_data.CreatePlatformFont();
-  if (vertical_layout == HarfBuzzFace::kPrepareForVerticalLayout) {
-    float ascent = 0, descent = 0;
-    FontMetrics::AscentDescentWithHacks(ascent, descent, platform_data);
-    ascent_fallback_ = ascent;
-    height_fallback_ = std::lround(ascent) + std::lround(descent);
-    const unsigned units_per_em = hb_face_get_upem(hb_font_get_face(unscaled_font_.get()));
-    size_per_unit_ = platform_data.size() / (units_per_em ? units_per_em : 1);
-  } else {
-    ascent_fallback_ = kInvalidFallbackMetricsValue;
-    height_fallback_ = kInvalidFallbackMetricsValue;
-    size_per_unit_ = kInvalidFallbackMetricsValue;
-  }
-}
+HarfBuzzFace::~HarfBuzzFace() = default;
 
 static inline bool TableHasSpace(hb_face_t* face,
                                  hb_set_t* glyphs,
@@ -434,7 +489,7 @@ hb_codepoint_t HarfBuzzFace::HarfBuzzGetGlyphForTesting(UChar32 character, UChar
 }
 
 bool HarfBuzzFace::ShouldSubpixelPosition() {
-  return platform_data_->ShouldSubpixelPosition();
+  return harfbuzz_font_data_->font_.IsSubpixel();
 }
 
 const OpenTypeVerticalData& HarfBuzzFace::VerticalData() const {
@@ -451,7 +506,7 @@ hb_font_t* HarfBuzzFace::GetScaledFont(const UnicodeRangeSet* range_set,
   harfbuzz_font_data_->UpdateFallbackMetricsAndScale(*platform_data_,
                                                      vertical_layout);
 
-  int scale = FloatToHarfBuzzPosition(platform_data_->size());
+  int scale = ScalarToHarfBuzzPosition(platform_data_->size());
   hb_font_t* unscaled_font = harfbuzz_font_data_->unscaled_font_.get();
   hb_font_set_scale(unscaled_font, scale, scale);
   // See contended discussion in https://github.com/harfbuzz/harfbuzz/pull/1484

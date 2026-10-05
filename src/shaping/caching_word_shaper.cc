@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/shaping/caching_word_shaper.cc
+// Ported from: blink/renderer/platform/fonts/shaping/caching_word_shaper.cc
 /*
  * Copyright (C) 2015 Google Inc. All rights reserved.
  *

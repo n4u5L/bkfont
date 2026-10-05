@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/wtf.cc
+// Ported from: blink/renderer/platform/wtf/wtf.cc
 /*
  * Copyright (C) 2013 Google Inc. All rights reserved.
  *

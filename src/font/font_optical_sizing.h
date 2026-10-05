@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_optical_sizing.h
+// Ported from: blink/renderer/platform/fonts/font_optical_sizing.h
 // Copyright 2019 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -11,10 +11,12 @@
 #include "base/text/wtf_string.h"
 
 namespace bkfont {
+
 enum OpticalSizing {
   kAutoOpticalSizing,
   kNoneOpticalSizing
 };
 
 String ToString(OpticalSizing);
+
 } // namespace bkfont

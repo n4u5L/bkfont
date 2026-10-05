@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/geometry/length.cc
+// Ported from: blink/renderer/platform/geometry/length.cc
 /*
  * Copyright (C) 1999 Lars Knoll (knoll@kde.org)
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)

@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/web_font_decoder.cc
+// Ported from: blink/renderer/platform/fonts/web_font_decoder.cc
 /*
  * Copyright (C) 2009 Google Inc. All rights reserved.
  *
@@ -166,7 +166,7 @@ ots::TableAction BlinkOTSContext::GetTableAction(uint32_t tag) {
 
 } // namespace
 
-std::shared_ptr<FontFace> WebFontDecoder::Decode(std::span<const uint8_t> buffer) {
+std::shared_ptr<Typeface> WebFontDecoder::Decode(std::span<const uint8_t> buffer) {
   if (!buffer.data()) {
     SetErrorString("Empty Buffer");
     return nullptr;
@@ -198,9 +198,9 @@ std::shared_ptr<FontFace> WebFontDecoder::Decode(std::span<const uint8_t> buffer
   }
 
   const size_t decoded_length = static_cast<size_t>(output.Tell());
-  auto new_typeface = FontCache::Get().GetFontManager()->CreateFromData(
-      std::span<const uint8_t>(static_cast<const uint8_t*>(output.get()),
-                               decoded_length));
+  // The OTS stream is local; the typeface must own the sanitized bytes.
+  auto new_typeface = FontCache::Get().GetFontManager()->MakeFromData(
+      Data::MakeWithCopy(output.get(), decoded_length));
   if (!new_typeface) {
     SetErrorString("Unable to instantiate font face from font data.");
     return nullptr;

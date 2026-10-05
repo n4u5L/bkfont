@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/shaping/caching_word_shape_iterator.cc
+// Ported from: blink/renderer/platform/fonts/shaping/caching_word_shape_iterator.cc
 // Copyright 2016 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.

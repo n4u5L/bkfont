@@ -1,4 +1,4 @@
-// Source: ui/gfx/color_conversions.h
+// Ported from: chromium/ui/gfx/color_conversions.h
 // Copyright 2022 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -11,6 +11,7 @@
 #include "color_float.h"
 
 namespace bkfont::gfx {
+
 using bkfont::ColorFloat4;
 
 // All the methods below are exposed for bkfont::color conversions.

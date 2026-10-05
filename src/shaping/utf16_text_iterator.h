@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/utf16_text_iterator.h
+// Ported from: blink/renderer/platform/fonts/utf16_text_iterator.h
 /*
  * Copyright (C) Research In Motion Limited 2011. All rights reserved.
  *

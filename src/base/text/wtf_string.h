@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/wtf_string.h
+// Ported from: blink/renderer/platform/wtf/text/wtf_string.h
 /*
  * (C) 1999 Lars Knoll (knoll@kde.org)
  * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2012, 2013 Apple Inc.

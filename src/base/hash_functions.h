@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/hash_functions.h
+// Ported from: blink/renderer/platform/wtf/hash_functions.h
 /*
  * Copyright (C) 2005, 2006, 2008 Apple Inc. All rights reserved.
  *

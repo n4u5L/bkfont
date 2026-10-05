@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_description.cc
+// Ported from: blink/renderer/platform/fonts/font_description.cc
 /*
  * Copyright (C) 2007 Nicholas Shanks <contact@nickshanks.com>
  * Copyright (C) 2008 Apple Inc. All rights reserved.
@@ -442,13 +442,13 @@ FontStyle FontDescription::PlatformFontStyle() const {
     skia_width = 9;
   }
 
-  FontSlant slant = FontSlant::kNormal;
+  FontStyle::Slant slant = FontStyle::kUpright_Slant;
   FontSelectionValue style = Style();
   if (style > kNormalSlopeValue && style <= kItalicThreshold) {
-    slant = FontSlant::kItalic;
+    slant = FontStyle::kItalic_Slant;
   }
   if (style > kItalicThreshold) {
-    slant = FontSlant::kOblique;
+    slant = FontStyle::kOblique_Slant;
   }
 
   int skia_weight = 400;
@@ -460,9 +460,9 @@ FontStyle FontDescription::PlatformFontStyle() const {
 }
 
 void FontDescription::UpdateFromPlatformFontStyle(const FontStyle& font_style) {
-  SetWeight(FontSelectionValue(font_style.weight));
+  SetWeight(FontSelectionValue(font_style.GetWeight()));
 
-  switch (font_style.stretch) {
+  switch (font_style.GetWidth()) {
   case (1):
     SetStretch(kUltraCondensedWidthValue);
     break;
@@ -489,7 +489,7 @@ void FontDescription::UpdateFromPlatformFontStyle(const FontStyle& font_style) {
     break;
   }
 
-  if (font_style.slant == FontSlant::kOblique)
+  if (font_style.GetSlant() == FontStyle::kOblique_Slant)
     SetStyle(kItalicSlopeValue);
   else
     SetStyle(kNormalSlopeValue);

@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/shaping/glyph_data_range.cc
+// Ported from: blink/renderer/platform/fonts/shaping/glyph_data_range.cc
 // Copyright 2024 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -13,7 +13,7 @@
 namespace bkfont {
 
 GlyphDataRange::GlyphDataRange(const ShapeResultRun& run)
-    : run_(run.shared_from_this()),
+    : run_(&run),
       size_(run.glyph_data_.size()) {
 }
 

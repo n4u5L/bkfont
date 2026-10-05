@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/string_utf8_adaptor.h
+// Ported from: blink/renderer/platform/wtf/text/string_utf8_adaptor.h
 /*
  * Copyright (C) 2013 Google Inc. All rights reserved.
  *

@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/text_offset_map.cc
+// Ported from: blink/renderer/platform/wtf/text/text_offset_map.cc
 // Copyright 2019 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.

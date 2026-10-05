@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_smoothing_mode.h
+// Ported from: blink/renderer/platform/fonts/font_smoothing_mode.h
 /*
  * Copyright (C) 2009 Apple Inc. All rights reserved.
  *

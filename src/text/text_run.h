@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/text/text_run.h
+// Ported from: blink/renderer/platform/text/text_run.h
 /*
  * Copyright (C) 2000 Lars Knoll (knoll@kde.org)
  *           (C) 2000 Antti Koivisto (koivisto@kde.org)

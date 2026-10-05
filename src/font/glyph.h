@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/glyph.h
+// Ported from: blink/renderer/platform/fonts/glyph.h
 /*
  * Copyright (C) 2006, 2007, 2008 Apple Inc. All rights reserved.
  * Copyright (C) Research In Motion Limited 2011. All rights reserved.

@@ -1,4 +1,4 @@
-// Source: ui/gfx/color_conversions.cc
+// Ported from: chromium/ui/gfx/color_conversions.cc
 // Copyright 2012 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -15,11 +15,13 @@
 #include <tuple>
 
 namespace bkfont::gfx {
+
 using namespace bkfont::color_math;
 using bkfont::ColorFloat4;
 
 // Namespace containing some of the helper methods for color conversions.
 namespace {
+
 // https://en.wikipedia.org/wiki/CIELAB_color_space#Converting_between_CIELAB_and_CIEXYZ_coordinates
 constexpr float kD50_x = 0.9642f;
 constexpr float kD50_y = 1.0f;
@@ -245,6 +247,7 @@ std::tuple<float, float, float> ApplyInverseTransferFnRec2020(float r,
       skcmsTrFnEvalExt(getRec2020nverseTransferFunction(), g),
       skcmsTrFnEvalExt(getRec2020nverseTransferFunction(), b));
 }
+
 } // namespace
 
 std::tuple<float, float, float> LabToXYZD50(float l, float a, float b) {
@@ -746,4 +749,5 @@ ColorFloat4 HWBToColorFloat4(float h, float w, float b, float alpha) {
   auto [red, green, blue] = HWBToSRGB(h, w, b);
   return ColorFloat4{red, green, blue, alpha};
 }
+
 } // namespace bkfont::gfx

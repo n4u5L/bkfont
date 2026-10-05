@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/shaping/harfbuzz_shaper.cc
+// Ported from: blink/renderer/platform/fonts/shaping/harfbuzz_shaper.cc
 /*
  * Copyright (c) 2012 Google Inc. All rights reserved.
  * Copyright (C) 2013 BlackBerry Limited. All rights reserved.
@@ -1123,7 +1123,7 @@ void HarfBuzzShaper::GetGlyphData(const SimpleFontData& font_data,
   hb_buffer_set_direction(
       hb_buffer,
       is_horizontal ? (bkfont::IsLtr(direction) ? HB_DIRECTION_LTR
-                                               : HB_DIRECTION_RTL)
+                                                : HB_DIRECTION_RTL)
                     : HB_DIRECTION_TTB);
   if (text_.Is8Bit()) {
     auto span = text_.Span8();

@@ -1,8 +1,10 @@
+// Ported from: blink/renderer/platform/wtf/allocator/partition_allocator.h
+// Non-GC backing-store
+// policy, with Partitions supplied by the CRT boundary in this port.
+
 // Copyright 2013 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-// Source: platform/wtf/allocator/partition_allocator.h. Non-GC backing-store
-// policy, with Partitions supplied by the CRT boundary in this port.
 #pragma once
 
 #include <cstddef>
@@ -96,30 +98,32 @@ char* PartitionAllocator::AllocateVectorBacking<char>(std::size_t size);
 
 } // namespace bkfont
 
-#define USE_ALLOCATOR(ClassName, Allocator)                           \
-public:                                                               \
-  void* operator new(std::size_t size) {                              \
-    return Allocator::template Malloc<void*, ClassName>(              \
-        size,                                                         \
-        BASE_HEAP_PROFILER_TYPE_NAME(ClassName));                     \
-  }                                                                   \
-  void operator delete(void* p) {                                     \
-    Allocator::Free(p);                                               \
-  }                                                                   \
-  void* operator new[](std::size_t size) {                            \
-    return Allocator::template NewArray<ClassName>(size);             \
-  }                                                                   \
-  void operator delete[](void* p) {                                   \
-    Allocator::DeleteArray(p);                                        \
-  }                                                                   \
+#define USE_ALLOCATOR(ClassName, Allocator)                                     \
+public:                                                                         \
+  void* operator new(std::size_t size) {                                        \
+    return Allocator::template Malloc<void*, ClassName>(                        \
+        size,                                                                   \
+        BASE_HEAP_PROFILER_TYPE_NAME(ClassName));                               \
+  }                                                                             \
+  void operator delete(void* p) {                                               \
+    Allocator::Free(p);                                                         \
+  }                                                                             \
+  void* operator new[](std::size_t size) {                                      \
+    return Allocator::template NewArray<ClassName>(size);                       \
+  }                                                                             \
+  void operator delete[](void* p) {                                             \
+    Allocator::DeleteArray(p);                                                  \
+  }                                                                             \
   void* operator new(std::size_t, ::bkfont::base::NotNullTag, void* location) { \
-    return location;                                                  \
-  }                                                                   \
-  void* operator new(std::size_t, void* location) {                   \
-    return location;                                                  \
-  }                                                                   \
-  void operator delete(void*, ::bkfont::base::NotNullTag, void*) {}             \
-  void operator delete(void*, void*) {}                               \
-                                                                      \
-private:                                                              \
+    return location;                                                            \
+  }                                                                             \
+  void* operator new(std::size_t, void* location) {                             \
+    return location;                                                            \
+  }                                                                             \
+  void operator delete(void*, ::bkfont::base::NotNullTag, void*) {              \
+  }                                                                             \
+  void operator delete(void*, void*) {                                          \
+  }                                                                             \
+                                                                                \
+private:                                                                        \
   typedef int __thisIsHereToForceASemicolonAfterThisMacro

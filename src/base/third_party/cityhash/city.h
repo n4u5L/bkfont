@@ -1,4 +1,4 @@
-// Source: base/third_party/cityhash/city.h
+// Ported from: chromium/base/third_party/cityhash/city.h
 // Copyright (c) 2011 Google, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -70,7 +70,9 @@
 // handle linker symbol clash error with deprecated CityHash from
 // third_party/smhasher in a few unit tests.
 namespace bkfont::base {
+
 namespace internal {
+
 namespace cityhash_v111 {
 
 typedef uint8_t uint8;
@@ -123,5 +125,7 @@ inline uint64 Hash128to64(const uint128& x) {
 }
 
 } // namespace cityhash_v111
+
 } // namespace internal
+
 } // namespace bkfont::base

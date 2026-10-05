@@ -15,10 +15,13 @@ namespace bkfont {
 
 class Strike;
 
-// SK_DEFAULT_FONT_CACHE_COUNT_LIMIT.
+// SK_DEFAULT_FONT_CACHE_COUNT_LIMIT, which Chromium only overrides on
+// Windows. The FreeType rasterizer keeps no GDI handles, so the count limit
+// of the FreeType platforms applies.
 inline constexpr int kDefaultFontCacheCountLimit = 2048;
-// SK_DEFAULT_FONT_CACHE_LIMIT.
-inline constexpr std::size_t kDefaultFontCacheLimit = 2 * 1024 * 1024;
+// content::InitializeSkia calls SkGraphics::SetFontCacheLimit(kMB) in every
+// renderer, which replaces the SK_DEFAULT_FONT_CACHE_LIMIT define.
+inline constexpr std::size_t kDefaultFontCacheLimit = 1024 * 1024;
 
 // SkStrikeCache. Pinners are not ported; every strike is deletable.
 class StrikeCache final {

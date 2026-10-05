@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/shaping/harfbuzz_shaper.h
+// Ported from: blink/renderer/platform/fonts/shaping/harfbuzz_shaper.h
 /*
  * Copyright (C) 2012 Google Inc. All rights reserved.
  *

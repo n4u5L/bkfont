@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/get_ptr.h
+// Ported from: blink/renderer/platform/wtf/get_ptr.h
 /*
  *  Copyright (C) 2006 Apple Computer, Inc.
  *

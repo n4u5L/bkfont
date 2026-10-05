@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/dynamic_annotations.cc
+// Ported from: blink/renderer/platform/wtf/dynamic_annotations.cc
 /*
  * Copyright (C) 2011 Google Inc. All rights reserved.
  *

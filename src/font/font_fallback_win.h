@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/win/font_fallback_win.h
+// Ported from: blink/renderer/platform/fonts/win/font_fallback_win.h
 /*
  * Copyright (c) 2006, 2007, 2008, Google Inc. All rights reserved.
  *

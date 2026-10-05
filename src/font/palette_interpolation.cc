@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/palette_interpolation.cc
+// Ported from: blink/renderer/platform/fonts/palette_interpolation.cc
 // Copyright 2023 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -8,8 +8,6 @@
 #include "open_type_cpal_lookup.h"
 #include "base/math_extras.h"
 
-#include "platform/font_face.h"
-#include "font_table_harfbuzz.h"
 namespace bkfont {
 
 Vector<FontPalette::FontPaletteOverride> PaletteInterpolation::MixColorRecords(

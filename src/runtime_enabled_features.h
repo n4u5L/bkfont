@@ -1,3 +1,7 @@
+// Ported from: blink/renderer/build/scripts/templates/runtime_enabled_features.h.tmpl
+// Ported from: blink/renderer/platform/runtime_enabled_features.json5
+// Ported from: chromium/content/common/features.cc
+// Ported from: chromium/content/child/runtime_features.cc
 // Copyright 2026 The Chromium Authors
 // Use of this source code is governed by a BSD-style license in LICENSE.
 // Defaults: Blink platform/runtime_enabled_features.json5 (Windows), except
@@ -5,8 +9,15 @@
 // Browser field trials are replaced by explicit configuration before font use.
 #pragma once
 namespace bkfont {
+
 class RuntimeEnabledFeatures {
 public:
+  static bool CanvasTextCacheLimitEnabled() {
+    return CanvasTextCacheLimit_;
+  }
+  static void SetCanvasTextCacheLimitEnabled(bool value) {
+    CanvasTextCacheLimit_ = value;
+  }
   static bool ShapeResultCachedPreviousSafeToBreakOffsetEnabled() {
     return ShapeResultCachedPreviousSafeToBreakOffset_;
   }
@@ -103,6 +114,12 @@ public:
   static void SetTabWidthNegativePositionEnabled(bool value) {
     TabWidthNegativePosition_ = value;
   }
+  static bool TextEmphasisLetterSpacingEnabled() {
+    return TextEmphasisLetterSpacing_;
+  }
+  static void SetTextEmphasisLetterSpacingEnabled(bool value) {
+    TextEmphasisLetterSpacing_ = value;
+  }
   static bool TextSpacingTrimFallbackEnabled() {
     return TextSpacingTrimFallback_;
   }
@@ -117,6 +134,7 @@ public:
   }
 
 private:
+  inline static bool CanvasTextCacheLimit_ = true;
   inline static bool ShapeResultCachedPreviousSafeToBreakOffset_ = true;
   inline static bool CSSChUnitSpecCompliantFallback_ = true;
   inline static bool CSSHexAlphaColor_ = true;
@@ -133,7 +151,9 @@ private:
   inline static bool SystemFallbackEmojiVSSupport_ = true;
   inline static bool TabSizeWithSpacing_ = true;
   inline static bool TabWidthNegativePosition_ = true;
+  inline static bool TextEmphasisLetterSpacing_ = true;
   inline static bool TextSpacingTrimFallback_ = true;
   inline static bool TextSpacingTrimFallback2_ = false;
 };
+
 } // namespace bkfont

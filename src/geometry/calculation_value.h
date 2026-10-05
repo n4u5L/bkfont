@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/geometry/calculation_value.h
+// Ported from: blink/renderer/platform/geometry/calculation_value.h
 /*
  * Copyright (C) 2011 Google Inc. All rights reserved.
  *

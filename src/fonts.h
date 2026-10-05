@@ -1,12 +1,25 @@
+// Local implementation: public font API umbrella header.
 // Public entry points for the extracted Blink font layer.
 #pragma once
 
 #include "initialize.h"
+#include "font/canvas_paint_canvas.h"
+#include "font/character_range.h"
 #include "font/font.h"
 #include "font/font_cache.h"
 #include "font/font_custom_platform_data.h"
 #include "font/font_description.h"
 #include "font/font_selector.h"
+#include "font/plain_text_node.h"
+#include "font/string_truncator.h"
+#include "platform/raster_canvas.h"
+#include "shaping/frame_shape_cache.h"
 #include "shaping/harfbuzz_shaper.h"
+#include "shaping/opentype/open_type_math_support.h"
 #include "shaping/shape_result.h"
+#include "shaping/shape_result_view.h"
+#include "shaping/shaping_line_breaker.h"
+#include "shaping/stretchy_operator_shaper.h"
+#include "text/hyphenation.h"
+#include "text/text_break_iterator.h"
 #include "text/text_run.h"

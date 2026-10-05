@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/shaping/shape_result_view.h
+// Ported from: blink/renderer/platform/fonts/shaping/shape_result_view.h
 // Copyright 2018 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -28,6 +28,8 @@ class ShapeResult;
 
 // Class representing a read-only composite of views into one or more existing
 // shape results.
+// Each view has one owner; its parts retain the runs needed by the view, so the
+// original ShapeResult or ShapeResultView may be destroyed after Create().
 // Implemented as a list of ref counted RunInfo instances and a start/end
 // offset for each, represented using the internal RunInfoPart struct.
 // This allows lines to be reference sections of the overall paragraph shape
@@ -73,8 +75,7 @@ class ShapeResult;
 // referencing a range in the original ShapeResult while the last word
 // would be a separate result owned by the ShapeResultView instance. The second
 // and third lines would again be represented as parts.
-class ShapeResultView final
-    : public std::enable_shared_from_this<ShapeResultView> {
+class ShapeResultView final {
 public:
   // Create a new ShapeResultView from a pre-defined list of segments.
   // The segments list is assumed to be in logical order.
@@ -101,14 +102,14 @@ public:
     unsigned start_index;
     unsigned end_index;
   };
-  static std::shared_ptr<ShapeResultView> Create(base::span<const Segment> segments);
+  static std::unique_ptr<ShapeResultView> Create(base::span<const Segment> segments);
 
   // Creates a new ShapeResultView from a single segment.
-  static std::shared_ptr<ShapeResultView> Create(const ShapeResult*);
-  static std::shared_ptr<ShapeResultView> Create(const ShapeResult*,
+  static std::unique_ptr<ShapeResultView> Create(const ShapeResult*);
+  static std::unique_ptr<ShapeResultView> Create(const ShapeResult*,
                                                  unsigned start_index,
                                                  unsigned end_index);
-  static std::shared_ptr<ShapeResultView> Create(const ShapeResultView*,
+  static std::unique_ptr<ShapeResultView> Create(const ShapeResultView*,
                                                  unsigned start_index,
                                                  unsigned end_index);
 
@@ -289,6 +290,7 @@ public:
     }
 
     std::shared_ptr<const ShapeResultRun> run_;
+    // Borrows glyph storage from run_, whose ownership is retained above.
     GlyphDataRange range_;
 
     // Start index for partial run, adjusted to ensure that runs are continuous.

@@ -1,9 +1,11 @@
-// Source: third_party/blink/renderer/platform/color_data.gperf
+// Ported from: blink/renderer/platform/color_data.gperf
 // Copyright The Chromium Authors. BSD-style license, see LICENSE.
 #include "color.h"
 
 namespace bkfont {
+
 namespace {
+
 // The upstream gperf word list, in its original order and with unchanged values.
 constexpr NamedColor kNamedColors[] = {
     {"aliceblue", 0xfff0f8ff},
@@ -158,7 +160,9 @@ constexpr NamedColor kNamedColors[] = {
     {"yellow", 0xffffff00},
     {"yellowgreen", 0xff9acd32},
 };
+
 } // namespace
+
 const NamedColor* FindColor(std::string_view str) {
   // Like the gperf lookup, matching is case-sensitive and includes the length.
   // FindNamedColor in color.cc performs the original ASCII lowercasing.
@@ -167,4 +171,5 @@ const NamedColor* FindColor(std::string_view str) {
   }
   return nullptr;
 }
+
 } // namespace bkfont

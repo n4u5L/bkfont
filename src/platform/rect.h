@@ -1,9 +1,12 @@
-// Ported from: skia/include/core/SkPoint.h, skia/include/core/SkRect.h, skia/src/core/SkRect.cpp
+// Ported from: skia/include/core/SkPoint.h
+// Ported from: skia/include/core/SkRect.h
+// Ported from: skia/src/core/SkRect.cpp
 
 #pragma once
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <span>
 
@@ -59,6 +62,20 @@ struct ScalarRect {
     *this = {std::floor(left), std::floor(top), std::ceil(right), std::ceil(bottom)};
   }
 
+  void Offset(float dx, float dy) {
+    left += dx;
+    top += dy;
+    right += dx;
+    bottom += dy;
+  }
+
+  void Outset(float dx, float dy) {
+    left -= dx;
+    top -= dy;
+    right += dx;
+    bottom += dy;
+  }
+
   // setBoundsNoCheck. Non-finite points produce a NaN rect.
   void SetBoundsNoCheck(std::span<const ScalarPoint> points) {
     float accum = 0;
@@ -79,6 +96,68 @@ struct ScalarRect {
       const float nan = std::numeric_limits<float>::quiet_NaN();
       *this = {nan, nan, nan, nan};
     }
+  }
+};
+
+// SkIRect.
+struct IntRect {
+  std::int32_t left = 0;
+  std::int32_t top = 0;
+  std::int32_t right = 0;
+  std::int32_t bottom = 0;
+
+  static IntRect MakeLTRB(std::int32_t l, std::int32_t t, std::int32_t r, std::int32_t b) {
+    return {l, t, r, b};
+  }
+  static IntRect MakeWH(std::int32_t w, std::int32_t h) {
+    return {0, 0, w, h};
+  }
+  // The right and bottom edges saturate, as Sk32_sat_add.
+  static IntRect MakeXYWH(std::int32_t x, std::int32_t y, std::int32_t w, std::int32_t h) {
+    return {x, y, SaturateAdd(x, w), SaturateAdd(y, h)};
+  }
+
+  // The span as an int32, which may overflow.
+  std::int32_t Width() const {
+    return static_cast<std::int32_t>(static_cast<std::int64_t>(right) - left);
+  }
+  std::int32_t Height() const {
+    return static_cast<std::int32_t>(static_cast<std::int64_t>(bottom) - top);
+  }
+  std::int64_t Width64() const {
+    return static_cast<std::int64_t>(right) - left;
+  }
+  std::int64_t Height64() const {
+    return static_cast<std::int64_t>(bottom) - top;
+  }
+
+  // Empty if either span is not positive, computed in 64 bits.
+  bool IsEmpty() const {
+    return Width64() <= 0 || Height64() <= 0;
+  }
+
+  void Offset(std::int32_t dx, std::int32_t dy) {
+    left = SaturateAdd(left, dx);
+    top = SaturateAdd(top, dy);
+    right = SaturateAdd(right, dx);
+    bottom = SaturateAdd(bottom, dy);
+  }
+
+  bool operator==(const IntRect& other) const = default;
+
+  // Both rects are assumed sorted.
+  static bool Intersects(const IntRect& a, const IntRect& b) {
+    const std::int32_t l = std::max(a.left, b.left);
+    const std::int32_t r = std::min(a.right, b.right);
+    const std::int32_t t = std::max(a.top, b.top);
+    const std::int32_t bo = std::min(a.bottom, b.bottom);
+    return l < r && t < bo;
+  }
+
+private:
+  static std::int32_t SaturateAdd(std::int32_t a, std::int32_t b) {
+    const std::int64_t sum = static_cast<std::int64_t>(a) + b;
+    return static_cast<std::int32_t>(std::clamp<std::int64_t>(sum, std::numeric_limits<std::int32_t>::min(), std::numeric_limits<std::int32_t>::max()));
   }
 };
 

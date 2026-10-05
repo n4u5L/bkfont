@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/shaping/shape_result_view.cc
+// Ported from: blink/renderer/platform/fonts/shaping/shape_result_view.cc
 // Copyright 2018 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -295,12 +295,12 @@ void ShapeResultView::PopulateRunInfoParts(const Segment& segment) {
   }
 }
 
-std::shared_ptr<ShapeResultView> ShapeResultView::Create(base::span<const Segment> segments) {
+std::unique_ptr<ShapeResultView> ShapeResultView::Create(base::span<const Segment> segments) {
 
   InitData data;
   data.Populate(segments);
 
-  auto out = std::shared_ptr<ShapeResultView>(new ShapeResultView(data));
+  auto out = std::make_unique<ShapeResultView>(data);
 
   out->parts_.ReserveInitialCapacity(data.num_parts);
 
@@ -317,27 +317,27 @@ std::shared_ptr<ShapeResultView> ShapeResultView::Create(base::span<const Segmen
   return out;
 }
 
-std::shared_ptr<ShapeResultView> ShapeResultView::Create(const ShapeResult* result,
+std::unique_ptr<ShapeResultView> ShapeResultView::Create(const ShapeResult* result,
                                                          unsigned start_index,
                                                          unsigned end_index) {
   const Segment segments[] = {{result, start_index, end_index}};
   return Create(segments);
 }
 
-std::shared_ptr<ShapeResultView> ShapeResultView::Create(const ShapeResultView* result,
+std::unique_ptr<ShapeResultView> ShapeResultView::Create(const ShapeResultView* result,
                                                          unsigned start_index,
                                                          unsigned end_index) {
   const Segment segments[] = {{result, start_index, end_index}};
   return Create(segments);
 }
 
-std::shared_ptr<ShapeResultView> ShapeResultView::Create(const ShapeResult* result) {
+std::unique_ptr<ShapeResultView> ShapeResultView::Create(const ShapeResult* result) {
   // This specialization is an optimization to allow the bounding box to be
   // re-used.
   InitData data;
   data.Populate(*result);
 
-  auto out = std::shared_ptr<ShapeResultView>(new ShapeResultView(data));
+  auto out = std::make_unique<ShapeResultView>(data);
 
   out->parts_.ReserveInitialCapacity(data.num_parts);
 

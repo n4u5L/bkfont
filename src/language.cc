@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/language.cc
+// Ported from: blink/renderer/platform/language.cc
 /*
  * Copyright (C) 2010, 2013 Apple Inc. All rights reserved.
  *
@@ -26,7 +26,12 @@
 
 #include "language.h"
 
+#include "build/build_config.h"
+#if BUILDFLAG(IS_WIN)
 #include <windows.h>
+#else
+#include <unicode/uloc.h>
+#endif
 #include "text/layout_locale.h"
 #include "base/text/atomic_string.h"
 #include "base/text/wtf_string.h"
@@ -35,6 +40,20 @@
 namespace bkfont {
 
 namespace {
+
+String PlatformDefaultLocale() {
+#if BUILDFLAG(IS_WIN)
+  wchar_t locale_name[LOCALE_NAME_MAX_LENGTH] = {};
+  const int length = GetUserDefaultLocaleName(locale_name, LOCALE_NAME_MAX_LENGTH);
+  return length > 0 ? String(base::span(reinterpret_cast<const UChar*>(locale_name),
+                                        static_cast<size_t>(length - 1)))
+                    : String();
+#else
+  // Chromium's Linux locale comes from ICU; Blink canonicalizes underscores
+  // to BCP47 separators below.
+  return String::FromUTF8(uloc_getDefault());
+#endif
+}
 
 static String CanonicalizeLanguageIdentifier(const String& language_code) {
   String copied_code = language_code;
@@ -70,14 +89,7 @@ void InitializePlatformLanguage() {
       const AtomicString,
       platform_language,
       (([]() {
-        String canonicalized = CanonicalizeLanguageIdentifier(
-            ([]() {
-              wchar_t locale_name[LOCALE_NAME_MAX_LENGTH] = {};
-              const int length = GetUserDefaultLocaleName(locale_name, LOCALE_NAME_MAX_LENGTH);
-              return length > 0 ? String(base::span(reinterpret_cast<const UChar*>(locale_name),
-                                                    static_cast<size_t>(length - 1)))
-                                : String();
-            })());
+        String canonicalized = CanonicalizeLanguageIdentifier(PlatformDefaultLocale());
         if (!canonicalized.empty()) {
           StringImpl* impl =
               StringImpl::CreateStatic(base::span<const char>(canonicalized.Ascii()));

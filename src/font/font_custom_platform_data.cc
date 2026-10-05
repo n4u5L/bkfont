@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_custom_platform_data.cc
+// Ported from: blink/renderer/platform/fonts/font_custom_platform_data.cc
 /*
  * Copyright (C) 2007 Apple Computer, Inc.
  * Copyright (c) 2007, 2008, 2009, Google Inc. All rights reserved.
@@ -47,6 +47,7 @@
 #include <memory>
 #include <span>
 namespace {
+
 using namespace bkfont;
 
 constexpr uint32_t kOpszTag = HB_TAG('o', 'p', 's', 'z');
@@ -54,8 +55,13 @@ constexpr uint32_t kSlntTag = HB_TAG('s', 'l', 'n', 't');
 constexpr uint32_t kWdthTag = HB_TAG('w', 'd', 't', 'h');
 constexpr uint32_t kWghtTag = HB_TAG('w', 'g', 'h', 't');
 
-std::optional<FontVariationParameter> RetrieveVariationDesignParametersByTag(std::shared_ptr<FontFace> face, uint32_t tag) {
-  for (const auto& axis : face->VariationParameters())
+std::optional<FontParameters::Variation::Axis> RetrieveVariationDesignParametersByTag(std::shared_ptr<Typeface> face, uint32_t tag) {
+  const int count = face->GetVariationDesignParameters({});
+  if (count <= 0) return std::nullopt;
+  Vector<FontParameters::Variation::Axis> axes(static_cast<wtf_size_t>(count));
+  if (face->GetVariationDesignParameters(std::span(axes.data(), axes.size())) <= 0)
+    return std::nullopt;
+  for (const auto& axis : axes)
     if (axis.tag == tag) return axis;
   return std::nullopt;
 }
@@ -64,7 +70,7 @@ std::optional<FontVariationParameter> RetrieveVariationDesignParametersByTag(std
 
 namespace bkfont {
 
-FontCustomPlatformData::FontCustomPlatformData(std::shared_ptr<FontFace> face, size_t data_size)
+FontCustomPlatformData::FontCustomPlatformData(std::shared_ptr<Typeface> face, size_t data_size)
     : base_typeface_(std::move(face)),
       data_size_(data_size) {
 }
@@ -85,7 +91,7 @@ std::shared_ptr<const FontPlatformData> FontCustomPlatformData::GetFontPlatformD
     const FontVariationSettings* variation_settings,
     const FontPalette* palette) const {
 
-  std::shared_ptr<FontFace> return_typeface = base_typeface_;
+  std::shared_ptr<Typeface> return_typeface = base_typeface_;
 
   // Maximum axis count is maximum value for the OpenType USHORT,
   // which is a 16bit unsigned.
@@ -106,19 +112,19 @@ std::shared_ptr<const FontPlatformData> FontCustomPlatformData::GetFontPlatformD
             ? variation_settings->size()
             : 0;
     const size_t variation_capacity = 3 + settings_count + 1;
-    auto variation = std::make_unique<PlatformFontVariationAxis[]>(variation_capacity);
+    auto variation = std::make_unique<FontArguments::VariationPosition::Coordinate[]>(variation_capacity);
     size_t variation_count = 0;
 
-    PlatformFontVariationAxis weight_coordinate = {
+    FontArguments::VariationPosition::Coordinate weight_coordinate = {
         kWghtTag,
         static_cast<float>(selection_capabilities.weight.clampToRange(
             selection_request.weight))};
-    std::optional<FontVariationParameter> wght_parameters =
+    std::optional<FontParameters::Variation::Axis> wght_parameters =
         RetrieveVariationDesignParametersByTag(base_typeface_, kWghtTag);
     if (selection_capabilities.weight.IsRangeSetFromAuto() && wght_parameters) {
       FontSelectionRange wght_range = {
-          FontSelectionValue(wght_parameters->minimum),
-          FontSelectionValue(wght_parameters->maximum)};
+          FontSelectionValue(wght_parameters->min),
+          FontSelectionValue(wght_parameters->max)};
       if (wght_range.IsValid()) {
         weight_coordinate = {
             kWghtTag,
@@ -127,16 +133,16 @@ std::shared_ptr<const FontPlatformData> FontCustomPlatformData::GetFontPlatformD
       }
     }
 
-    PlatformFontVariationAxis width_coordinate = {
+    FontArguments::VariationPosition::Coordinate width_coordinate = {
         kWdthTag,
         static_cast<float>(selection_capabilities.width.clampToRange(
             selection_request.width))};
-    std::optional<FontVariationParameter> wdth_parameters =
+    std::optional<FontParameters::Variation::Axis> wdth_parameters =
         RetrieveVariationDesignParametersByTag(base_typeface_, kWdthTag);
     if (selection_capabilities.width.IsRangeSetFromAuto() && wdth_parameters) {
       FontSelectionRange wdth_range = {
-          FontSelectionValue(wdth_parameters->minimum),
-          FontSelectionValue(wdth_parameters->maximum)};
+          FontSelectionValue(wdth_parameters->min),
+          FontSelectionValue(wdth_parameters->max)};
       if (wdth_range.IsValid()) {
         width_coordinate = {
             kWdthTag,
@@ -148,16 +154,16 @@ std::shared_ptr<const FontPlatformData> FontCustomPlatformData::GetFontPlatformD
     // values clockwise - in CSS positive values are clockwise rotations /
     // skew. See note in https://drafts.csswg.org/css-fonts/#font-style-prop -
     // map value from CSS to OpenType here.
-    PlatformFontVariationAxis slant_coordinate = {
+    FontArguments::VariationPosition::Coordinate slant_coordinate = {
         kSlntTag,
         static_cast<float>(-selection_capabilities.slope.clampToRange(
             selection_request.slope))};
-    std::optional<FontVariationParameter> slnt_parameters =
+    std::optional<FontParameters::Variation::Axis> slnt_parameters =
         RetrieveVariationDesignParametersByTag(base_typeface_, kSlntTag);
     if (selection_capabilities.slope.IsRangeSetFromAuto() && slnt_parameters) {
       FontSelectionRange slnt_range = {
-          FontSelectionValue(slnt_parameters->minimum),
-          FontSelectionValue(slnt_parameters->maximum)};
+          FontSelectionValue(slnt_parameters->min),
+          FontSelectionValue(slnt_parameters->max)};
       if (slnt_range.IsValid()) {
         slant_coordinate = {
             kSlntTag,
@@ -175,7 +181,7 @@ std::shared_ptr<const FontPlatformData> FontCustomPlatformData::GetFontPlatformD
       for (const auto& setting : *variation_settings) {
         if (setting.Tag() == kOpszTag)
           explicit_opsz_configured = true;
-        PlatformFontVariationAxis setting_coordinate =
+        FontArguments::VariationPosition::Coordinate setting_coordinate =
             {setting.Tag(), static_cast<float>(setting.Value())};
         variation[variation_count++] = setting_coordinate;
       }
@@ -183,18 +189,18 @@ std::shared_ptr<const FontPlatformData> FontCustomPlatformData::GetFontPlatformD
 
     if (!explicit_opsz_configured) {
       if (optical_sizing == kAutoOpticalSizing) {
-        PlatformFontVariationAxis opsz_coordinate = {
+        FontArguments::VariationPosition::Coordinate opsz_coordinate = {
             kOpszTag,
             static_cast<float>(adjusted_specified_size)};
         variation[variation_count++] = opsz_coordinate;
       } else if (optical_sizing == kNoneOpticalSizing) {
         // Explicitly set default value to avoid automatic application of
         // optical sizing as it seems to happen on SkTypeface on Mac.
-        std::optional<FontVariationParameter> opsz_parameters =
+        std::optional<FontParameters::Variation::Axis> opsz_parameters =
             RetrieveVariationDesignParametersByTag(return_typeface, kOpszTag);
         if (opsz_parameters) {
-          float opszDefault = opsz_parameters->default_value;
-          PlatformFontVariationAxis opsz_coordinate = {
+          float opszDefault = opsz_parameters->def;
+          FontArguments::VariationPosition::Coordinate opsz_coordinate = {
               kOpszTag,
               static_cast<float>(opszDefault)};
           variation[variation_count++] = opsz_coordinate;
@@ -202,7 +208,9 @@ std::shared_ptr<const FontPlatformData> FontCustomPlatformData::GetFontPlatformD
       }
     }
 
-    auto variation_font = base_typeface_->WithVariations(std::span<const PlatformFontVariationAxis>(variation.get(), variation_count));
+    FontArguments args;
+    args.SetVariationDesignPosition({variation.get(), static_cast<int>(variation_count)});
+    auto variation_font = base_typeface_->MakeClone(args);
     if (variation_font) return_typeface = std::move(variation_font);
   }
 
@@ -218,21 +226,24 @@ std::shared_ptr<const FontPlatformData> FontCustomPlatformData::GetFontPlatformD
       palette_index = interpolation.RetrievePaletteIndex(palette);
     }
     const size_t override_count = palette_index ? color_overrides.size() : 0;
-    auto overrides = std::make_unique<PlatformPaletteOverride[]>(override_count);
+    auto overrides = std::make_unique<FontArguments::Palette::Override[]>(override_count);
     for (size_t i = 0; i < override_count; ++i) {
       const auto& entry = color_overrides[i];
       overrides[i] = {entry.index, entry.color.ToARGB32()};
     }
-    auto palette_face = return_typeface->WithPalette(palette_index.value_or(0),
-                                                     std::span<const PlatformPaletteOverride>(overrides.get(), override_count));
+    FontArguments args;
+    args.SetPalette({palette_index.value_or(0), overrides.get(), static_cast<int>(override_count)});
+    // FreeType clones inherit omitted axes, but use the requested palette
+    // (zero by default). Apply the palette after the variation clone.
+    auto palette_face = return_typeface->MakeClone(args);
     if (palette_face) return_typeface = std::move(palette_face);
   }
   return std::make_shared<FontPlatformData>(
       std::move(return_typeface),
       String(),
       size,
-      synthetic_bold && base_typeface_->Style().weight < kBoldThreshold,
-      synthetic_italic && base_typeface_->Style().slant == FontSlant::kNormal,
+      synthetic_bold && base_typeface_->GetFontStyle().GetWeight() < kBoldThreshold,
+      synthetic_italic && !base_typeface_->IsItalic(),
       text_rendering,
       resolved_font_features,
       orientation);
@@ -244,16 +255,18 @@ Vector<VariationAxis> FontCustomPlatformData::GetVariationAxes() const {
 
 String FontCustomPlatformData::FamilyNameForInspector() const {
   String result;
-  for (const auto& name : base_typeface_->FamilyNames()) {
-    result = name.name;
-    if (name.locale == "en" || name.locale == "en-US") break;
+  auto names = base_typeface_->CreateFamilyNameIterator();
+  Typeface::LocalizedString name;
+  while (names->Next(&name)) {
+    result = name.string;
+    if (name.language == "en" || name.language == "en-US") break;
   }
   return result;
 }
 
 String FontCustomPlatformData::GetPostScriptNameOrFamilyNameForInspector() const {
-  String name = base_typeface_->PostScriptName();
-  return name.IsNull() ? FamilyNameForInspector() : name;
+  String name;
+  return base_typeface_->GetPostScriptName(&name) ? name : FamilyNameForInspector();
 }
 
 std::shared_ptr<FontCustomPlatformData> FontCustomPlatformData::Create(
@@ -261,7 +274,7 @@ std::shared_ptr<FontCustomPlatformData> FontCustomPlatformData::Create(
     String& ots_parse_message) {
 
   WebFontDecoder decoder;
-  std::shared_ptr<FontFace> typeface = decoder.Decode(buffer);
+  std::shared_ptr<Typeface> typeface = decoder.Decode(buffer);
   if (!typeface) {
     ots_parse_message = decoder.GetErrorString();
     return nullptr;
@@ -270,7 +283,7 @@ std::shared_ptr<FontCustomPlatformData> FontCustomPlatformData::Create(
 }
 
 std::shared_ptr<FontCustomPlatformData> FontCustomPlatformData::Create(
-    std::shared_ptr<FontFace> typeface,
+    std::shared_ptr<Typeface> typeface,
     size_t data_size) {
   return std::make_shared<FontCustomPlatformData>(
       std::move(typeface),

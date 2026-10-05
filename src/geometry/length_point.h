@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/geometry/length_point.h
+// Ported from: blink/renderer/platform/geometry/length_point.h
 /*
  * Copyright (c) 2013, Opera Software ASA. All rights reserved.
  *

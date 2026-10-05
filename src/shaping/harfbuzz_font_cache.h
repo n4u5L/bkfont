@@ -1,6 +1,7 @@
+// Ported from: blink/renderer/platform/fonts/shaping/harfbuzz_font_cache.h
+
 // Copyright 2017 The Chromium Authors
 // Use of this source code is governed by a BSD-style license.
-// Ported from platform/fonts/shaping/harfbuzz_font_cache.h.
 #pragma once
 #include <cstdint>
 #include <memory>
@@ -8,6 +9,7 @@
 #include "base/hash_traits.h"
 
 namespace bkfont {
+
 class FontPlatformData;
 struct HarfBuzzFontData;
 
@@ -24,4 +26,5 @@ private:
           IntWithZeroKeyHashTraits<uint64_t>>
       font_map_;
 };
+
 } // namespace bkfont

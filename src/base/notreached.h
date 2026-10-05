@@ -1,4 +1,4 @@
-// Ported from: base/notreached.h
+// Ported from: chromium/base/notreached.h
 
 #pragma once
 

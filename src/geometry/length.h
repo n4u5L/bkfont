@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/geometry/length.h
+// Ported from: blink/renderer/platform/geometry/length.h
 /*
     Copyright (C) 1999 Lars Knoll (knoll@kde.org)
     Copyright (C) 2006, 2008 Apple Inc. All rights reserved.

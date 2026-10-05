@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/sanitizers.h
+// Ported from: blink/renderer/platform/wtf/sanitizers.h
 // Copyright 2015 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -20,6 +20,7 @@
   __asan_region_is_poisoned(addr, size)
 #define NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
 namespace bkfont {
+
 class AsanUnpoisonScope {
 public:
   AsanUnpoisonScope(const void* addr, size_t size)
@@ -41,12 +42,15 @@ private:
   size_t size_;
   bool was_poisoned_;
 };
+
 } // namespace bkfont
+
 #else
 #define ASAN_REGION_IS_POISONED(addr, size) \
   ((void)(addr), (void)(size), (void*)nullptr)
 #define NO_SANITIZE_ADDRESS
 namespace bkfont {
+
 class AsanUnpoisonScope {
 public:
   AsanUnpoisonScope(const void*, size_t) {
@@ -54,7 +58,9 @@ public:
   ~AsanUnpoisonScope() {
   }
 };
+
 } // namespace bkfont
+
 #endif
 
 #if defined(LEAK_SANITIZER)

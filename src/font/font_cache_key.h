@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_cache_key.h
+// Ported from: blink/renderer/platform/fonts/font_cache_key.h
 /*
  * Copyright (C) 2013 Google Inc. All rights reserved.
  *

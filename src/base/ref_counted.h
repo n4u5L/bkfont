@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/ref_counted.h
+// Ported from: blink/renderer/platform/wtf/ref_counted.h
 /*
  * Copyright (C) 2006, 2007, 2008, 2009, 2010 Apple Inc. All rights reserved.
  *

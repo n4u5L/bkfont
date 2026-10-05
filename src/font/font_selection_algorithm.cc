@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_selection_algorithm.cc
+// Ported from: blink/renderer/platform/fonts/font_selection_algorithm.cc
 /*
  * Copyright (C) 2017 Apple Inc. All rights reserved.
  *

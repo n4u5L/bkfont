@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/string_statics.cc
+// Ported from: blink/renderer/platform/wtf/text/string_statics.cc
 /*
  * Copyright (C) 2010 Apple Inc. All Rights Reserved.
  *
@@ -58,8 +58,10 @@ DEFINE_GLOBAL(, String, g_empty_string);
 DEFINE_GLOBAL(, String, g_empty_string16_bit);
 
 namespace {
+
 alignas(String) char g_canonical_whitespace_table_storage[sizeof(
     NewlineThenWhitespaceStringsTable::TableType)];
+
 } // namespace
 
 const NewlineThenWhitespaceStringsTable::TableType&

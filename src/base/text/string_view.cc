@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/string_view.cc
+// Ported from: blink/renderer/platform/wtf/text/string_view.cc
 // Copyright 2016 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -23,6 +23,7 @@
 namespace bkfont {
 
 namespace {
+
 class StackStringViewAllocator {
 public:
   explicit StackStringViewAllocator(
@@ -44,6 +45,7 @@ public:
 private:
   StringView::StackBackingStore& backing_store_;
 };
+
 } // namespace
 
 StringView::StringView(const UChar* chars)

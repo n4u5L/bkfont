@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/thread_safe_ref_counted.h
+// Ported from: blink/renderer/platform/wtf/thread_safe_ref_counted.h
 /*
  * Copyright (C) 2007, 2008, 2010 Apple Inc. All rights reserved.
  * Copyright (C) 2007 Justin Haygood (jhaygood@reaktix.com)

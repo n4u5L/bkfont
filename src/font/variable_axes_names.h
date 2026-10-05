@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/opentype/variable_axes_names.h
+// Ported from: blink/renderer/platform/fonts/opentype/variable_axes_names.h
 // Copyright 2020 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -7,8 +7,7 @@
 
 #include "base/text/wtf_string.h"
 
-#include "platform/font_face.h"
-#include "font_table_harfbuzz.h"
+#include "platform/typeface.h"
 namespace bkfont {
 
 struct VariationAxis {
@@ -21,7 +20,7 @@ struct VariationAxis {
 
 class VariableAxesNames {
 public:
-  static Vector<VariationAxis> GetVariationAxes(std::shared_ptr<FontFace> typeface);
+  static Vector<VariationAxis> GetVariationAxes(std::shared_ptr<Typeface> typeface);
 };
 
 } // namespace bkfont

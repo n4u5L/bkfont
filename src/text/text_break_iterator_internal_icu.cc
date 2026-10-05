@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/text/text_break_iterator_internal_icu.cc
+// Ported from: blink/renderer/platform/text/text_break_iterator_internal_icu.cc
 /*
  * Copyright (C) 2007 Apple Inc. All rights reserved.
  * Copyright (C) 2008, 2009 Google Inc.

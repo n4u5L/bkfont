@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/atomic_string_table.cc
+// Ported from: blink/renderer/platform/wtf/text/atomic_string_table.cc
 // Copyright 2016 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -154,9 +154,7 @@ struct ASCIILowerHashReader {
 
   ALWAYS_INLINE static uint64_t Read64(const uint8_t* ptr) {
     const CharType* p = reinterpret_cast<const CharType*>(ptr);
-#if (defined(__SSE2__) || defined(__ARM_NEON__))  \
-    && (!defined(_MSC_VER) || defined(__clang__)) \
-    && (!defined(__clang_major__) || (__clang_major__ >= 16))
+#if (defined(__SSE2__) || defined(__ARM_NEON__)) && (!defined(_MSC_VER) || defined(__clang__)) && (!defined(__clang_major__) || (__clang_major__ >= 16))
     CharType b __attribute__((vector_size(8)));
     memcpy(&b, p, sizeof(b));
     b |= (b >= 'A' & b <= 'Z') & 0x20;
@@ -173,9 +171,7 @@ struct ASCIILowerHashReader {
   }
   ALWAYS_INLINE static uint64_t Read32(const uint8_t* ptr) {
     const CharType* p = reinterpret_cast<const CharType*>(ptr);
-#if (defined(__SSE2__) || defined(__ARM_NEON__))  \
-    && (!defined(_MSC_VER) || defined(__clang__)) \
-    && (!defined(__clang_major__) || (__clang_major__ >= 16))
+#if (defined(__SSE2__) || defined(__ARM_NEON__)) && (!defined(_MSC_VER) || defined(__clang__)) && (!defined(__clang_major__) || (__clang_major__ >= 16))
     CharType b __attribute__((vector_size(4)));
     memcpy(&b, p, sizeof(b));
     b |= (b >= 'A' & b <= 'Z') & 0x20;

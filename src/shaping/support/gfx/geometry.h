@@ -1,7 +1,18 @@
+// Ported from: chromium/ui/gfx/geometry/point_f.h
+// Ported from: chromium/ui/gfx/geometry/point_f.cc
+// Ported from: chromium/ui/gfx/geometry/size_f.h
+// Ported from: chromium/ui/gfx/geometry/size_f.cc
+// Ported from: chromium/ui/gfx/geometry/vector2d_f.h
+// Ported from: chromium/ui/gfx/geometry/vector2d_f.cc
+// Ported from: chromium/ui/gfx/geometry/rect_f.h
+// Ported from: chromium/ui/gfx/geometry/rect_f.cc
+// Ported from: chromium/ui/gfx/geometry/insets_outsets_f_base.h
+// Ported from: chromium/ui/gfx/geometry/insets_f.h
+// Ported from: chromium/ui/gfx/geometry/outsets_f.h
+
 // Copyright 2012 The Chromium Authors
 // Copyright 2022 The Chromium Authors
 // Use of this source code is governed by a BSD-style license.
-// Font-only extraction from ui/gfx/geometry/{point_f,size_f,vector2d_f,rect_f}.{h,cc}.
 #pragma once
 #include <algorithm>
 #include <cmath>
@@ -9,7 +20,7 @@
 #include <string>
 
 namespace bkfont::gfx {
-// Extracted from ui/gfx/geometry/{insets_outsets_f_base,insets_f,outsets_f}.h.
+
 // This is the base template class of InsetsF and OutsetsF.
 template <typename T>
 class InsetsOutsetsFBase {
@@ -376,6 +387,9 @@ public:
   const SizeF& size() const {
     return size_;
   }
+  PointF CenterPoint() const {
+    return PointF(x() + width() / 2, y() + height() / 2);
+  }
   void set_x(float value) {
     origin_.set_x(value);
   }
@@ -463,4 +477,5 @@ inline RectF operator-(RectF rect, const Vector2dF& offset) {
   rect -= offset;
   return rect;
 }
+
 } // namespace bkfont::gfx

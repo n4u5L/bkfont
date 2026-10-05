@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_selector.cc
+// Ported from: blink/renderer/platform/fonts/font_selector.cc
 // Copyright 2017 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -15,6 +15,9 @@
 #include "generic_font_family_settings.h"
 
 namespace bkfont {
+
+FontSelector::FontSelector() = default;
+FontSelector::~FontSelector() = default;
 
 AtomicString FontSelector::FamilyNameFromSettings(
     const GenericFontFamilySettings& settings,
@@ -89,7 +92,7 @@ bool FontSelector::IsWebkitBodyFamily(const FontDescription& font_description) {
 
 FontFallbackMap& FontSelector::GetFontFallbackMap() {
   if (!font_fallback_map_) {
-    font_fallback_map_ = std::make_shared<FontFallbackMap>(shared_from_this());
+    font_fallback_map_ = std::make_unique<FontFallbackMap>(shared_from_this());
     RegisterForInvalidationCallbacks(font_fallback_map_.get());
   }
   return *font_fallback_map_;

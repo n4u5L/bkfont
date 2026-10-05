@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/unicode_range_set.h
+// Ported from: blink/renderer/platform/fonts/unicode_range_set.h
 /*
  * Copyright (C) 2007, 2008 Apple Inc. All rights reserved.
  *

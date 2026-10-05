@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/segmented_font_data.cc
+// Ported from: blink/renderer/platform/fonts/segmented_font_data.cc
 /*
  * Copyright (C) 2008, 2009 Apple Inc. All rights reserved.
  *

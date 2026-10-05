@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/stack_util.cc
+// Ported from: blink/renderer/platform/wtf/stack_util.cc
 // Copyright 2017 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -12,6 +12,10 @@
 
 #include "build/build_config.h"
 #include "base/threading.h"
+
+#if BUILDFLAG(IS_POSIX)
+#include <pthread.h>
+#endif
 
 #if BUILDFLAG(IS_WIN)
 #include <windows.h>

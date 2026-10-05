@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_metrics.h
+// Ported from: blink/renderer/platform/fonts/font_metrics.h
 /*
  * Copyright (C) Research In Motion Limited 2010-2011. All rights reserved.
  *
@@ -35,6 +35,7 @@
 namespace bkfont {
 
 class FontPlatformData;
+class PlatformFont;
 
 class FontMetrics {
 
@@ -237,14 +238,14 @@ public:
     return hanging_baseline_position_;
   }
 
-  // Unfortunately we still need to keep metrics adjustments for certain Mac
-  // fonts, see crbug.com/445830. Also, a potentially better solution for the
-  // subpixel_ascent_descent flag would be to move line layout to LayoutUnit
-  // instead of int boundaries, see crbug.com/707807 and crbug.com/706298.
+  // Uses the Linux/FreeType metrics adjustments on every platform. A better
+  // solution for subpixel_ascent_descent would be to move line layout to
+  // LayoutUnit; see crbug.com/707807 and crbug.com/706298.
   static void AscentDescentWithHacks(
       float& ascent,
       float& descent,
       const FontPlatformData&,
+      const PlatformFont&,
       bool subpixel_ascent_descent = false,
       std::optional<float> ascent_override = std::nullopt,
       std::optional<float> descent_override = std::nullopt);

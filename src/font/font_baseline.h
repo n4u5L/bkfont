@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_baseline.h
+// Ported from: blink/renderer/platform/fonts/font_baseline.h
 /*
  * Copyright (C) 2010 Apple Inc. All rights reserved.
  *

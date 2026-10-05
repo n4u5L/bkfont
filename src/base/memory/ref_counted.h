@@ -1,7 +1,9 @@
+// Ported from: chromium/base/memory/ref_counted.h
+// Ported from: chromium/base/atomic_ref_count.h
+// Sequence diagnostics removed; reference ownership and adoption are retained.
+
 // Copyright 2012 The Chromium Authors
 // Use of this source code is governed by a BSD-style license in LICENSE.
-// Source: base/memory/ref_counted.h and base/atomic_ref_count.h.
-// Sequence diagnostics removed; reference ownership and adoption are retained.
 #pragma once
 #include <atomic>
 #include <cstdint>
@@ -9,7 +11,9 @@
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_refptr.h"
 namespace bkfont::base {
+
 namespace subtle {
+
 class RefCountedBase {
 public:
   bool HasOneRef() const {
@@ -68,7 +72,9 @@ protected:
 private:
   mutable std::atomic<std::uint32_t> ref_count_;
 };
+
 } // namespace subtle
+
 #define REQUIRE_ADOPTION_FOR_REFCOUNTED_TYPE() \
   using RefCountPreferenceTag = ::bkfont::base::subtle::StartRefCountFromOneTag
 

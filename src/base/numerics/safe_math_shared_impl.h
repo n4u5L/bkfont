@@ -1,4 +1,4 @@
-// Source: base/numerics/safe_math_shared_impl.h
+// Ported from: chromium/base/numerics/safe_math_shared_impl.h
 // Copyright 2017 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -23,6 +23,7 @@
 #endif
 
 namespace bkfont::base {
+
 namespace internal {
 
 // These are the non-functioning boilerplate implementations of the optimized
@@ -195,4 +196,5 @@ struct MathWrapper {
   BASE_NUMERIC_ARITHMETIC_VARIADIC(CLASS, CL_ABBR, OP_NAME)
 
 } // namespace internal
+
 } // namespace bkfont::base

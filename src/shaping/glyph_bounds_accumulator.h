@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/shaping/glyph_bounds_accumulator.h
+// Ported from: blink/renderer/platform/fonts/shaping/glyph_bounds_accumulator.h
 /*
  * Copyright (c) 2012 Google Inc. All rights reserved.
  * Copyright (C) 2013 BlackBerry Limited. All rights reserved.

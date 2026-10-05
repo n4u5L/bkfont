@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/copy_lchars_from_uchar_source.h
+// Ported from: blink/renderer/platform/wtf/text/copy_lchars_from_uchar_source.h
 /*
  * Copyright (C) 2011, 2012 Apple Inc. All rights reserved.
  * Copyright (C) 2011 Nokia Corporation and/or its subsidiary(-ies).

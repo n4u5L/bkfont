@@ -1,4 +1,5 @@
-// Source: base/memory/scoped_refptr.h; diagnostics removed.
+// Ported from: chromium/base/memory/scoped_refptr.h
+// diagnostics removed.
 // Copyright 2017 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.

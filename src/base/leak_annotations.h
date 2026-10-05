@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/leak_annotations.h
+// Ported from: blink/renderer/platform/wtf/leak_annotations.h
 /*
  * Copyright (C) 2013 Google Inc. All rights reserved.
  * Copyright (C) 2013 Samsung Electronics. All rights reserved.
@@ -63,7 +63,7 @@ public:
 //
 // TODO(sof): once layering rules allow wtf/ to make use of the Oilpan
 // infrastructure, remove this macro.
-#define BASE_INTERNAL_LEAK_SANITIZER_DISABLED_SCOPE   \
+#define BASE_INTERNAL_LEAK_SANITIZER_DISABLED_SCOPE    \
   bkfont::LeakSanitizerDisabler leakSanitizerDisabler; \
   static_cast<void>(0)
 

@@ -1,13 +1,19 @@
+// Ported from: skia/modules/skcms/skcms.cc
+// Ported from: skia/modules/skcms/src/skcms_public.h
+// Ported from: skia/include/core/SkColorSpace.h
+// Ported from: skia/include/private/base/SkFixed.h
+// Scalar transfer and matrix routines.
+// No Skia or skcms binary/header dependency.
+
 /*
  * Copyright 2018 Google Inc.
  *
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-// Scalar routines extracted from third_party/skia/modules/skcms/{skcms.cc,src/skcms_public.h}.
-// No Skia or skcms binary/header dependency.
 #pragma once
 namespace bkfont::color_math {
+
 struct skcms_Matrix3x3 {
   float vals[3][3];
 };
@@ -31,18 +37,22 @@ bool skcms_PrimariesToXYZD50(float, float, float, float, float, float, float, fl
 bool skcms_Matrix3x3_invert(const skcms_Matrix3x3*, skcms_Matrix3x3*);
 skcms_Matrix3x3 skcms_Matrix3x3_concat(const skcms_Matrix3x3*, const skcms_Matrix3x3*);
 
-// Constants extracted unchanged from third_party/skia/include/core/SkColorSpace.h.
+// Constants extracted unchanged.
 // Copyright 2016 Google Inc.; BSD-style license, see LICENSE.
 namespace NamedTransferFn {
+
 inline constexpr skcms_TransferFunction kSRGB =
     {2.4f, (float)(1 / 1.055), (float)(0.055 / 1.055), (float)(1 / 12.92), 0.04045f, 0.f, 0.f};
 inline constexpr skcms_TransferFunction k2Dot2 = {2.2f, 1.f, 0.f, 0.f, 0.f, 0.f, 0.f};
 inline constexpr skcms_TransferFunction kRec2020 =
     {2.22222f, 0.909672f, 0.0903276f, 0.222222f, 0.0812429f, 0, 0};
 inline constexpr skcms_TransferFunction kProPhotoRGB = {1.8f, 1.f, 0.f, 0.f, 0.f, 0.f, 0.f};
+
 } // namespace NamedTransferFn
+
 namespace NamedGamut {
-// Exact SkFixedToFloat scaling from include/private/base/SkFixed.h.
+
+// Exact SkFixedToFloat scaling.
 constexpr float FixedToFloat(int value) {
   return value * 1.52587890625e-5f;
 }
@@ -58,5 +68,7 @@ inline constexpr skcms_Matrix3x3 kDisplayP3 = {{{0.515102f, 0.291965f, 0.157153f
 inline constexpr skcms_Matrix3x3 kRec2020 = {{{0.673459f, 0.165661f, 0.125100f},
                                               {0.279033f, 0.675338f, 0.0456288f},
                                               {-0.00193139f, 0.0299794f, 0.797162f}}};
+
 } // namespace NamedGamut
+
 } // namespace bkfont::color_math

@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_orientation.h
+// Ported from: blink/renderer/platform/fonts/font_orientation.h
 /*
  * Copyright (C) 2010 Apple Inc. All rights reserved.
  *

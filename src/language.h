@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/language.h
+// Ported from: blink/renderer/platform/language.h
 /*
  * Copyright (C) 2003, 2006, 2010, 2013 Apple Inc. All rights reserved.
  *

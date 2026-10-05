@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/case_folding_hash.h
+// Ported from: blink/renderer/platform/wtf/text/case_folding_hash.h
 /*
  * Copyright (C) 2006, 2007, 2008, 2012, 2013 Apple Inc. All rights reserved
  * Copyright (C) Research In Motion Limited 2009. All rights reserved.

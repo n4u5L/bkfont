@@ -1,4 +1,4 @@
-// Source: base/third_party/superfasthash/superfasthash.c
+// Ported from: chromium/base/third_party/superfasthash/superfasthash.c
 // Copyright (c) 2010, Paul Hsieh
 // All rights reserved.
 //
@@ -29,8 +29,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define get16bits(d) ((((uint32_t)(((const uint8_t*)(d))[1])) << 8) \
-                      + (uint32_t)(((const uint8_t*)(d))[0]))
+#define get16bits(d) ((((uint32_t)(((const uint8_t*)(d))[1])) << 8) + (uint32_t)(((const uint8_t*)(d))[0]))
 
 extern "C" uint32_t SuperFastHash(const char* data, int len) {
   uint32_t hash = (uint32_t)len, tmp;

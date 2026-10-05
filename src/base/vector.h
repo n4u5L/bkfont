@@ -41,6 +41,7 @@
 #include "vector_traits.h"
 
 namespace bkfont {
+
 inline constexpr wtf_size_t kInitialVectorSize = 4;
 
 // The ordinary placement construction branch of WTF ConstructTraits.
@@ -742,8 +743,8 @@ concept VectorCanAssignFromRange =
     std::ranges::input_range<Range> && std::ranges::sized_range<Range> && std::indirectly_unary_invocable<Proj, std::ranges::iterator_t<Range>> &&
     // This prevents accidental fallback from the more efficient code paths.
     (!std::is_base_of_v<Vector<T, InlineCapacity, Allocator>,
-                        std::decay_t<Range>>
-     || !std::is_same_v<Proj, std::identity>);
+                        std::decay_t<Range>> ||
+     !std::is_same_v<Proj, std::identity>);
 
 template <typename T, wtf_size_t InlineCapacity, typename Allocator>
 class Vector : private VectorBuffer<T, InlineCapacity, Allocator> {

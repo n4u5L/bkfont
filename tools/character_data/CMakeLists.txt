@@ -1,8 +1,11 @@
-# Source: Blink platform/BUILD.gn character_data and character_data_generator.
+# Ported from: blink/renderer/platform/BUILD.gn
+# Local CMake adaptation of the character_data and character_data_generator targets.
 cmake_minimum_required(VERSION 3.24)
 project(blink_font_character_data LANGUAGES CXX)
 if(NOT TARGET ICU::i18n)
-  set(BLINK_FONTS_PACKAGES_ROOT "D:/MyPackages" CACHE PATH "Prebuilt MSVC x64 dependencies")
+  if(WIN32)
+    set(BLINK_FONTS_PACKAGES_ROOT "D:/MyPackages" CACHE PATH "Prebuilt MSVC x64 dependencies")
+  endif()
   include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/NoExceptions.cmake")
   include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/FontPackages.cmake")
 endif()
@@ -16,7 +19,9 @@ target_sources(character_data_generator PRIVATE
   han_kerning_char_type.h
   wtf_uchar.h)
 target_compile_features(character_data_generator PRIVATE cxx_std_20)
-target_compile_definitions(character_data_generator PRIVATE _CRT_SECURE_NO_WARNINGS)
+if(MSVC)
+  target_compile_definitions(character_data_generator PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
 target_link_libraries(character_data_generator PRIVATE ICU::i18n ICU::uc)
 set(GENERATED_CHARACTER_DATA "${CMAKE_CURRENT_BINARY_DIR}/generated/character_property_data.cc")
 set(GENERATED_BREAK_DATA "${CMAKE_CURRENT_BINARY_DIR}/generated/text/break_iterator_data_inline_header.h")

@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_family.h
+// Ported from: blink/renderer/platform/fonts/font_family.h
 /*
  * Copyright (C) 2003, 2006, 2008 Apple Inc. All rights reserved.
  *

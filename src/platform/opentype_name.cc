@@ -1,20 +1,25 @@
+// Ported from: skia/src/sfnt/SkOTTable_name.cpp
+
 /*
  * Copyright 2012, 2013 Google Inc.
- * BSD license retained in dwrite_internal.h.
- * Extracted from third_party/skia/src/sfnt/SkOTTable_name.cpp and
- * SkOTUtils.cpp: UTF-16BE/MacRoman decoding, language mappings and the name
- * record iterator. Binary table fields are read explicitly instead of through
- * SkOTTableName's packed Skia structures; branch order and malformed-table
- * stopping behavior are retained.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Also from skia/src/sfnt/SkOTUtils.cpp: UTF-16BE/MacRoman decoding, language
+ * mappings and the name record iterator. Binary table fields are read
+ * explicitly instead of through SkOTTableName's packed Skia structures;
+ * branch order and malformed-table stopping behavior are retained.
  */
-#include "font_face.h"
+#include "ot_utils.h"
 
 #include <algorithm>
 #include <iterator>
 #include <memory>
 
 namespace bkfont {
+
 namespace {
+
 static const uint16_t UnicodeFromMacRoman[0x80] = {
     0x00C4,
     0x00C5,
@@ -559,7 +564,7 @@ String FromMacRoman(const std::uint8_t* bytes, std::size_t length) {
 
 // SkOTTableName::Iterator::next. source_index is independent for each name type.
 bool NextName(std::span<const std::uint8_t> table, std::uint16_t type,
-              std::size_t& source_index, LocalizedFontName& result) {
+              std::size_t& source_index, Typeface::LocalizedString& result) {
   constexpr std::size_t header_size = 6;
   constexpr std::size_t record_size = 12;
   if (table.size() < header_size)
@@ -591,19 +596,19 @@ bool NextName(std::span<const std::uint8_t> table, std::uint16_t type,
   switch (platform) {
   case 3:
     if (encoding != 0 && encoding != 1 && encoding != 10) {
-      result.name = String(u"");
+      result.string = String(u"");
       break;
     }
     [[fallthrough]];
   case 0:
   case 2:
-    result.name = FromUtf16BE(name, name_length);
+    result.string = FromUtf16BE(name, name_length);
     break;
   case 1:
-    result.name = encoding == 0 ? FromMacRoman(name, name_length) : String(u"");
+    result.string = encoding == 0 ? FromMacRoman(name, name_length) : String(u"");
     break;
   default:
-    result.name = String(u"");
+    result.string = String(u"");
     break;
   }
 
@@ -624,7 +629,7 @@ bool NextName(std::span<const std::uint8_t> table, std::uint16_t type,
       const std::size_t language_offset = Read16(language_record + 2);
       if (table.size() < string_offset + language_offset + language_length)
         return false;
-      result.locale = FromUtf16BE(strings + language_offset, language_length);
+      result.language = FromUtf16BE(strings + language_offset, language_length);
       return true;
     }
   }
@@ -635,21 +640,21 @@ bool NextName(std::span<const std::uint8_t> table, std::uint16_t type,
       [](const BCP47FromLanguageId& entry, std::uint16_t target) -> bool {
         return entry.languageID < target;
       });
-  result.locale = String(language != std::end(BCP47FromLanguageID) && language->languageID == language_id
-                             ? language->bcp47
-                             : "und");
+  result.language = String(language != std::end(BCP47FromLanguageID) && language->languageID == language_id
+                               ? language->bcp47
+                               : "und");
   return true;
 }
 
 } // namespace
 
-Vector<LocalizedFontName> FamilyNamesFromNameTable(std::span<const std::uint8_t> table) {
+Vector<Typeface::LocalizedString> FamilyNamesFromNameTable(std::span<const std::uint8_t> table) {
   // SkOTUtils::LocalizedStrings_NameTable::familyNameTypes / next.
   constexpr std::uint16_t types[] = {1, 16, 21};
-  Vector<LocalizedFontName> result;
+  Vector<Typeface::LocalizedString> result;
   for (std::uint16_t type : types) {
     std::size_t index = 0;
-    LocalizedFontName record;
+    Typeface::LocalizedString record;
     while (NextName(table, type, index, record))
       result.push_back(record);
   }

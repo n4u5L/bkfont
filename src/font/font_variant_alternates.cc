@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_variant_alternates.cc
+// Ported from: blink/renderer/platform/fonts/font_variant_alternates.cc
 // Copyright 2022 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -14,6 +14,7 @@ namespace bkfont {
 FontVariantAlternates::FontVariantAlternates() = default;
 
 namespace {
+
 constexpr uint32_t kSwshTag = HB_TAG('s', 'w', 's', 'h');
 constexpr uint32_t kCswhTag = HB_TAG('c', 's', 'w', 'h');
 constexpr uint32_t kHistTag = HB_TAG('h', 'i', 's', 't');
@@ -40,6 +41,7 @@ uint32_t cvTag(uint32_t number) {
   uint32_t base_tag = HB_TAG('c', 'v', 0, 0);
   return NumberedTag(base_tag, number);
 }
+
 } // namespace
 
 const ResolvedFontFeatures& FontVariantAlternates::GetResolvedFontFeatures()

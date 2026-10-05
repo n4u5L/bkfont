@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/string_concatenate.cc
+// Ported from: blink/renderer/platform/wtf/text/string_concatenate.cc
 // Copyright 2014 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.

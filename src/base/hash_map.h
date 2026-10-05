@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/hash_map.h
+// Ported from: blink/renderer/platform/wtf/hash_map.h
 /*
  * Copyright (C) 2005, 2006, 2007, 2008, 2011 Apple Inc. All rights reserved.
  *

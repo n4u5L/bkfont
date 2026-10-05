@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/convert_to_8bit_hash_reader.h
+// Ported from: blink/renderer/platform/wtf/text/convert_to_8bit_hash_reader.h
 /*
  * Copyright (C) 2005, 2006, 2008, 2010, 2013 Apple Inc. All rights reserved.
  * Copyright (C) 2010 Patrick Gansterer <paroga@paroga.com>

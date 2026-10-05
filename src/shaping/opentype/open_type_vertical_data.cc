@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/opentype/open_type_vertical_data.cc
+// Ported from: blink/renderer/platform/fonts/opentype/open_type_vertical_data.cc
 /*
  * Copyright (C) 2012 Koji Ishii <kojiishi@gmail.com>
  *
@@ -23,23 +23,22 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <algorithm>
+#include "open_type_vertical_data.h"
+
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <memory>
-#include "base/vector.h"
-#include "open_type_vertical_data.h"
 
+#include "base/numerics/safe_conversions.h"
+#include "font/text_metrics.h"
 #include "open_type_types.h"
-#include "font/font_platform_data.h"
-#include "platform/font_face.h"
-#include "font/simple_font_data.h"
+#include "platform/platform_font.h"
+#include "platform/typeface.h"
 
 namespace bkfont {
-class FontPlatformData;
-class FontFace;
+
 namespace open_type {
 
 // The input characters are big-endian (first is most significant).
@@ -138,7 +137,7 @@ struct VORGTable {
 
 } // namespace open_type
 
-OpenTypeVerticalData::OpenTypeVerticalData(std::shared_ptr<FontFace> typeface)
+OpenTypeVerticalData::OpenTypeVerticalData(const Typeface& typeface)
     : default_vert_origin_y_(0),
       size_per_unit_(0),
       ascent_fallback_(0),
@@ -146,14 +145,16 @@ OpenTypeVerticalData::OpenTypeVerticalData(std::shared_ptr<FontFace> typeface)
   LoadMetrics(typeface);
 }
 
-static void CopyOpenTypeTable(std::shared_ptr<FontFace> typeface,
+static void CopyOpenTypeTable(const Typeface& typeface,
                               uint32_t tag, Vector<char>& destination) {
-  const Vector<uint8_t> bytes = typeface->TableData(tag);
-  destination.resize(bytes.size());
-  std::copy(bytes.begin(), bytes.end(), destination.begin());
+  const std::size_t table_size = typeface.GetTableSize(tag);
+  destination.resize(base::checked_cast<wtf_size_t>(table_size));
+  if (table_size) {
+    typeface.GetTableData(tag, 0, table_size, destination.data());
+  }
 }
 
-void OpenTypeVerticalData::LoadMetrics(std::shared_ptr<FontFace> typeface) {
+void OpenTypeVerticalData::LoadMetrics(const Typeface& typeface) {
   // Load hhea and hmtx to get x-component of vertical origins.
   // If these tables are missing, it's not an OpenType font.
   Vector<char> buffer;
@@ -277,7 +278,7 @@ float OpenTypeVerticalData::AdvanceHeight(Glyph glyph) const {
 }
 
 void OpenTypeVerticalData::GetVerticalTranslationsForGlyphs(
-    const FontPlatformData& font,
+    const PlatformFont& font,
     const Glyph* glyphs,
     size_t count,
     float* out_xy_array) const {
@@ -319,8 +320,8 @@ void OpenTypeVerticalData::GetVerticalTranslationsForGlyphs(
                                  : count_top_side_bearings - 1];
       float top_side_bearing = top_side_bearing_f_unit * size_per_unit_;
 
-      PlatformGlyphMetrics bounds;
-      font.MeasureGlyph(glyph, &bounds);
+      ScalarRect bounds;
+      FontGetBoundsForGlyph(font, glyph, &bounds);
       out_xy_array[1] = bounds.top - top_side_bearing;
       continue;
     }

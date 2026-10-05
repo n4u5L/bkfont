@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/atomic_string_hash.h
+// Ported from: blink/renderer/platform/wtf/text/atomic_string_hash.h
 /*
  * Copyright (C) 2008 Apple Inc. All rights reserved.
  *

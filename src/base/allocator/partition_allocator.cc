@@ -1,7 +1,8 @@
+// Ported from: blink/renderer/platform/wtf/allocator/partition_allocator.cc
+
 // Copyright 2014 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-// Source: platform/wtf/allocator/partition_allocator.cc.
 #include "base/allocator/partition_allocator.h"
 
 namespace bkfont {

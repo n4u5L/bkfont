@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/opentype/variable_axes_names.cc
+// Ported from: blink/renderer/platform/fonts/opentype/variable_axes_names.cc
 // Copyright 2020 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -11,14 +11,14 @@
 #include <hb-ot.h>
 // clang-format on
 
-#include "platform/font_face.h"
-#include "font_table_harfbuzz.h"
+#include "platform/typeface.h"
+#include "shaping/harfbuzz_face_from_typeface.h"
 namespace bkfont {
 
 Vector<VariationAxis> VariableAxesNames::GetVariationAxes(
-    std::shared_ptr<FontFace> typeface) {
+    std::shared_ptr<Typeface> typeface) {
   Vector<VariationAxis> output;
-  hb::unique_ptr<hb_face_t> face(HbFaceFromFontFace(typeface));
+  hb::unique_ptr<hb_face_t> face(HbFaceFromTypeface(typeface));
   if (!face) return output;
   unsigned axes_count = hb_ot_var_get_axis_count(face.get());
   std::unique_ptr<hb_ot_var_axis_info_t[]> axes =

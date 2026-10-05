@@ -1,4 +1,5 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_metrics.cc
+// Ported from: blink/renderer/platform/fonts/font_metrics.cc
+// (Linux branch)
 /*
  * Copyright (C) 2005, 2008, 2010 Apple Inc. All rights reserved.
  * Copyright (C) 2006 Alexey Proskuryakov
@@ -29,32 +30,92 @@
  */
 
 #include "font_metrics.h"
-#include <utility>
 
-#include "target_platform.h"
-#include "font_platform_data.h"
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+
+#include "base/allocator/partitions.h"
 #include "base/notreached.h"
+#include "font_platform_data.h"
+#include "platform/platform_font.h"
+#include "platform/platform_font_metrics.h"
+#include "platform/typeface.h"
+#include "vdmx_parser.h"
 
 namespace bkfont {
 
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_FUCHSIA)
 // This is the largest VDMX table which we'll try to load and parse.
-static const size_t kMaxVDMXTableSize = 1024 * 1024; // 1 MB
-#endif
+static const std::size_t kMaxVDMXTableSize = 1024 * 1024; // 1 MB
 
-void FontMetrics::AscentDescentWithHacks(float& ascent, float& descent,
-                                         const FontPlatformData& platform_data, bool subpixel_ascent_descent,
-                                         std::optional<float> ascent_override, std::optional<float> descent_override) {
-  const auto metrics = platform_data.GetFontMetrics();
-  const float raw_ascent = ascent_override ? platform_data.size() * *ascent_override : metrics.ascender;
-  const float raw_descent = descent_override ? platform_data.size() * *descent_override : metrics.descender;
-  if (subpixel_ascent_descent && (raw_ascent < 3 || raw_ascent + raw_descent < 2)) {
-    ascent = raw_ascent;
-    descent = raw_descent;
+void FontMetrics::AscentDescentWithHacks(
+    float& ascent,
+    float& descent,
+    const FontPlatformData& platform_data,
+    const PlatformFont& font,
+    bool subpixel_ascent_descent,
+    std::optional<float> ascent_override,
+    std::optional<float> descent_override) {
+  Typeface* face = font.GetTypeface().get();
+
+  PlatformFontMetrics metrics;
+  font.GetMetrics(&metrics);
+
+  if (ascent_override) {
+    metrics.ascent = -platform_data.size() * ascent_override.value();
+  }
+  if (descent_override) {
+    metrics.descent = platform_data.size() * descent_override.value();
+  }
+
+  int vdmx_ascent = 0, vdmx_descent = 0;
+  bool is_vdmx_valid = false;
+
+  // Manually digging up VDMX metrics is only applicable when bytecode hinting
+  // using FreeType. All platforms in this port use this Linux metrics path.
+  static const std::uint32_t kVdmxTag = 0x56444d58; // 'VDMX'
+  int pixel_size = platform_data.size() + 0.5;
+  // TODO(xiaochengh): How do we support ascent/descent override with VDMX?
+  if (!ascent_override && !descent_override && !font.IsForceAutoHinting() &&
+      (font.GetHinting() == FontHinting::kFull ||
+       font.GetHinting() == FontHinting::kNormal)) {
+    std::size_t vdmx_size = face->GetTableSize(kVdmxTag);
+    if (vdmx_size && vdmx_size < kMaxVDMXTableSize) {
+      auto* vdmx_table = static_cast<std::uint8_t*>(
+          Partitions::FastMalloc(vdmx_size, "FontMetrics"));
+      if (vdmx_table &&
+          face->GetTableData(kVdmxTag, 0, vdmx_size, vdmx_table) == vdmx_size &&
+          ParseVDMX(&vdmx_ascent, &vdmx_descent, vdmx_table, vdmx_size,
+                    pixel_size)) {
+        is_vdmx_valid = true;
+      }
+      Partitions::FastFree(vdmx_table);
+    }
+  }
+
+  // Match the upstream Linux rounding and tiny-font exceptions in this order.
+  if (is_vdmx_valid) {
+    ascent = vdmx_ascent;
+    descent = -vdmx_descent;
+  } else if (subpixel_ascent_descent &&
+             (-metrics.ascent < 3 || -metrics.ascent + metrics.descent < 2)) {
+    // Rounding tiny fonts can make different text baselines coincide.
+    ascent = -metrics.ascent;
+    descent = metrics.descent;
   } else {
-    // SkScalarRoundToScalar uses floor(x + 0.5), including negative inputs.
-    ascent = std::floor(raw_ascent + 0.5f);
-    descent = std::floor(raw_descent + 0.5f);
+    // SkScalarRoundToScalar does the addition and floor in double before
+    // converting back to float, including for negative inputs.
+    ascent = static_cast<float>(std::floor(static_cast<double>(-metrics.ascent) + 0.5));
+    descent = static_cast<float>(std::floor(static_cast<double>(metrics.descent) + 0.5));
+
+    // Avoid clipping descenders in overflow:hidden containers with subpixel
+    // positioning. Borrow one unit from the ascent when possible.
+    if (descent < metrics.descent &&
+        platform_data.GetFontRenderStyle().use_subpixel_positioning &&
+        ascent >= 1) {
+      ++descent;
+      --ascent;
+    }
   }
 }
 
@@ -135,4 +196,5 @@ int FontMetrics::IntAscentInternal(
 
   NOTREACHED();
 }
+
 } // namespace bkfont

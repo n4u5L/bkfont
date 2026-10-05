@@ -1,4 +1,4 @@
-// Source: base/third_party/cityhash/city.cc
+// Ported from: chromium/base/third_party/cityhash/city.cc
 // Copyright (c) 2011 Google, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -95,7 +95,9 @@ using std::pair;
 #endif
 
 namespace bkfont::base {
+
 namespace internal {
+
 namespace cityhash_v111 {
 
 #ifdef WORDS_BIGENDIAN
@@ -535,5 +537,7 @@ uint128 CityHash128(const char* s, size_t len) {
 }
 
 } // namespace cityhash_v111
+
 } // namespace internal
+
 } // namespace bkfont::base

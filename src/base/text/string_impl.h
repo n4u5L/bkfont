@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/string_impl.h
+// Ported from: blink/renderer/platform/wtf/text/string_impl.h
 /*
  * Copyright (C) 1999 Lars Knoll (knoll@kde.org)
  * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2013 Apple Inc. All rights
@@ -96,7 +96,8 @@ private:
     return ptr;
   }
   void operator delete(void*);
-  void operator delete(void*, void*) {}
+  void operator delete(void*, void*) {
+  }
 
   // Used to construct static strings, which have a special ref_count_ that can
   // never hit zero. This means that the static string will never be destroyed.

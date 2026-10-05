@@ -1,15 +1,20 @@
+// Ported from: skia/include/core/SkColor.h
+// Ported from: skia/src/core/SkColor.cpp
+// Ported from: skia/src/core/SkSwizzlePriv.h
+// Ported from: skia/src/base/SkVx.h
+// Scalar extraction without Skia types.
+
 /*
  * Copyright 2006 The Android Open Source Project
  *
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-// Scalar extraction of include/core/SkColor.h, src/core/SkColor.cpp,
-// src/core/SkSwizzlePriv.h and src/base/SkVx.h, without Skia types.
 #pragma once
 #include <cstdint>
 
 namespace bkfont {
+
 struct ColorFloat4 {
   float fR, fG, fB, fA;
 
@@ -36,4 +41,5 @@ struct ColorFloat4 {
     return channel(fA) << 24 | channel(fR) << 16 | channel(fG) << 8 | channel(fB);
   }
 };
+
 } // namespace bkfont

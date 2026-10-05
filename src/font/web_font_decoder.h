@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/web_font_decoder.h
+// Ported from: blink/renderer/platform/fonts/web_font_decoder.h
 /*
  * Copyright (C) 2009 Google Inc. All rights reserved.
  *
@@ -33,7 +33,7 @@
 
 #include "base/text/wtf_string.h"
 #include <span>
-#include "platform/font_face.h"
+#include "platform/typeface.h"
 
 namespace bkfont {
 
@@ -42,7 +42,7 @@ class WebFontDecoder final {
 public:
   WebFontDecoder() = default;
 
-  std::shared_ptr<FontFace> Decode(std::span<const uint8_t>);
+  std::shared_ptr<Typeface> Decode(std::span<const uint8_t>);
   size_t DecodedSize() const {
     return decoded_size_;
   }

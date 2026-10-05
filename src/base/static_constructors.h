@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/static_constructors.h
+// Ported from: blink/renderer/platform/wtf/static_constructors.h
 /*
  * Copyright (C) 2006 Apple Computer, Inc.
  *

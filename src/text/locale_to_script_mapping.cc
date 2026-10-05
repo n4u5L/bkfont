@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/text/locale_to_script_mapping.cc
+// Ported from: blink/renderer/platform/text/locale_to_script_mapping.cc
 /*
  * Copyright (C) 2011 Google Inc. All rights reserved.
  *

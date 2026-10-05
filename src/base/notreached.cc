@@ -1,4 +1,4 @@
-// Ported from: base/check.cc
+// Ported from: chromium/base/check.cc
 
 #include "notreached.h"
 

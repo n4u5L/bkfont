@@ -1,3 +1,5 @@
+// Ported from: blink/renderer/platform/fonts/font.cc
+
 /*
  * Copyright (C) 1999 Lars Knoll (knoll@kde.org)
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
@@ -32,7 +34,13 @@
 #include "shaping/caching_word_shaper.h"
 #include "text/bidi_paragraph.h"
 #include "base/notreached.h"
+#include "shaping/shape_result_bloberizer.h"
+#include "shaping/shape_result_buffer.h"
+#include "shaping/shape_result_view.h"
+#include "text_fragment_paint_info.h"
+#include "text_run_paint_info.h"
 namespace bkfont {
+
 static std::shared_ptr<FontFallbackList> GetOrCreateFontFallbackList(const FontDescription& description,
                                                                      FontSelector* selector) {
   FontFallbackMap& map = selector ? selector->GetFontFallbackMap() : FontCache::Get().GetFontFallbackMap();
@@ -51,7 +59,6 @@ FontFallbackList* Font::EnsureFontFallbackList() const {
     font_fallback_list_ = GetOrCreateFontFallbackList(font_description_, GetFontSelector());
   return font_fallback_list_.get();
 }
-// Port source: third_party/blink/renderer/platform/fonts/font.cc
 bool Font::operator==(const Font& other) const {
   // Font objects with the same FontDescription and FontSelector should always
   // hold reference to the same FontFallbackList object, unless invalidated.
@@ -195,6 +202,211 @@ bool Font::IsFallbackValid() const {
 } // namespace bkfont
 
 namespace bkfont {
+
+void Font::DrawText(PaintCanvas* canvas,
+                    const TextFragmentPaintInfo& text_info,
+                    const gfx::PointF& point,
+                    NodeId node_id,
+                    const PlatformPaint& flags,
+                    DrawType draw_type) const {
+  // Don't draw anything while we are using custom fonts that are in the
+  // process of loading.
+  if (ShouldSkipDrawing())
+    return;
+
+  ShapeResultBloberizer::FillGlyphsNG bloberizer(
+      GetFontDescription(), text_info.text, text_info.from, text_info.to,
+      text_info.shape_result,
+      draw_type == Font::DrawType::kGlyphsOnly
+          ? ShapeResultBloberizer::Type::kNormal
+          : ShapeResultBloberizer::Type::kEmitText);
+  DrawTextBlobs(bloberizer.Blobs(), *canvas, point, flags, node_id);
+}
+
+bool Font::DeprecatedDrawBidiText(
+    PaintCanvas* canvas,
+    const TextRunPaintInfo& run_info,
+    const gfx::PointF& point,
+    CustomFontNotReadyAction custom_font_not_ready_action,
+    const PlatformPaint& flags,
+    DrawType draw_type) const {
+  // Don't draw anything while we are using custom fonts that are in the
+  // process of loading, except if the 'force' argument is set to true (in
+  // which case it will use a fallback font).
+  if (ShouldSkipDrawing() &&
+      custom_font_not_ready_action == kDoNotPaintIfFontNotReady)
+    return false;
+
+  const TextRun& run = run_info.run;
+  if (!run.length()) {
+    return true;
+  }
+  bool is_sub_run = (run_info.from != 0 || run_info.to != run.length());
+
+  if (run.DirectionalOverride()) [[unlikely]] {
+    // If directional override, create a new string with Unicode directional
+    // override characters.
+    const String text_with_override =
+        BidiParagraph::StringWithDirectionalOverride(run.ToStringView(),
+                                                     run.Direction());
+    TextRun run_with_override(text_with_override, run.Direction(),
+                              /* directional_override */ false,
+                              run.NormalizeSpace());
+    return DeprecatedDrawBidiText(canvas, TextRunPaintInfo(run_with_override),
+                                  point, custom_font_not_ready_action, flags,
+                                  draw_type);
+  }
+
+  BidiParagraph::Runs bidi_runs;
+  if (run.Is8Bit() && IsLtr(run.Direction())) {
+    // U+0000-00FF are L or neutral, it's unidirectional if 8 bits and LTR.
+    bidi_runs.emplace_back(0, run.length(), 0);
+  } else {
+    String text = run.ToStringView().ToString();
+    text.Ensure16Bit();
+    BidiParagraph bidi(text, run.Direction());
+    bidi.GetVisualRuns(text, &bidi_runs);
+  }
+
+  gfx::PointF curr_point = point;
+  CachingWordShaper word_shaper(*this);
+  for (const BidiParagraph::Run& bidi_run : bidi_runs) {
+    if (bidi_run.end <= run_info.from || run_info.to <= bidi_run.start) {
+      continue;
+    }
+
+    TextRun subrun =
+        run.SubRun(bidi_run.start, bidi_run.Length(), bidi_run.Direction());
+    TextRunPaintInfo subrun_info(subrun);
+    CharacterRange range(0, 0, 0, 0);
+    if (is_sub_run) [[unlikely]] {
+      // Calculate the required indexes for this specific run.
+      subrun_info.from =
+          run_info.from < bidi_run.start ? 0 : run_info.from - bidi_run.start;
+      subrun_info.to = run_info.to > bidi_run.end
+                           ? bidi_run.Length()
+                           : run_info.to - bidi_run.start;
+      // The range provides information required for positioning the subrun.
+      range = word_shaper.GetCharacterRange(subrun, subrun_info.from,
+                                            subrun_info.to);
+    }
+
+    ShapeResultBuffer buffer;
+    word_shaper.FillResultBuffer(subrun, &buffer);
+
+    ShapeResultBloberizer::FillGlyphs bloberizer(
+        GetFontDescription(), subrun_info, buffer,
+        draw_type == Font::DrawType::kGlyphsOnly
+            ? ShapeResultBloberizer::Type::kNormal
+            : ShapeResultBloberizer::Type::kEmitText);
+    if (is_sub_run) [[unlikely]] {
+      // Align the subrun with the point given.
+      curr_point.Offset(-range.start, 0);
+    }
+    DrawTextBlobs(bloberizer.Blobs(), *canvas, curr_point, flags);
+
+    if (is_sub_run) [[unlikely]] {
+      curr_point.Offset(range.Width(), 0);
+    } else {
+      curr_point.Offset(bloberizer.Advance(), 0);
+    }
+  }
+  return true;
+}
+
+void Font::DrawEmphasisMarks(PaintCanvas* canvas,
+                             const TextFragmentPaintInfo& text_info,
+                             const AtomicString& mark,
+                             const gfx::PointF& point,
+                             const PlatformPaint& flags) const {
+  if (ShouldSkipDrawing())
+    return;
+
+  // FontCachePurgePreventer is not ported: the font cache is never purged
+  // while drawing.
+  const auto emphasis_glyph_data = GetEmphasisMarkGlyphData(mark);
+  if (!emphasis_glyph_data.font_data)
+    return;
+
+  ShapeResultBloberizer::FillTextEmphasisGlyphsNG bloberizer(
+      GetFontDescription(), text_info.text, text_info.from, text_info.to,
+      text_info.shape_result, emphasis_glyph_data);
+  DrawTextBlobs(bloberizer.Blobs(), *canvas, point, flags);
+}
+
+gfx::RectF Font::TextInkBounds(const TextFragmentPaintInfo& text_info) const {
+  // No need to compute bounds if using custom fonts that are in the process
+  // of loading as it won't be painted.
+  if (ShouldSkipDrawing())
+    return gfx::RectF();
+
+  // NOTE(eae): We could use the TextBlob bounds however by default it returns
+  // conservative bounds (rather than tight bounds) which are unsuitable for
+  // our needs. If we could get the tight bounds from Skia that would be quite
+  // a bit faster than the two-stage approach employed by the
+  // ShapeResultView::ComputeInkBounds method.
+  return text_info.shape_result->ComputeInkBounds();
+}
+
+namespace { // anonymous namespace
+
+unsigned InterceptsFromBlobs(const ShapeResultBloberizer::BlobBuffer& blobs,
+                             const PlatformPaint& paint,
+                             const std::tuple<float, float>& bounds,
+                             float* intercepts_buffer) {
+  float bounds_array[2] = {std::get<0>(bounds), std::get<1>(bounds)};
+
+  unsigned num_intervals = 0;
+  for (const auto& blob_info : blobs) {
+    // ShapeResultBloberizer splits for a new blob rotation, but does not
+    // split for a change in font. A TextBlob can contain runs with differing
+    // fonts and the GetIntercepts method handles multiple fonts for us. For
+    // upright in vertical blobs we currently have to bail, see
+    // crbug.com/655154
+    if (IsCanvasRotationInVerticalUpright(blob_info.rotation))
+      continue;
+
+    float* offset_intercepts_buffer = nullptr;
+    if (intercepts_buffer)
+      offset_intercepts_buffer = &intercepts_buffer[num_intervals];
+    num_intervals += static_cast<unsigned>(blob_info.blob->GetIntercepts(
+        bounds_array, offset_intercepts_buffer, &paint));
+  }
+  return num_intervals;
+}
+
+void GetTextInterceptsInternal(const ShapeResultBloberizer::BlobBuffer& blobs,
+                               const PlatformPaint& paint,
+                               const std::tuple<float, float>& bounds,
+                               Vector<Font::TextIntercept>& intercepts) {
+  // Get the number of intervals, without copying the actual values by
+  // specifying nullptr for the buffer, following the Skia allocation model
+  // for retrieving text intercepts.
+  unsigned num_intervals = InterceptsFromBlobs(blobs, paint, bounds, nullptr);
+  if (!num_intervals)
+    return;
+  intercepts.resize(num_intervals / 2u);
+
+  InterceptsFromBlobs(blobs, paint, bounds,
+                      reinterpret_cast<float*>(intercepts.data()));
+}
+
+} // anonymous namespace
+
+void Font::GetTextIntercepts(const TextFragmentPaintInfo& text_info,
+                             const PlatformPaint& flags,
+                             const std::tuple<float, float>& bounds,
+                             Vector<TextIntercept>& intercepts) const {
+  if (ShouldSkipDrawing())
+    return;
+
+  ShapeResultBloberizer::FillGlyphsNG bloberizer(
+      GetFontDescription(), text_info.text, text_info.from, text_info.to,
+      text_info.shape_result, ShapeResultBloberizer::Type::kTextIntercepts);
+
+  GetTextInterceptsInternal(bloberizer.Blobs(), flags, bounds, intercepts);
+}
+
 float Font::DeprecatedWidth(const TextRun& run,
                             gfx::RectF* glyph_bounds) const {
   CachingWordShaper shaper(*this);
@@ -258,6 +470,7 @@ float Font::DeprecatedSubRunWidth(const TextRun& run,
 } // namespace bkfont
 
 namespace bkfont {
+
 GlyphData Font::GetEmphasisMarkGlyphData(const AtomicString& mark) const {
   if (mark.empty())
     return GlyphData();

@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/text/quotes_data.h
+// Ported from: blink/renderer/platform/text/quotes_data.h
 /*
  * Copyright (C) 2011 Nokia Inc. All rights reserved.
  * Copyright (C) 2012 Google Inc. All rights reserved.

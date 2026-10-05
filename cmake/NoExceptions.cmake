@@ -1,3 +1,4 @@
+# Local implementation: CMake compiler settings for builds without C++ exceptions.
 # Build without C++ exceptions, as Chromium does. CMake's default /EHsc is
 # removed so that it does not conflict with /EHs-c- (warning D9025).
 include_guard(DIRECTORY)

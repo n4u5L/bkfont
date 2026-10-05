@@ -1,3 +1,4 @@
+// Ported from: chromium/base/third_party/double_conversion/double-conversion/utils.h
 // Copyright 2010 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -45,10 +46,12 @@
 #ifndef DOUBLE_CONVERSION_UNREACHABLE
 #ifdef _MSC_VER
 void DOUBLE_CONVERSION_NO_RETURN abort_noreturn();
-inline void abort_noreturn() { abort(); }
-#define DOUBLE_CONVERSION_UNREACHABLE()   (abort_noreturn())
+inline void abort_noreturn() {
+  abort();
+}
+#define DOUBLE_CONVERSION_UNREACHABLE() (abort_noreturn())
 #else
-#define DOUBLE_CONVERSION_UNREACHABLE()   (abort())
+#define DOUBLE_CONVERSION_UNREACHABLE() (abort())
 #endif
 #endif
 

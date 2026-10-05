@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/character_names.h
+// Ported from: blink/renderer/platform/wtf/text/character_names.h
 /*
  * Copyright (C) 2007, 2009, 2010 Apple Inc. All rights reserved.
  *

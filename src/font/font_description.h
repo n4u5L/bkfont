@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_description.h
+// Ported from: blink/renderer/platform/fonts/font_description.h
 /*
  * Copyright (C) 2000 Lars Knoll (knoll@kde.org)
  *           (C) 2000 Antti Koivisto (koivisto@kde.org)
@@ -51,7 +51,7 @@
 #include "text/layout_locale.h"
 #include "base/math_extras.h"
 #include "base/text/wtf_string.h"
-#include "platform/font_face.h"
+#include "platform/font_style.h"
 
 namespace bkfont {
 
@@ -164,8 +164,7 @@ public:
     unsigned contextual : 2;
 
     bool operator==(const VariantLigatures& other) const {
-      return common == other.common && discretionary == other.discretionary
-             && historical == other.historical && contextual == other.contextual;
+      return common == other.common && discretionary == other.discretionary && historical == other.historical && contextual == other.contextual;
     }
   };
 

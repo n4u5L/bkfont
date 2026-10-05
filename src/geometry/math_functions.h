@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/geometry/math_functions.h
+// Ported from: blink/renderer/platform/geometry/math_functions.h
 // Copyright 2023 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.

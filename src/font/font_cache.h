@@ -1,3 +1,4 @@
+// Ported from: blink/renderer/platform/fonts/font_cache.h
 /*
  * Copyright (C) 2006, 2008 Apple Computer, Inc.  All rights reserved.
  * Copyright (C) 2007-2008 Torch Mobile, Inc.
@@ -27,8 +28,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// Port source: platform/fonts/font_cache.h (Windows/font-management API).
+// Platform matching and shared font-management API.
 #pragma once
+#include <cstdint>
+#include <memory>
 #include "fallback_list_composite_key.h"
 #include "font_cache_client.h"
 #include "font_data_cache.h"
@@ -37,6 +40,7 @@
 #include "platform/font_manager.h"
 #include "base/hash_map.h"
 namespace bkfont {
+
 class ShapeCache;
 class FontPrewarmer;
 class FontFallbackMap;
@@ -65,7 +69,9 @@ public:
   bool IsPlatformFontUniqueNameMatchAvailable(const FontDescription&, const AtomicString&);
   std::shared_ptr<ShapeCache> GetShapeCache(const FallbackListCompositeKey&);
   FontFallbackMap& GetFontFallbackMap();
-  void AddClient(const std::shared_ptr<FontCacheClient>&);
+  // Registration does not take ownership. Clients unregister on destruction.
+  void AddClient(FontCacheClient*);
+  void RemoveClient(FontCacheClient*);
   uint16_t Generation() const {
     return generation_;
   }
@@ -79,6 +85,8 @@ public:
     prewarmer_ = prewarmer;
   }
   static void PrewarmFamily(const AtomicString&);
+  static const AtomicString& SystemFontFamily();
+#if BUILDFLAG(IS_WIN)
   static bool AntialiasedTextEnabled() {
     return antialiased_text_enabled_;
   }
@@ -91,7 +99,6 @@ public:
   static void SetLCDTextEnabled(bool value) {
     lcd_text_enabled_ = value;
   }
-  static const AtomicString& SystemFontFamily();
   static void SetMenuFontMetrics(const AtomicString&, int32_t);
   static void SetSmallCaptionFontMetrics(const AtomicString&, int32_t);
   static void SetStatusFontMetrics(const AtomicString&, int32_t);
@@ -113,26 +120,40 @@ public:
   static int32_t StatusFontHeight() {
     return status_font_height_;
   }
+#elif BUILDFLAG(IS_LINUX)
+  static void SetSystemFontFamily(const AtomicString& family_name);
+  static float DeviceScaleFactor() {
+    return device_scale_factor_;
+  }
+  static void SetDeviceScaleFactor(float device_scale_factor) {
+    device_scale_factor_ = device_scale_factor;
+  }
+#endif
   std::shared_ptr<bkfont::FontManager> GetFontManager() const {
     return font_manager_;
   }
+#if BUILDFLAG(IS_WIN)
   std::shared_ptr<const SimpleFontData> GetFallbackFamilyNameFromHardcodedChoices(const FontDescription&, UChar32, FontFallbackPriority);
   std::shared_ptr<const SimpleFontData> GetDWriteFallbackFamily(const FontDescription&, UChar32, FontFallbackPriority);
+#endif
 
 private:
-  std::shared_ptr<FontFace> CreateTypeface(const FontDescription&, const FontFaceCreationParams&, String&);
-  std::shared_ptr<FontFace> CreateTypefaceFromUniqueName(const FontFaceCreationParams&);
+  std::shared_ptr<Typeface> CreateTypeface(const FontDescription&, const FontFaceCreationParams&, String&);
+  std::shared_ptr<Typeface> CreateTypefaceFromUniqueName(const FontFaceCreationParams&);
   std::shared_ptr<const SimpleFontData> FallbackOnStandardFontStyle(const FontDescription&, UChar32);
   std::shared_ptr<const SimpleFontData> PlatformFallbackFontForCharacter(const FontDescription&, UChar32, std::shared_ptr<const SimpleFontData>, FontFallbackPriority);
   std::shared_ptr<bkfont::FontManager> font_manager_;
   FontPlatformDataCache font_platform_data_cache_;
   FontDataCache font_data_cache_;
   HashMap<FallbackListCompositeKey, std::weak_ptr<ShapeCache>, FallbackListCompositeKeyTraits> fallback_list_shaper_cache_;
-  // A weak set keyed by the stable client address; expired entries are removed.
-  HashMap<FontCacheClient*, std::weak_ptr<FontCacheClient>> font_cache_clients_;
-  std::shared_ptr<FontFallbackMap> font_fallback_map_;
+  // Registration IDs distinguish a removed/re-added client (including address
+  // reuse) from the original client in a notification snapshot.
+  HashMap<FontCacheClient*, std::uint64_t> font_cache_clients_;
+  std::uint64_t next_client_id_ = 0;
+  std::unique_ptr<FontFallbackMap> font_fallback_map_;
   uint16_t generation_ = 0;
   static FontPrewarmer* prewarmer_;
+#if BUILDFLAG(IS_WIN)
   static bool antialiased_text_enabled_;
   static bool lcd_text_enabled_;
   static std::unique_ptr<AtomicString> menu_font_family_name_;
@@ -141,5 +162,9 @@ private:
   static int32_t menu_font_height_;
   static int32_t small_caption_font_height_;
   static int32_t status_font_height_;
+#elif BUILDFLAG(IS_LINUX)
+  static float device_scale_factor_;
+#endif
 };
+
 } // namespace bkfont

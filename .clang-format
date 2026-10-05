@@ -5,6 +5,7 @@ IndentWidth: 2
 AccessModifierOffset: -2
 NamespaceIndentation: None
 ShortNamespaceLines: 0
+WrapNamespaceBodyWithEmptyLines: Always
 
 AlignAfterOpenBracket: true
 PointerAlignment: Left

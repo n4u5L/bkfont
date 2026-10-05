@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_width_variant.h
+// Ported from: blink/renderer/platform/fonts/font_width_variant.h
 /*
  * Copyright (C) 2011 Apple Inc. All rights reserved.
  *

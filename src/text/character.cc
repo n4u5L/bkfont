@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/text/character.cc
+// Ported from: blink/renderer/platform/text/character.cc
 /*
  * Copyright (C) 2014 Google Inc. All rights reserved.
  *
@@ -90,8 +90,7 @@ void Character::ApplyPatternAndFreezeIfEmpty(icu::UnicodeSet* unicodeSet,
 
 bool Character::IsUprightInMixedVertical(UChar32 character) {
   return u_getIntPropertyValue(character,
-                               UProperty::UCHAR_VERTICAL_ORIENTATION)
-         != UVerticalOrientation::U_VO_ROTATED;
+                               UProperty::UCHAR_VERTICAL_ORIENTATION) != UVerticalOrientation::U_VO_ROTATED;
 }
 
 bool Character::IsCJKIdeographOrSymbolSlow(UChar32 c) {

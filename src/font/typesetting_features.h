@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/typesetting_features.h
+// Ported from: blink/renderer/platform/fonts/typesetting_features.h
 /*
  * Copyright (C) 2010 Apple Inc. All rights reserved.
  *

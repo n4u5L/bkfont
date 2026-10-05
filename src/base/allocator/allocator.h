@@ -1,7 +1,9 @@
+// Ported from: blink/renderer/platform/wtf/allocator/allocator.h
+// non-GC allocation facilities.
+
 // Copyright 2015 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-// Source: platform/wtf/allocator/allocator.h; non-GC allocation facilities.
 #pragma once
 #include <cstddef>
 #include <memory>
@@ -11,43 +13,50 @@
 #include "base/ref_counted.h"
 #include "base/type_traits.h"
 namespace bkfont::base {
+
 enum class NotNullTag {
   kNotNull
 };
+
 } // namespace bkfont::base
+
 inline void* operator new(std::size_t, bkfont::base::NotNullTag, void* address) noexcept {
   return address;
 }
 inline void operator delete(void*, bkfont::base::NotNullTag, void*) noexcept {
 }
 namespace bkfont {
+
 class PartitionAllocator;
 namespace internal {
+
 class __thisIsHereToForceASemicolonAfterThisMacro;
+
 } // namespace internal
+
 } // namespace bkfont
 
-#define DISALLOW_NEW()                                                \
-public:                                                               \
-  using IsDisallowNewMarker [[maybe_unused]] = int;                   \
+#define DISALLOW_NEW()                                                          \
+public:                                                                         \
+  using IsDisallowNewMarker [[maybe_unused]] = int;                             \
   void* operator new(std::size_t, ::bkfont::base::NotNullTag, void* location) { \
-    return location;                                                  \
-  }                                                                   \
-  void* operator new(std::size_t, void* location) {                   \
-    return location;                                                  \
-  }                                                                   \
-                                                                      \
-private:                                                              \
-  void* operator new(std::size_t) = delete;                           \
-                                                                      \
-public:                                                               \
+    return location;                                                            \
+  }                                                                             \
+  void* operator new(std::size_t, void* location) {                             \
+    return location;                                                            \
+  }                                                                             \
+                                                                                \
+private:                                                                        \
+  void* operator new(std::size_t) = delete;                                     \
+                                                                                \
+public:                                                                         \
   friend class ::bkfont::internal::__thisIsHereToForceASemicolonAfterThisMacro
 
-#define STATIC_ONLY(Type)                                            \
-  Type() = delete;                                                   \
-  Type(const Type&) = delete;                                        \
-  Type& operator=(const Type&) = delete;                             \
-  void* operator new(std::size_t) = delete;                          \
+#define STATIC_ONLY(Type)                                                      \
+  Type() = delete;                                                             \
+  Type(const Type&) = delete;                                                  \
+  Type& operator=(const Type&) = delete;                                       \
+  void* operator new(std::size_t) = delete;                                    \
   void* operator new(std::size_t, ::bkfont::base::NotNullTag, void*) = delete; \
   void* operator new(std::size_t, void*) = delete
 
@@ -61,32 +70,35 @@ public:                                                               \
   USING_FAST_MALLOC_INTERNAL(type, BASE_HEAP_PROFILER_TYPE_NAME(type))
 #define USING_FAST_MALLOC_WITH_TYPE_NAME(type) \
   USING_FAST_MALLOC_INTERNAL(type, #type)
-#define USING_FAST_MALLOC_INTERNAL(type, type_name)                   \
-public:                                                               \
-  void* operator new(std::size_t, void* p) {                          \
-    return p;                                                         \
-  }                                                                   \
-  void* operator new[](std::size_t, void* p) {                        \
-    return p;                                                         \
-  }                                                                   \
-  void* operator new(std::size_t size) {                              \
-    return ::bkfont::Partitions::FastMalloc(size, type_name);          \
-  }                                                                   \
-  void operator delete(void* p) {                                     \
-    ::bkfont::Partitions::FastFree(p);                                 \
-  }                                                                   \
-  void* operator new[](std::size_t size) {                            \
-    return ::bkfont::Partitions::FastMalloc(size, type_name);          \
-  }                                                                   \
-  void operator delete[](void* p) {                                   \
-    ::bkfont::Partitions::FastFree(p);                                 \
-  }                                                                   \
+#define USING_FAST_MALLOC_INTERNAL(type, type_name)                             \
+public:                                                                         \
+  void* operator new(std::size_t, void* p) {                                    \
+    return p;                                                                   \
+  }                                                                             \
+  void* operator new[](std::size_t, void* p) {                                  \
+    return p;                                                                   \
+  }                                                                             \
+  void* operator new(std::size_t size) {                                        \
+    return ::bkfont::Partitions::FastMalloc(size, type_name);                   \
+  }                                                                             \
+  void operator delete(void* p) {                                               \
+    ::bkfont::Partitions::FastFree(p);                                          \
+  }                                                                             \
+  void* operator new[](std::size_t size) {                                      \
+    return ::bkfont::Partitions::FastMalloc(size, type_name);                   \
+  }                                                                             \
+  void operator delete[](void* p) {                                             \
+    ::bkfont::Partitions::FastFree(p);                                          \
+  }                                                                             \
   void* operator new(std::size_t, ::bkfont::base::NotNullTag, void* location) { \
-    return location;                                                  \
-  }                                                                   \
-  void operator delete(void*, ::bkfont::base::NotNullTag, void*) {}             \
-  void operator delete(void*, void*) {}                               \
-  void operator delete[](void*, void*) {}                             \
-                                                                      \
-private:                                                              \
+    return location;                                                            \
+  }                                                                             \
+  void operator delete(void*, ::bkfont::base::NotNullTag, void*) {              \
+  }                                                                             \
+  void operator delete(void*, void*) {                                          \
+  }                                                                             \
+  void operator delete[](void*, void*) {                                        \
+  }                                                                             \
+                                                                                \
+private:                                                                        \
   friend class ::bkfont::internal::__thisIsHereToForceASemicolonAfterThisMacro

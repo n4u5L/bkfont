@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/geometry/calculation_value.cc
+// Ported from: blink/renderer/platform/geometry/calculation_value.cc
 // Copyright 2019 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -63,11 +63,11 @@ std::shared_ptr<const CalculationValue> CalculationValue::Blend(
     PixelsAndPercent from_pixels_and_percent = from.GetPixelsAndPercent();
     PixelsAndPercent to_pixels_and_percent = GetPixelsAndPercent();
     const float pixels = bkfont::Blend(from_pixels_and_percent.pixels,
-                                      to_pixels_and_percent.pixels,
-                                      progress);
-    const float percent = bkfont::Blend(from_pixels_and_percent.percent,
-                                       to_pixels_and_percent.percent,
+                                       to_pixels_and_percent.pixels,
                                        progress);
+    const float percent = bkfont::Blend(from_pixels_and_percent.percent,
+                                        to_pixels_and_percent.percent,
+                                        progress);
     bool has_explicit_pixels = from_pixels_and_percent.has_explicit_pixels | to_pixels_and_percent.has_explicit_pixels;
     bool has_explicit_percent = from_pixels_and_percent.has_explicit_percent | to_pixels_and_percent.has_explicit_percent;
     return std::make_shared<CalculationValue>(

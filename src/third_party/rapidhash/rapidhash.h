@@ -1,4 +1,4 @@
-// Source: third_party/rapidhash/rapidhash.h
+// Ported from: chromium/third_party/rapidhash/rapidhash.h
 /*
  * rapidhash - Very fast, high quality, platform-independent hashing algorithm.
  * Copyright (C) 2024 Nicolas De Carli

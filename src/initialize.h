@@ -1,3 +1,5 @@
+// Local implementation: standalone font initialization API.
+// Upstream reference: blink/renderer/platform/exported/platform.cc
 // Copyright 2026 The Chromium Authors
 // Use of this source code is governed by a BSD-style license in LICENSE.
 #pragma once

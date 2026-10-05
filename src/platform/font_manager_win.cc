@@ -1,783 +1,1138 @@
-/*
- * Copyright 2012, 2014 Google Inc.
- * BSD license retained in dwrite_internal.h.
- * Port of third_party/skia/src/ports/SkFontMgr_win_dw.cpp,
- * SkTypeface_win_dw.cpp (custom collection loaders / MakeFromStream), and
- * src/utils/win/SkDWriteFontFileStream.cpp (memory stream bounds behavior).
- */
+// Ported from: skia/src/ports/SkFontMgr_win_dw.cpp
+
+#include "font_manager_win.h"
+
+#include <cstring>
+#include <cwchar>
+#include <utility>
+
+#include "base/mutex.h"
+#include "base/vector.h"
+#include "dwrite_font_file_stream.h"
 #include "dwrite_internal.h"
+#include "scaler_context.h"
+#include "typeface_cache.h"
+#include "typeface_freetype.h"
+#include "typeface_proxy.h"
 
 namespace bkfont {
+
 namespace {
 
-template <typename Interface>
-class DWriteComObject : public Interface {
-public:
-  HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** result) override {
-    if (iid == __uuidof(IUnknown) || iid == __uuidof(Interface)) {
-      *result = static_cast<Interface*>(this);
-      AddRef();
-      return S_OK;
+// DWriteStyle from skia/src/utils/win/SkDWrite.h.
+struct DWriteStyle {
+  explicit DWriteStyle(const FontStyle& pattern) {
+    weight = static_cast<DWRITE_FONT_WEIGHT>(pattern.GetWeight());
+    width = static_cast<DWRITE_FONT_STRETCH>(pattern.GetWidth());
+    switch (pattern.GetSlant()) {
+    case FontStyle::kUpright_Slant:
+      slant = DWRITE_FONT_STYLE_NORMAL;
+      break;
+    case FontStyle::kItalic_Slant:
+      slant = DWRITE_FONT_STYLE_ITALIC;
+      break;
+    case FontStyle::kOblique_Slant:
+      slant = DWRITE_FONT_STYLE_OBLIQUE;
+      break;
     }
-    *result = nullptr;
-    return E_NOINTERFACE;
-  }
-  ULONG STDMETHODCALLTYPE AddRef() override {
-    return InterlockedIncrement(&references_);
-  }
-  ULONG STDMETHODCALLTYPE Release() override {
-    const ULONG count = InterlockedDecrement(&references_);
-    if (!count)
-      delete this;
-    return count;
-  }
-
-protected:
-  virtual ~DWriteComObject() = default;
-
-private:
-  ULONG references_ = 1;
-};
-
-struct NativeStyle {
-  explicit NativeStyle(const FontStyle& style)
-      : weight(static_cast<DWRITE_FONT_WEIGHT>(style.weight)),
-        width(static_cast<DWRITE_FONT_STRETCH>(style.stretch)),
-        slant(style.slant == FontSlant::kItalic ? DWRITE_FONT_STYLE_ITALIC : style.slant == FontSlant::kOblique ? DWRITE_FONT_STYLE_OBLIQUE
-                                                                                                                : DWRITE_FONT_STYLE_NORMAL) {
   }
   DWRITE_FONT_WEIGHT weight;
   DWRITE_FONT_STRETCH width;
-  DWRITE_FONT_STYLE slant;
+  DWRITE_FONT_STYLE slant = DWRITE_FONT_STYLE_NORMAL;
 };
 
+// Korean fonts Gulim, Dotum, Batang, Gungsuh have bitmap strikes that get
+// artifically emboldened by Windows without antialiasing. Korean users prefer
+// these over the synthetic boldening performed by Skia. So let's make an
+// exception for fonts with bitmap strikes and allow passing through Windows
+// simulations for those, until Skia provides more control over simulations in
+// font matching, see https://crbug.com/1258378
 bool HasBitmapStrikes(IDWriteFont* font) {
-  ComPtr<IDWriteFontFace> face;
-  if (FAILED(font->CreateFontFace(&face)))
+  ComPtr<IDWriteFontFace> font_face;
+  if (FAILED(font->CreateFontFace(&font_face))) {
     return false;
+  }
+
+  // AutoDWriteTable.
   const void* data = nullptr;
   UINT32 size = 0;
-  void* context = nullptr;
+  void* lock = nullptr;
   BOOL exists = FALSE;
-  if (FAILED(face->TryGetFontTable(DWRITE_MAKE_OPENTYPE_TAG('E', 'B', 'D', 'T'),
-                                   &data,
-                                   &size,
-                                   &context,
-                                   &exists)))
+  if (FAILED(font_face->TryGetFontTable(DWRITE_MAKE_OPENTYPE_TAG('E', 'B', 'D', 'T'), &data, &size, &lock, &exists))) {
     return false;
-  if (exists)
-    face->ReleaseFontTable(context);
+  }
+  if (exists) {
+    font_face->ReleaseFontTable(lock);
+  }
   return exists != FALSE;
 }
 
-// FirstMatchingFontWithoutSimulations. Chromium's skia/BUILD.gn enables
-// SK_WIN_FONTMGR_NO_SIMULATIONS; keep that branch including Korean bitmap fonts.
+// Iterate calls to GetFirstMatchingFont incrementally removing bold or italic
+// styling that can trigger the simulations. Implementing it this way gets us a
+// IDWriteFont that can be used as before and has the correct information on
+// its own style. Stripping simulations from IDWriteFontFace is possible via
+// IDWriteFontList1, IDWriteFontFaceReference and CreateFontFace, but this way
+// we won't have a matching IDWriteFont which is still used in get_style().
+//
+// Chromium's skia/BUILD.gn defines SK_WIN_FONTMGR_NO_SIMULATIONS.
 HRESULT FirstMatchingFontWithoutSimulations(IDWriteFontFamily* family,
-                                            NativeStyle style,
-                                            IDWriteFont** result) {
+                                            DWriteStyle dw_style,
+                                            ComPtr<IDWriteFont>& font) {
   bool no_simulations = false;
   while (!no_simulations) {
-    ComPtr<IDWriteFont> font;
-    const HRESULT status = family->GetFirstMatchingFont(
-        style.weight,
-        style.width,
-        style.slant,
-        &font);
-    if (FAILED(status))
-      return status;
-    const DWRITE_FONT_SIMULATIONS simulations = font->GetSimulations();
-    no_simulations = simulations == DWRITE_FONT_SIMULATIONS_NONE || (style.weight == DWRITE_FONT_WEIGHT_REGULAR && style.slant == DWRITE_FONT_STYLE_NORMAL) || HasBitmapStrikes(font.Get());
+    ComPtr<IDWriteFont> search_font;
+    HRESULT hr = family->GetFirstMatchingFont(dw_style.weight, dw_style.width, dw_style.slant, &search_font);
+    if (FAILED(hr)) {
+      return hr;
+    }
+    DWRITE_FONT_SIMULATIONS simulations = search_font->GetSimulations();
+    // If we still get simulations even though we're not asking for bold or
+    // italic, we can't help it and exit the loop.
+
+    no_simulations = simulations == DWRITE_FONT_SIMULATIONS_NONE ||
+                     (dw_style.weight == DWRITE_FONT_WEIGHT_REGULAR &&
+                      dw_style.slant == DWRITE_FONT_STYLE_NORMAL) ||
+                     HasBitmapStrikes(search_font.Get());
     if (no_simulations) {
-      *result = font.Detach();
+      font = std::move(search_font);
       break;
     }
     if (simulations & DWRITE_FONT_SIMULATIONS_BOLD) {
-      style.weight = DWRITE_FONT_WEIGHT_REGULAR;
+      dw_style.weight = DWRITE_FONT_WEIGHT_REGULAR;
       continue;
     }
     if (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) {
-      style.slant = DWRITE_FONT_STYLE_NORMAL;
+      dw_style.slant = DWRITE_FONT_STYLE_NORMAL;
       continue;
     }
   }
   return S_OK;
 }
 
-bool SameComObject(IUnknown* first, IUnknown* second) {
-  ComPtr<IUnknown> first_identity;
-  ComPtr<IUnknown> second_identity;
-  return first && second && SUCCEEDED(first->QueryInterface(IID_PPV_ARGS(&first_identity))) && SUCCEEDED(second->QueryInterface(IID_PPV_ARGS(&second_identity))) && first_identity.Get() == second_identity.Get();
+// DWriteFontTypeface::onOpenStream.
+std::unique_ptr<StreamAsset> OpenDWriteFontFaceStream(IDWriteFontFace* font_face, int* ttc_index) {
+  *ttc_index = static_cast<int>(font_face->GetIndex());
+
+  UINT32 num_files = 0;
+  if (FAILED(font_face->GetFiles(&num_files, nullptr))) {
+    return nullptr;
+  }
+  if (num_files != 1) {
+    return nullptr;
+  }
+
+  ComPtr<IDWriteFontFile> font_file;
+  if (FAILED(font_face->GetFiles(&num_files, font_file.GetAddressOf()))) {
+    return nullptr;
+  }
+
+  const void* font_file_key;
+  UINT32 font_file_key_size;
+  if (FAILED(font_file->GetReferenceKey(&font_file_key, &font_file_key_size))) {
+    return nullptr;
+  }
+
+  ComPtr<IDWriteFontFileLoader> font_file_loader;
+  if (FAILED(font_file->GetLoader(&font_file_loader))) {
+    return nullptr;
+  }
+
+  ComPtr<IDWriteFontFileStream> font_file_stream;
+  if (FAILED(font_file_loader->CreateStreamFromKey(font_file_key, font_file_key_size, &font_file_stream))) {
+    return nullptr;
+  }
+
+  return std::make_unique<DWriteFontFileStream>(font_file_stream.Get());
 }
 
-// FindByDWriteFont: Face5 Equals, COM identity, file loader/key, then names.
-bool SameFont(IDWriteFontFace* first_face, IDWriteFont* first_font,
-              IDWriteFontFamily* first_family, IDWriteFontFace* second_face,
-              IDWriteFont* second_font, IDWriteFontFamily* second_family) {
-  ComPtr<IDWriteFontFace5> first5;
-  ComPtr<IDWriteFontFace5> second5;
-  first_face->QueryInterface(IID_PPV_ARGS(&first5));
-  second_face->QueryInterface(IID_PPV_ARGS(&second5));
-  if (first5 && second5)
-    return first5->Equals(second5.Get()) != FALSE;
-  if (SameComObject(first_font, second_font) || SameComObject(first_face, second_face))
-    return true;
-  UINT32 first_count = 0;
-  UINT32 second_count = 0;
-  if (FAILED(first_face->GetFiles(&first_count, nullptr)) || FAILED(second_face->GetFiles(&second_count, nullptr)) || first_count != second_count || first_count != 1)
-    return false;
-  ComPtr<IDWriteFontFile> first_file;
-  ComPtr<IDWriteFontFile> second_file;
-  ComPtr<IDWriteFontFileLoader> first_loader;
-  ComPtr<IDWriteFontFileLoader> second_loader;
-  if (FAILED(first_face->GetFiles(&first_count, first_file.GetAddressOf())) || FAILED(second_face->GetFiles(&second_count, second_file.GetAddressOf())) || FAILED(first_file->GetLoader(&first_loader)) || FAILED(second_file->GetLoader(&second_loader)) || !SameComObject(first_loader.Get(), second_loader.Get()))
-    return false;
-  const void* first_key = nullptr;
-  const void* second_key = nullptr;
-  UINT32 first_length = 0;
-  UINT32 second_length = 0;
-  if (FAILED(first_file->GetReferenceKey(&first_key, &first_length)) || FAILED(second_file->GetReferenceKey(&second_key, &second_length)) || first_length != second_length || std::memcmp(first_key, second_key, first_length) != 0)
-    return false;
-  ComPtr<IDWriteLocalizedStrings> first_family_names;
-  ComPtr<IDWriteLocalizedStrings> second_family_names;
-  ComPtr<IDWriteLocalizedStrings> first_face_names;
-  ComPtr<IDWriteLocalizedStrings> second_face_names;
-  if (FAILED(first_family->GetFamilyNames(&first_family_names)) || FAILED(second_family->GetFamilyNames(&second_family_names)) || FAILED(first_font->GetFaceNames(&first_face_names)) || FAILED(second_font->GetFaceNames(&second_face_names)))
-    return false;
-  const String first_family_name = DWriteLocalizedString(first_family_names.Get());
-  const String second_family_name = DWriteLocalizedString(second_family_names.Get());
-  const String first_face_name = DWriteLocalizedString(first_face_names.Get());
-  const String second_face_name = DWriteLocalizedString(second_face_names.Get());
-  return !first_family_name.IsNull() && !second_family_name.IsNull() && !first_face_name.IsNull() && !second_face_name.IsNull() && first_family_name == second_family_name && first_face_name == second_face_name;
+// DWriteFontTypeface::onGetVariationDesignPosition: only VARIABLE axes, with
+// their tags in OpenType byte order.
+Vector<FontArguments::VariationPosition::Coordinate> DWriteVariationDesignPosition(IDWriteFontFace* font_face) {
+  Vector<FontArguments::VariationPosition::Coordinate> result;
+#if defined(NTDDI_WIN10_RS3) && NTDDI_VERSION >= NTDDI_WIN10_RS3
+  ComPtr<IDWriteFontFace5> font_face5;
+  if (FAILED(font_face->QueryInterface(IID_PPV_ARGS(&font_face5))) || !font_face5->HasVariations()) {
+    return result;
+  }
+  UINT32 font_axis_count = font_face5->GetFontAxisValueCount();
+  ComPtr<IDWriteFontResource> font_resource;
+  if (FAILED(font_face5->GetFontResource(&font_resource))) {
+    return result;
+  }
+  Vector<DWRITE_FONT_AXIS_VALUE, 8> font_axis_value(font_axis_count);
+  if (FAILED(font_face5->GetFontAxisValues(font_axis_value.data(), font_axis_count))) {
+    return result;
+  }
+  for (UINT32 axis_index = 0; axis_index < font_axis_count; ++axis_index) {
+    if (font_resource->GetFontAxisAttributes(axis_index) & DWRITE_FONT_AXIS_ATTRIBUTES_VARIABLE) {
+      // SkEndian_SwapBE32.
+      const std::uint32_t tag = font_axis_value[axis_index].axisTag;
+      result.push_back(FontArguments::VariationPosition::Coordinate{
+          ((tag & 0xffu) << 24) | ((tag & 0xff00u) << 8) | ((tag & 0xff0000u) >> 8) | (tag >> 24),
+          font_axis_value[axis_index].value});
+    }
+  }
+#endif
+  return result;
 }
 
-// FontFallbackSource. In particular, retain the upstream boundary behavior of
-// GetTextBeforePosition and the unchanged output-length handling for locale and
-// number substitution; this adapter does not silently repair source behavior.
-class FontFallbackSource final : public DWriteComObject<IDWriteTextAnalysisSource> {
+// Stands in for DWriteFontTypeface. As SkTypeface_fontconfig does for a
+// fontconfig match, it wraps the FreeType typeface made from the matched
+// font's file and keeps the matcher's family name and style. A DirectWrite
+// bold simulation, which only survives SK_WIN_FONTMGR_NO_SIMULATIONS for fonts
+// with bitmap strikes, becomes kEmbolden_Flag as FC_EMBOLDEN does. An oblique
+// simulation is not applied.
+class TypefaceDWrite final : public TypefaceProxy {
 public:
-  FontFallbackSource(const WCHAR* text, UINT32 length, const WCHAR* locale,
-                     IDWriteNumberSubstitution* substitution)
-      : text_(text),
-        length_(length),
-        locale_(locale),
-        substitution_(substitution) {
-  }
-  HRESULT STDMETHODCALLTYPE GetTextAtPosition(
-      UINT32 position, const WCHAR** text, UINT32* length) override {
-    if (length_ <= position) {
-      *text = nullptr;
-      *length = 0;
-      return S_OK;
+  static std::shared_ptr<Typeface> Make(IDWriteFontFace* font_face,
+                                        IDWriteFont* font,
+                                        IDWriteFontFamily* font_family) {
+    int ttc_index = 0;
+    std::unique_ptr<StreamAsset> stream = OpenDWriteFontFaceStream(font_face, &ttc_index);
+    if (!stream) {
+      return nullptr;
     }
-    *text = text_ + position;
-    *length = length_ - position;
-    return S_OK;
-  }
-  HRESULT STDMETHODCALLTYPE GetTextBeforePosition(
-      UINT32 position, const WCHAR** text, UINT32* length) override {
-    if (position < 1 || length_ <= position) {
-      *text = nullptr;
-      *length = 0;
-      return S_OK;
+    const Vector<FontArguments::VariationPosition::Coordinate> position = DWriteVariationDesignPosition(font_face);
+    FontArguments args;
+    args.SetCollectionIndex(ttc_index);
+    args.SetVariationDesignPosition({position.data(), static_cast<int>(position.size())});
+    std::shared_ptr<Typeface> real_typeface = TypefaceFreeType::MakeFromStream(std::move(stream), args);
+    if (!real_typeface) {
+      return nullptr;
     }
-    *text = text_;
-    *length = position;
-    return S_OK;
-  }
-  DWRITE_READING_DIRECTION STDMETHODCALLTYPE GetParagraphReadingDirection() override {
-    return DWRITE_READING_DIRECTION_LEFT_TO_RIGHT;
-  }
-  HRESULT STDMETHODCALLTYPE GetLocaleName(
-      UINT32, UINT32*, const WCHAR** locale) override {
-    *locale = locale_;
-    return S_OK;
-  }
-  HRESULT STDMETHODCALLTYPE GetNumberSubstitution(
-      UINT32, UINT32*, IDWriteNumberSubstitution** substitution) override {
-    *substitution = substitution_.Get();
-    return S_OK;
+    return std::make_shared<TypefaceDWrite>(std::move(real_typeface), font_face, font, font_family);
   }
 
-private:
-  const WCHAR* text_;
-  UINT32 length_;
-  const WCHAR* locale_;
-  ComPtr<IDWriteNumberSubstitution> substitution_;
+  TypefaceDWrite(std::shared_ptr<Typeface> real_typeface,
+                 IDWriteFontFace* font_face,
+                 IDWriteFont* font,
+                 IDWriteFontFamily* font_family)
+      : TypefaceProxy(std::move(real_typeface), DWriteFontStyle(font, font_face)),
+        dwrite_font_face_(font_face),
+        dwrite_font_(font),
+        dwrite_font_family_(font_family) {
+  }
+
+  ComPtr<IDWriteFontFace> dwrite_font_face_;
+  ComPtr<IDWriteFont> dwrite_font_;
+  ComPtr<IDWriteFontFamily> dwrite_font_family_;
+
+protected:
+  void OnGetFamilyName(String* family_name) const override {
+    // DWriteFontTypeface::onGetFamilyName.
+    ComPtr<IDWriteLocalizedStrings> family_names;
+    if (FAILED(dwrite_font_family_->GetFamilyNames(&family_names))) {
+      *family_name = String("");
+      return;
+    }
+    String name = DWriteLocalizedString(family_names.Get(), nullptr);
+    *family_name = name.IsNull() ? String("") : name;
+  }
+
+  FontStyle OnGetFontStyle() const override {
+    return Typeface::OnGetFontStyle();
+  }
+
+  void OnFilterRec(ScalerContextRec* rec) const override {
+    if (dwrite_font_->GetSimulations() & DWRITE_FONT_SIMULATIONS_BOLD) {
+      rec->flags |= ScalerContext::kEmbolden_Flag;
+    }
+
+    TypefaceProxy::OnFilterRec(rec);
+  }
 };
 
-// FontFallbackRenderer from SkFontMgr_win_dw.cpp. This does not draw: it captures
-// the face chosen by DirectWrite's pre-IDWriteFontFallback text-layout path.
+bool AreSame(IUnknown* a, IUnknown* b, bool& same) {
+  ComPtr<IUnknown> iunk_a;
+  if (FAILED(a->QueryInterface(IID_PPV_ARGS(&iunk_a)))) {
+    return false;
+  }
+
+  ComPtr<IUnknown> iunk_b;
+  if (FAILED(b->QueryInterface(IID_PPV_ARGS(&iunk_b)))) {
+    return false;
+  }
+
+  same = (iunk_a.Get() == iunk_b.Get());
+  return true;
+}
+
+struct ProtoDWriteTypeface {
+  IDWriteFontFace* dwrite_font_face;
+  IDWriteFont* dwrite_font;
+  IDWriteFontFamily* dwrite_font_family;
+};
+
+bool FindByDWriteFont(Typeface* cached, void* ctx) {
+  TypefaceDWrite* csh_face = static_cast<TypefaceDWrite*>(cached);
+  ProtoDWriteTypeface* ctx_face = static_cast<ProtoDWriteTypeface*>(ctx);
+
+  // IDWriteFontFace5 introduced both Equals and HasVariations
+  ComPtr<IDWriteFontFace5> csh_font_face5;
+  ComPtr<IDWriteFontFace5> ctx_font_face5;
+  csh_face->dwrite_font_face_->QueryInterface(IID_PPV_ARGS(&csh_font_face5));
+  ctx_face->dwrite_font_face->QueryInterface(IID_PPV_ARGS(&ctx_font_face5));
+  if (csh_font_face5 && ctx_font_face5) {
+    return csh_font_face5->Equals(ctx_font_face5.Get()) != FALSE;
+  }
+
+  bool same;
+
+  // Check to see if the two fonts are identical.
+  if (!AreSame(csh_face->dwrite_font_.Get(), ctx_face->dwrite_font, same)) {
+    return false;
+  }
+  if (same) {
+    return true;
+  }
+
+  if (!AreSame(csh_face->dwrite_font_face_.Get(), ctx_face->dwrite_font_face, same)) {
+    return false;
+  }
+  if (same) {
+    return true;
+  }
+
+  // Check if the two fonts share the same loader and have the same key.
+  UINT32 csh_num_files;
+  UINT32 ctx_num_files;
+  if (FAILED(csh_face->dwrite_font_face_->GetFiles(&csh_num_files, nullptr)) ||
+      FAILED(ctx_face->dwrite_font_face->GetFiles(&ctx_num_files, nullptr))) {
+    return false;
+  }
+  if (csh_num_files != ctx_num_files) {
+    return false;
+  }
+  // Upstream asks for every file into a single pointer. Only single-file
+  // faces are compared here so the call cannot write past it.
+  if (csh_num_files != 1) {
+    return false;
+  }
+
+  ComPtr<IDWriteFontFile> csh_font_file;
+  ComPtr<IDWriteFontFile> ctx_font_file;
+  if (FAILED(csh_face->dwrite_font_face_->GetFiles(&csh_num_files, csh_font_file.GetAddressOf())) ||
+      FAILED(ctx_face->dwrite_font_face->GetFiles(&ctx_num_files, ctx_font_file.GetAddressOf()))) {
+    return false;
+  }
+
+  // for (each file) { //we currently only admit fonts from one file.
+  ComPtr<IDWriteFontFileLoader> csh_font_file_loader;
+  ComPtr<IDWriteFontFileLoader> ctx_font_file_loader;
+  if (FAILED(csh_font_file->GetLoader(&csh_font_file_loader)) ||
+      FAILED(ctx_font_file->GetLoader(&ctx_font_file_loader))) {
+    return false;
+  }
+  if (!AreSame(csh_font_file_loader.Get(), ctx_font_file_loader.Get(), same)) {
+    return false;
+  }
+  if (!same) {
+    return false;
+  }
+  //}
+
+  const void* csh_ref_key;
+  UINT32 csh_ref_key_size;
+  const void* ctx_ref_key;
+  UINT32 ctx_ref_key_size;
+  if (FAILED(csh_font_file->GetReferenceKey(&csh_ref_key, &csh_ref_key_size)) ||
+      FAILED(ctx_font_file->GetReferenceKey(&ctx_ref_key, &ctx_ref_key_size))) {
+    return false;
+  }
+  if (csh_ref_key_size != ctx_ref_key_size) {
+    return false;
+  }
+  if (0 != std::memcmp(csh_ref_key, ctx_ref_key, ctx_ref_key_size)) {
+    return false;
+  }
+
+  // TODO: better means than comparing name strings?
+  // NOTE: .ttc and fake bold/italic will end up here.
+  ComPtr<IDWriteLocalizedStrings> csh_family_names;
+  ComPtr<IDWriteLocalizedStrings> csh_face_names;
+  if (FAILED(csh_face->dwrite_font_family_->GetFamilyNames(&csh_family_names)) ||
+      FAILED(csh_face->dwrite_font_->GetFaceNames(&csh_face_names))) {
+    return false;
+  }
+  UINT32 csh_family_name_length;
+  UINT32 csh_face_name_length;
+  if (FAILED(csh_family_names->GetStringLength(0, &csh_family_name_length)) ||
+      FAILED(csh_face_names->GetStringLength(0, &csh_face_name_length))) {
+    return false;
+  }
+
+  ComPtr<IDWriteLocalizedStrings> ctx_family_names;
+  ComPtr<IDWriteLocalizedStrings> ctx_face_names;
+  if (FAILED(ctx_face->dwrite_font_family->GetFamilyNames(&ctx_family_names)) ||
+      FAILED(ctx_face->dwrite_font->GetFaceNames(&ctx_face_names))) {
+    return false;
+  }
+  UINT32 ctx_family_name_length;
+  UINT32 ctx_face_name_length;
+  if (FAILED(ctx_family_names->GetStringLength(0, &ctx_family_name_length)) ||
+      FAILED(ctx_face_names->GetStringLength(0, &ctx_face_name_length))) {
+    return false;
+  }
+
+  if (csh_family_name_length != ctx_family_name_length ||
+      csh_face_name_length != ctx_face_name_length) {
+    return false;
+  }
+
+  std::unique_ptr<wchar_t[]> csh_family_name = std::make_unique<wchar_t[]>(csh_family_name_length + 1);
+  std::unique_ptr<wchar_t[]> csh_face_name = std::make_unique<wchar_t[]>(csh_face_name_length + 1);
+  if (FAILED(csh_family_names->GetString(0, csh_family_name.get(), csh_family_name_length + 1)) ||
+      FAILED(csh_face_names->GetString(0, csh_face_name.get(), csh_face_name_length + 1))) {
+    return false;
+  }
+
+  std::unique_ptr<wchar_t[]> ctx_family_name = std::make_unique<wchar_t[]>(ctx_family_name_length + 1);
+  std::unique_ptr<wchar_t[]> ctx_face_name = std::make_unique<wchar_t[]>(ctx_face_name_length + 1);
+  if (FAILED(ctx_family_names->GetString(0, ctx_family_name.get(), ctx_family_name_length + 1)) ||
+      FAILED(ctx_face_names->GetString(0, ctx_face_name.get(), ctx_face_name_length + 1))) {
+    return false;
+  }
+
+  return std::wcscmp(csh_family_name.get(), ctx_family_name.get()) == 0 &&
+         std::wcscmp(csh_face_name.get(), ctx_face_name.get()) == 0;
+}
+
+// SkUTF::ToUTF16.
+UINT32 ToUTF16(std::int32_t uni, WCHAR utf16[2]) {
+  if (static_cast<std::uint32_t>(uni) > 0x10FFFF) {
+    return 0;
+  }
+  int extra = (uni > 0xFFFF);
+  if (extra) {
+    utf16[0] = static_cast<WCHAR>((0xD800 - 64) + (uni >> 10));
+    utf16[1] = static_cast<WCHAR>(0xDC00 | (uni & 0x3FF));
+  } else {
+    utf16[0] = static_cast<WCHAR>(uni);
+  }
+  return static_cast<UINT32>(1 + extra);
+}
+
+template <typename Interface>
+class DWriteComObject : public Interface {
+public:
+  ULONG STDMETHODCALLTYPE AddRef() override {
+    return InterlockedIncrement(&ref_count_);
+  }
+  ULONG STDMETHODCALLTYPE Release() override {
+    ULONG new_count = InterlockedDecrement(&ref_count_);
+    if (0 == new_count) {
+      delete this;
+    }
+    return new_count;
+  }
+
+protected:
+  virtual ~DWriteComObject() = default;
+
+private:
+  ULONG ref_count_ = 1;
+};
+
+class FontManagerDirectWrite;
+
+class FontStyleSetDirectWrite final : public FontStyleSet {
+public:
+  FontStyleSetDirectWrite(std::shared_ptr<const FontManagerDirectWrite> font_mgr,
+                          IDWriteFontFamily* font_family)
+      : font_mgr_(std::move(font_mgr)),
+        font_family_(font_family) {
+  }
+
+  int Count() override;
+  void GetStyle(int index, FontStyle* fs, String* style_name) override;
+  std::shared_ptr<Typeface> CreateTypeface(int index) override;
+  std::shared_ptr<Typeface> MatchStyle(const FontStyle& pattern) override;
+
+private:
+  std::shared_ptr<const FontManagerDirectWrite> font_mgr_;
+  ComPtr<IDWriteFontFamily> font_family_;
+};
+
+// SkFontMgr_DirectWrite.
+class FontManagerDirectWrite final : public FontManager, public std::enable_shared_from_this<FontManagerDirectWrite> {
+public:
+  // locale_name_length and default_family_name_length must include the null
+  // terminator.
+  FontManagerDirectWrite(IDWriteFactory* factory, IDWriteFontCollection* font_collection,
+                         IDWriteFontFallback* fallback,
+                         const WCHAR* locale_name, int locale_name_length,
+                         const WCHAR* default_family_name, int default_family_name_length)
+      : factory_(factory),
+        font_fallback_(fallback),
+        font_collection_(font_collection),
+        locale_name_(std::make_unique<WCHAR[]>(locale_name_length)),
+        default_family_name_(std::make_unique<WCHAR[]>(default_family_name_length)) {
+    std::memcpy(locale_name_.get(), locale_name, locale_name_length * sizeof(WCHAR));
+    std::memcpy(default_family_name_.get(), default_family_name, default_family_name_length * sizeof(WCHAR));
+  }
+
+  // Creates a typeface using a typeface cache.
+  std::shared_ptr<Typeface> MakeTypefaceFromDWriteFont(IDWriteFontFace* font_face,
+                                                       IDWriteFont* font,
+                                                       IDWriteFontFamily* font_family) const;
+
+  IDWriteFontCollection* FontCollection() const {
+    return font_collection_.Get();
+  }
+  const WCHAR* LocaleName() const {
+    return locale_name_.get();
+  }
+
+protected:
+  int OnCountFamilies() const override;
+  void OnGetFamilyName(int index, String* family_name) const override;
+  std::shared_ptr<FontStyleSet> OnCreateStyleSet(int index) const override;
+  std::shared_ptr<FontStyleSet> OnMatchFamily(const String& family_name) const override;
+  std::shared_ptr<Typeface> OnMatchFamilyStyle(const String& family_name,
+                                               const FontStyle& fontstyle) const override;
+  std::shared_ptr<Typeface> OnMatchFamilyStyleCharacter(const String& family_name, const FontStyle&,
+                                                        std::span<const String> bcp47, std::int32_t character) const override;
+  std::shared_ptr<Typeface> OnMakeFromStreamIndex(std::unique_ptr<StreamAsset>, int ttc_index) const override;
+  std::shared_ptr<Typeface> OnMakeFromStreamArgs(std::unique_ptr<StreamAsset>, const FontArguments&) const override;
+  std::shared_ptr<Typeface> OnMakeFromData(std::shared_ptr<Data>, int ttc_index) const override;
+  std::shared_ptr<Typeface> OnMakeFromFile(const String& path, int ttc_index) const override;
+  std::shared_ptr<Typeface> OnLegacyMakeTypeface(const String& family_name, FontStyle) const override;
+
+private:
+  HRESULT GetByFamilyName(const WCHAR family_name[], ComPtr<IDWriteFontFamily>& font_family) const;
+  std::shared_ptr<Typeface> Fallback(const WCHAR* dw_family_name, DWriteStyle,
+                                     const WCHAR* dw_bcp47, UINT32 character) const;
+  std::shared_ptr<Typeface> LayoutFallback(const WCHAR* dw_family_name, DWriteStyle,
+                                           const WCHAR* dw_bcp47, UINT32 character) const;
+
+  ComPtr<IDWriteFactory> factory_;
+  ComPtr<IDWriteFontFallback> font_fallback_;
+  ComPtr<IDWriteFontCollection> font_collection_;
+  std::unique_ptr<WCHAR[]> locale_name_;
+  std::unique_ptr<WCHAR[]> default_family_name_;
+  mutable Mutex tf_cache_mutex_;
+  mutable TypefaceCache tf_cache_;
+};
+
+std::shared_ptr<Typeface> FontManagerDirectWrite::MakeTypefaceFromDWriteFont(
+    IDWriteFontFace* font_face,
+    IDWriteFont* font,
+    IDWriteFontFamily* font_family) const {
+  AutoMutexExclusive ama(tf_cache_mutex_);
+  ProtoDWriteTypeface spec = {font_face, font, font_family};
+  std::shared_ptr<Typeface> face = tf_cache_.FindByProcAndRef(FindByDWriteFont, &spec);
+  if (nullptr == face) {
+    face = TypefaceDWrite::Make(font_face, font, font_family);
+    if (face) {
+      tf_cache_.Add(face);
+    }
+  }
+  return face;
+}
+
+int FontManagerDirectWrite::OnCountFamilies() const {
+  return static_cast<int>(font_collection_->GetFontFamilyCount());
+}
+
+void FontManagerDirectWrite::OnGetFamilyName(int index, String* family_name) const {
+  ComPtr<IDWriteFontFamily> font_family;
+  if (FAILED(font_collection_->GetFontFamily(static_cast<UINT32>(index), &font_family))) {
+    return;
+  }
+
+  ComPtr<IDWriteLocalizedStrings> family_names;
+  if (FAILED(font_family->GetFamilyNames(&family_names))) {
+    return;
+  }
+
+  String name = DWriteLocalizedString(family_names.Get(), locale_name_.get());
+  if (!name.IsNull()) {
+    *family_name = name;
+  }
+}
+
+std::shared_ptr<FontStyleSet> FontManagerDirectWrite::OnCreateStyleSet(int index) const {
+  ComPtr<IDWriteFontFamily> font_family;
+  if (FAILED(font_collection_->GetFontFamily(static_cast<UINT32>(index), &font_family))) {
+    return nullptr;
+  }
+
+  return std::make_shared<FontStyleSetDirectWrite>(shared_from_this(), font_family.Get());
+}
+
+std::shared_ptr<FontStyleSet> FontManagerDirectWrite::OnMatchFamily(const String& family_name) const {
+  if (family_name.IsNull()) {
+    return nullptr;
+  }
+
+  std::unique_ptr<wchar_t[]> dw_family_name = ToWide(family_name);
+
+  UINT32 index;
+  BOOL exists;
+  if (FAILED(font_collection_->FindFamilyName(dw_family_name.get(), &index, &exists))) {
+    return nullptr;
+  }
+  if (!exists) {
+    return nullptr;
+  }
+
+  return OnCreateStyleSet(static_cast<int>(index));
+}
+
+std::shared_ptr<Typeface> FontManagerDirectWrite::OnMatchFamilyStyle(const String& family_name,
+                                                                     const FontStyle& fontstyle) const {
+  std::shared_ptr<FontStyleSet> sset(MatchFamily(family_name));
+  return sset->MatchStyle(fontstyle);
+}
+
 class FontFallbackRenderer final : public DWriteComObject<IDWriteTextRenderer> {
 public:
-  FontFallbackRenderer(IDWriteFontCollection* collection, UINT32 codepoint)
-      : collection_(collection),
-        codepoint_(codepoint) {
+  FontFallbackRenderer(const FontManagerDirectWrite* outer, UINT32 character)
+      : outer_(outer),
+        character_(character),
+        resolved_typeface_(nullptr) {
   }
-  HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** result) override {
-    if (iid == __uuidof(IDWritePixelSnapping)) {
-      *result = static_cast<IDWritePixelSnapping*>(this);
+
+  // IUnknown methods
+  HRESULT STDMETHODCALLTYPE QueryInterface(IID const& riid, void** ppv_object) override {
+    if (__uuidof(IUnknown) == riid ||
+        __uuidof(IDWritePixelSnapping) == riid ||
+        __uuidof(IDWriteTextRenderer) == riid) {
+      *ppv_object = this;
       AddRef();
       return S_OK;
     }
-    return DWriteComObject::QueryInterface(iid, result);
+    *ppv_object = nullptr;
+    return E_FAIL;
   }
-  HRESULT STDMETHODCALLTYPE DrawGlyphRun(void*, FLOAT, FLOAT,
-                                         DWRITE_MEASURING_MODE, const DWRITE_GLYPH_RUN* run,
-                                         const DWRITE_GLYPH_RUN_DESCRIPTION*, IUnknown*) override {
-    if (!run->fontFace)
+
+  // IDWriteTextRenderer methods
+  HRESULT STDMETHODCALLTYPE DrawGlyphRun(
+      void*,
+      FLOAT,
+      FLOAT,
+      DWRITE_MEASURING_MODE,
+      DWRITE_GLYPH_RUN const* glyph_run,
+      DWRITE_GLYPH_RUN_DESCRIPTION const*,
+      IUnknown*) override {
+    if (!glyph_run->fontFace) {
       return E_INVALIDARG;
-    ComPtr<IDWriteFont> candidate;
-    HRESULT status = collection_->GetFontFromFontFace(run->fontFace, &candidate);
-    if (FAILED(status))
-      return status;
-    BOOL exists = FALSE;
-    status = candidate->HasCharacter(codepoint_, &exists);
-    if (FAILED(status))
-      return status;
-    if (exists) {
-      ComPtr<IDWriteFontFamily> candidate_family;
-      status = candidate->GetFontFamily(&candidate_family);
-      if (FAILED(status))
-        return status;
-      face = run->fontFace;
-      font = std::move(candidate);
-      family = std::move(candidate_family);
-      has_simulations = font->GetSimulations() != DWRITE_FONT_SIMULATIONS_NONE && !HasBitmapStrikes(font.Get());
     }
+
+    ComPtr<IDWriteFont> font;
+    HRESULT hr = outer_->FontCollection()->GetFontFromFontFace(glyph_run->fontFace, &font);
+    if (FAILED(hr)) {
+      return hr;
+    }
+
+    // It is possible that the font passed does not actually have the
+    // requested character, due to no font being found and getting the
+    // fallback font. Check that the font actually contains the requested
+    // character.
+    BOOL exists;
+    hr = font->HasCharacter(character_, &exists);
+    if (FAILED(hr)) {
+      return hr;
+    }
+
+    if (exists) {
+      ComPtr<IDWriteFontFamily> font_family;
+      hr = font->GetFontFamily(&font_family);
+      if (FAILED(hr)) {
+        return hr;
+      }
+      resolved_typeface_ = outer_->MakeTypefaceFromDWriteFont(glyph_run->fontFace,
+                                                              font.Get(),
+                                                              font_family.Get());
+      has_simulations_ = (font->GetSimulations() != DWRITE_FONT_SIMULATIONS_NONE) &&
+                         !HasBitmapStrikes(font.Get());
+    }
+
     return S_OK;
   }
-  HRESULT STDMETHODCALLTYPE DrawUnderline(void*, FLOAT, FLOAT,
-                                          const DWRITE_UNDERLINE*, IUnknown*) override {
+
+  HRESULT STDMETHODCALLTYPE DrawUnderline(void*, FLOAT, FLOAT, DWRITE_UNDERLINE const*, IUnknown*) override {
     return E_NOTIMPL;
   }
-  HRESULT STDMETHODCALLTYPE DrawStrikethrough(void*, FLOAT, FLOAT,
-                                              const DWRITE_STRIKETHROUGH*, IUnknown*) override {
+
+  HRESULT STDMETHODCALLTYPE DrawStrikethrough(void*, FLOAT, FLOAT, DWRITE_STRIKETHROUGH const*, IUnknown*) override {
     return E_NOTIMPL;
   }
-  HRESULT STDMETHODCALLTYPE DrawInlineObject(void*, FLOAT, FLOAT,
-                                             IDWriteInlineObject*, BOOL, BOOL, IUnknown*) override {
+
+  HRESULT STDMETHODCALLTYPE DrawInlineObject(void*, FLOAT, FLOAT, IDWriteInlineObject*, BOOL, BOOL, IUnknown*) override {
     return E_NOTIMPL;
   }
-  HRESULT STDMETHODCALLTYPE IsPixelSnappingDisabled(void*, BOOL* disabled) override {
-    *disabled = FALSE;
+
+  // IDWritePixelSnapping methods
+  HRESULT STDMETHODCALLTYPE IsPixelSnappingDisabled(void*, BOOL* is_disabled) override {
+    *is_disabled = FALSE;
     return S_OK;
   }
+
   HRESULT STDMETHODCALLTYPE GetCurrentTransform(void*, DWRITE_MATRIX* transform) override {
-    *transform = {1, 0, 0, 1, 0, 0};
+    const DWRITE_MATRIX ident = {1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
+    *transform = ident;
     return S_OK;
   }
-  HRESULT STDMETHODCALLTYPE GetPixelsPerDip(void*, FLOAT* value) override {
-    *value = 1;
+
+  HRESULT STDMETHODCALLTYPE GetPixelsPerDip(void*, FLOAT* pixels_per_dip) override {
+    *pixels_per_dip = 1.0f;
     return S_OK;
   }
-  ComPtr<IDWriteFontFace> face;
-  ComPtr<IDWriteFont> font;
-  ComPtr<IDWriteFontFamily> family;
-  bool has_simulations = false;
+
+  std::shared_ptr<Typeface> ConsumeFallbackTypeface() {
+    return std::move(resolved_typeface_);
+  }
+
+  bool FallbackTypefaceHasSimulations() {
+    return has_simulations_;
+  }
 
 private:
-  ComPtr<IDWriteFontCollection> collection_;
-  UINT32 codepoint_;
+  // The outer manager outlives every layout it draws.
+  const FontManagerDirectWrite* outer_;
+  UINT32 character_;
+  std::shared_ptr<Typeface> resolved_typeface_;
+  bool has_simulations_{false};
 };
 
-UINT32 EncodeCharacter(UINT32 codepoint, WCHAR* text) {
-  if (codepoint > 0x10ffffu || (codepoint >= 0xd800u && codepoint <= 0xdfffu))
-    return 0;
-  if (codepoint <= 0xffffu) {
-    text[0] = static_cast<WCHAR>(codepoint);
-    return 1;
+class FontFallbackSource final : public DWriteComObject<IDWriteTextAnalysisSource> {
+public:
+  FontFallbackSource(const WCHAR* string, UINT32 length, const WCHAR* locale,
+                     IDWriteNumberSubstitution* number_substitution)
+      : string_(string),
+        length_(length),
+        locale_(locale),
+        number_substitution_(number_substitution) {
   }
-  codepoint -= 0x10000u;
-  text[0] = static_cast<WCHAR>(0xd800u + (codepoint >> 10));
-  text[1] = static_cast<WCHAR>(0xdc00u + (codepoint & 0x3ffu));
-  return 2;
+
+  // IUnknown methods
+  HRESULT STDMETHODCALLTYPE QueryInterface(IID const& riid, void** ppv_object) override {
+    if (__uuidof(IUnknown) == riid ||
+        __uuidof(IDWriteTextAnalysisSource) == riid) {
+      *ppv_object = this;
+      AddRef();
+      return S_OK;
+    }
+    *ppv_object = nullptr;
+    return E_FAIL;
+  }
+
+  // IDWriteTextAnalysisSource methods
+  HRESULT STDMETHODCALLTYPE GetTextAtPosition(
+      UINT32 text_position,
+      WCHAR const** text_string,
+      UINT32* text_length) override {
+    if (length_ <= text_position) {
+      *text_string = nullptr;
+      *text_length = 0;
+      return S_OK;
+    }
+    *text_string = string_ + text_position;
+    *text_length = length_ - text_position;
+    return S_OK;
+  }
+
+  HRESULT STDMETHODCALLTYPE GetTextBeforePosition(
+      UINT32 text_position,
+      WCHAR const** text_string,
+      UINT32* text_length) override {
+    if (text_position < 1 || length_ <= text_position) {
+      *text_string = nullptr;
+      *text_length = 0;
+      return S_OK;
+    }
+    *text_string = string_;
+    *text_length = text_position;
+    return S_OK;
+  }
+
+  DWRITE_READING_DIRECTION STDMETHODCALLTYPE GetParagraphReadingDirection() override {
+    // TODO: this is also interesting.
+    return DWRITE_READING_DIRECTION_LEFT_TO_RIGHT;
+  }
+
+  HRESULT STDMETHODCALLTYPE GetLocaleName(
+      UINT32,
+      UINT32*,
+      WCHAR const** locale_name) override {
+    *locale_name = locale_;
+    return S_OK;
+  }
+
+  HRESULT STDMETHODCALLTYPE GetNumberSubstitution(
+      UINT32,
+      UINT32*,
+      IDWriteNumberSubstitution** number_substitution) override {
+    *number_substitution = number_substitution_;
+    return S_OK;
+  }
+
+private:
+  const WCHAR* string_;
+  UINT32 length_;
+  const WCHAR* locale_;
+  IDWriteNumberSubstitution* number_substitution_;
+};
+
+std::shared_ptr<Typeface> FontManagerDirectWrite::OnMatchFamilyStyleCharacter(
+    const String& family_name, const FontStyle& style,
+    std::span<const String> bcp47,
+    std::int32_t character) const {
+  DWriteStyle dw_style(style);
+
+  const WCHAR* dw_family_name = nullptr;
+  std::unique_ptr<wchar_t[]> dw_family_name_local;
+  if (!family_name.IsNull()) {
+    dw_family_name_local = ToWide(family_name);
+    dw_family_name = dw_family_name_local.get();
+  }
+
+  const WCHAR* dw_bcp47;
+  std::unique_ptr<wchar_t[]> dw_bcp47_local;
+  if (bcp47.size() < 1) {
+    dw_bcp47 = locale_name_.get();
+  } else {
+    // TODO: support fallback stack.
+    // TODO: DirectWrite supports 'zh-CN' or 'zh-Hans', but 'zh' misses
+    // completely and may produce a Japanese font.
+    dw_bcp47_local = ToWide(bcp47[bcp47.size() - 1]);
+    dw_bcp47 = dw_bcp47_local.get();
+  }
+
+  if (font_fallback_) {
+    return Fallback(dw_family_name, dw_style, dw_bcp47, static_cast<UINT32>(character));
+  }
+
+  // LayoutFallback may use the system font collection for fallback.
+  return LayoutFallback(dw_family_name, dw_style, dw_bcp47, static_cast<UINT32>(character));
 }
 
-// The loader and its COM streams share the lifetime of one immutable font file.
-// Its byte count is fixed when the file is copied into the owned array.
-struct FontFileData {
-  std::unique_ptr<std::uint8_t[]> bytes;
-  std::size_t size = 0;
-};
+std::shared_ptr<Typeface> FontManagerDirectWrite::Fallback(const WCHAR* dw_family_name,
+                                                           DWriteStyle dw_style,
+                                                           const WCHAR* dw_bcp47,
+                                                           UINT32 character) const {
+  WCHAR str[16];
+  UINT32 str_len = ToUTF16(static_cast<std::int32_t>(character), str);
 
-// SkDWriteFontFileStreamWrapper::ReadFileFragment's memory-backed branch.
-class MemoryFontFileStream final : public DWriteComObject<IDWriteFontFileStream> {
-public:
-  explicit MemoryFontFileStream(std::shared_ptr<const FontFileData> data)
-      : data_(std::move(data)) {
-  }
-  HRESULT STDMETHODCALLTYPE ReadFileFragment(const void** start, UINT64 offset,
-                                             UINT64 size, void** context) override {
-    *start = nullptr;
-    *context = nullptr;
-    const UINT64 length = data_->size;
-    if (offset > length || size > length - offset || offset + size > std::numeric_limits<std::size_t>::max())
-      return E_FAIL;
-    *start = data_->bytes.get() + static_cast<std::size_t>(offset);
-    return S_OK;
-  }
-  void STDMETHODCALLTYPE ReleaseFileFragment(void*) override {
-  }
-  HRESULT STDMETHODCALLTYPE GetFileSize(UINT64* size) override {
-    *size = data_->size;
-    return S_OK;
-  }
-  HRESULT STDMETHODCALLTYPE GetLastWriteTime(UINT64* time) override {
-    *time = 0;
-    return E_NOTIMPL;
+  if (!font_fallback_) {
+    return nullptr;
   }
 
-private:
-  std::shared_ptr<const FontFileData> data_;
-};
+  ComPtr<IDWriteNumberSubstitution> number_substitution;
+  if (FAILED(factory_->CreateNumberSubstitution(DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE, dw_bcp47,
+                                                TRUE, &number_substitution))) {
+    return nullptr;
+  }
+  ComPtr<FontFallbackSource> font_fallback_source;
+  font_fallback_source.Attach(new FontFallbackSource(str, str_len, dw_bcp47, number_substitution.Get()));
 
-class StreamFontFileLoader final : public DWriteComObject<IDWriteFontFileLoader> {
-public:
-  explicit StreamFontFileLoader(std::shared_ptr<const FontFileData> data)
-      : data_(std::move(data)) {
-  }
-  HRESULT STDMETHODCALLTYPE CreateStreamFromKey(const void*, UINT32,
-                                                IDWriteFontFileStream** result) override {
-    *result = new MemoryFontFileStream(data_);
-    return S_OK;
-  }
+  UINT32 mapped_length;
+  ComPtr<IDWriteFont> font;
+  FLOAT scale;
 
-private:
-  std::shared_ptr<const FontFileData> data_;
-};
-
-class StreamFontFileEnumerator final : public DWriteComObject<IDWriteFontFileEnumerator> {
-public:
-  StreamFontFileEnumerator(IDWriteFactory* factory, IDWriteFontFileLoader* loader)
-      : factory_(factory),
-        loader_(loader) {
-  }
-  HRESULT STDMETHODCALLTYPE MoveNext(BOOL* current) override {
-    *current = FALSE;
-    if (!has_next_)
-      return S_OK;
-    has_next_ = false;
-    const UINT32 key = 0;
-    const HRESULT status = factory_->CreateCustomFontFileReference(
-        &key,
-        sizeof(key),
-        loader_.Get(),
-        &current_file_);
-    if (FAILED(status))
-      return status;
-    *current = TRUE;
-    return S_OK;
-  }
-  HRESULT STDMETHODCALLTYPE GetCurrentFontFile(IDWriteFontFile** file) override {
-    if (!current_file_) {
-      *file = nullptr;
-      return E_FAIL;
+  bool no_simulations = false;
+  while (!no_simulations) {
+    font.Reset();
+    if (FAILED(font_fallback_->MapCharacters(font_fallback_source.Get(),
+                                             0, // textPosition,
+                                             str_len,
+                                             font_collection_.Get(),
+                                             dw_family_name,
+                                             dw_style.weight,
+                                             dw_style.slant,
+                                             dw_style.width,
+                                             &mapped_length,
+                                             &font,
+                                             &scale))) {
+      return nullptr;
     }
-    return current_file_.CopyTo(file);
+    if (!font.Get()) {
+      return nullptr;
+    }
+
+    DWRITE_FONT_SIMULATIONS simulations = font->GetSimulations();
+
+    no_simulations = simulations == DWRITE_FONT_SIMULATIONS_NONE || HasBitmapStrikes(font.Get());
+
+    if (simulations & DWRITE_FONT_SIMULATIONS_BOLD) {
+      dw_style.weight = DWRITE_FONT_WEIGHT_REGULAR;
+      continue;
+    }
+
+    if (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) {
+      dw_style.slant = DWRITE_FONT_STYLE_NORMAL;
+      continue;
+    }
   }
 
-private:
-  ComPtr<IDWriteFactory> factory_;
-  ComPtr<IDWriteFontFileLoader> loader_;
-  ComPtr<IDWriteFontFile> current_file_;
-  bool has_next_ = true;
-};
-
-class StreamFontCollectionLoader final : public DWriteComObject<IDWriteFontCollectionLoader> {
-public:
-  explicit StreamFontCollectionLoader(IDWriteFontFileLoader* loader)
-      : loader_(loader) {
-  }
-  HRESULT STDMETHODCALLTYPE CreateEnumeratorFromKey(IDWriteFactory* factory,
-                                                    const void*, UINT32, IDWriteFontFileEnumerator** enumerator) override {
-    *enumerator = new StreamFontFileEnumerator(factory, loader_.Get());
-    return S_OK;
+  ComPtr<IDWriteFontFace> font_face;
+  if (FAILED(font->CreateFontFace(&font_face))) {
+    return nullptr;
   }
 
-private:
-  ComPtr<IDWriteFontFileLoader> loader_;
-};
+  ComPtr<IDWriteFontFamily> font_family;
+  if (FAILED(font->GetFontFamily(&font_family))) {
+    return nullptr;
+  }
+  return MakeTypefaceFromDWriteFont(font_face.Get(), font.Get(), font_family.Get());
+}
+
+std::shared_ptr<Typeface> FontManagerDirectWrite::LayoutFallback(const WCHAR* dw_family_name,
+                                                                 DWriteStyle dw_style,
+                                                                 const WCHAR* dw_bcp47,
+                                                                 UINT32 character) const {
+  WCHAR str[16];
+  UINT32 str_len = ToUTF16(static_cast<std::int32_t>(character), str);
+
+  bool no_simulations = false;
+  std::shared_ptr<Typeface> return_typeface(nullptr);
+  while (!no_simulations) {
+    ComPtr<IDWriteTextFormat> fallback_format;
+    if (FAILED(factory_->CreateTextFormat(dw_family_name ? dw_family_name : L"",
+                                          font_collection_.Get(),
+                                          dw_style.weight,
+                                          dw_style.slant,
+                                          dw_style.width,
+                                          72.0f,
+                                          dw_bcp47,
+                                          &fallback_format))) {
+      return nullptr;
+    }
+
+    // No matter how the font collection is set on this IDWriteTextLayout, it
+    // is not possible to disable use of the system font collection in
+    // fallback.
+    ComPtr<IDWriteTextLayout> fallback_layout;
+    if (FAILED(factory_->CreateTextLayout(str, str_len, fallback_format.Get(), 200.0f, 200.0f, &fallback_layout))) {
+      return nullptr;
+    }
+
+    ComPtr<FontFallbackRenderer> font_fallback_renderer;
+    font_fallback_renderer.Attach(new FontFallbackRenderer(this, character));
+
+    if (FAILED(fallback_layout->SetFontCollection(font_collection_.Get(), {0, str_len}))) {
+      return nullptr;
+    }
+    if (FAILED(fallback_layout->Draw(nullptr, font_fallback_renderer.Get(), 50.0f, 50.0f))) {
+      return nullptr;
+    }
+
+    no_simulations = !font_fallback_renderer->FallbackTypefaceHasSimulations();
+
+    if (no_simulations) {
+      return_typeface = font_fallback_renderer->ConsumeFallbackTypeface();
+    }
+
+    if (dw_style.weight != DWRITE_FONT_WEIGHT_REGULAR) {
+      dw_style.weight = DWRITE_FONT_WEIGHT_REGULAR;
+      continue;
+    }
+
+    if (dw_style.slant != DWRITE_FONT_STYLE_NORMAL) {
+      dw_style.slant = DWRITE_FONT_STYLE_NORMAL;
+      continue;
+    }
+  }
+
+  return return_typeface;
+}
+
+std::shared_ptr<Typeface> FontManagerDirectWrite::OnMakeFromStreamIndex(std::unique_ptr<StreamAsset> stream,
+                                                                        int ttc_index) const {
+  FontArguments args;
+  args.SetCollectionIndex(ttc_index);
+  return OnMakeFromStreamArgs(std::move(stream), args);
+}
+
+// Upstream makes a DWriteFontTypeface here. FreeType rasterizes every font in
+// this port, so the stream becomes a FreeType typeface as SkFontMgr_Custom's
+// onMakeFromStreamArgs does.
+std::shared_ptr<Typeface> FontManagerDirectWrite::OnMakeFromStreamArgs(std::unique_ptr<StreamAsset> stream,
+                                                                       const FontArguments& args) const {
+  return TypefaceFreeType::MakeFromStream(std::move(stream), args);
+}
+
+std::shared_ptr<Typeface> FontManagerDirectWrite::OnMakeFromData(std::shared_ptr<Data> data, int ttc_index) const {
+  return MakeFromStream(std::make_unique<MemoryStream>(std::move(data)), ttc_index);
+}
+
+std::shared_ptr<Typeface> FontManagerDirectWrite::OnMakeFromFile(const String& path, int ttc_index) const {
+  return MakeFromStream(Stream::MakeFromFile(path), ttc_index);
+}
+
+HRESULT FontManagerDirectWrite::GetByFamilyName(const WCHAR wide_family_name[],
+                                                ComPtr<IDWriteFontFamily>& font_family) const {
+  UINT32 index;
+  BOOL exists;
+  HRESULT hr = font_collection_->FindFamilyName(wide_family_name, &index, &exists);
+  if (FAILED(hr)) {
+    return hr;
+  }
+
+  if (exists) {
+    hr = font_collection_->GetFontFamily(index, &font_family);
+    if (FAILED(hr)) {
+      return hr;
+    }
+  }
+  return S_OK;
+}
+
+std::shared_ptr<Typeface> FontManagerDirectWrite::OnLegacyMakeTypeface(const String& family_name,
+                                                                       FontStyle style) const {
+  ComPtr<IDWriteFontFamily> font_family;
+  DWriteStyle dw_style(style);
+  if (!family_name.IsNull()) {
+    std::unique_ptr<wchar_t[]> dw_family_name = ToWide(family_name);
+    GetByFamilyName(dw_family_name.get(), font_family);
+    if (!font_family && font_fallback_) {
+      return Fallback(dw_family_name.get(), dw_style, locale_name_.get(), 32);
+    }
+  }
+
+  if (!font_family) {
+    if (font_fallback_) {
+      return Fallback(nullptr, dw_style, locale_name_.get(), 32);
+    }
+    // SPI_GETNONCLIENTMETRICS lfMessageFont can fail in Win8.
+    // (DisallowWin32kSystemCalls) layoutFallback causes DCHECK in Chromium.
+    // (Uses system font collection.)
+    if (FAILED(GetByFamilyName(default_family_name_.get(), font_family))) {
+      return nullptr;
+    }
+  }
+
+  if (!font_family) {
+    // Could not obtain the default font.
+    if (FAILED(font_collection_->GetFontFamily(0, &font_family))) {
+      return nullptr;
+    }
+  }
+
+  ComPtr<IDWriteFont> font;
+  if (FAILED(FirstMatchingFontWithoutSimulations(font_family.Get(), dw_style, font))) {
+    return nullptr;
+  }
+
+  ComPtr<IDWriteFontFace> font_face;
+  if (FAILED(font->CreateFontFace(&font_face))) {
+    return nullptr;
+  }
+
+  return MakeTypefaceFromDWriteFont(font_face.Get(), font.Get(), font_family.Get());
+}
+
+int FontStyleSetDirectWrite::Count() {
+  return static_cast<int>(font_family_->GetFontCount());
+}
+
+std::shared_ptr<Typeface> FontStyleSetDirectWrite::CreateTypeface(int index) {
+  ComPtr<IDWriteFont> font;
+  if (FAILED(font_family_->GetFont(static_cast<UINT32>(index), &font))) {
+    return nullptr;
+  }
+
+  ComPtr<IDWriteFontFace> font_face;
+  if (FAILED(font->CreateFontFace(&font_face))) {
+    return nullptr;
+  }
+
+  return font_mgr_->MakeTypefaceFromDWriteFont(font_face.Get(), font.Get(), font_family_.Get());
+}
+
+void FontStyleSetDirectWrite::GetStyle(int index, FontStyle* fs, String* style_name) {
+  ComPtr<IDWriteFont> font;
+  if (FAILED(font_family_->GetFont(static_cast<UINT32>(index), &font))) {
+    return;
+  }
+
+  if (fs) {
+    ComPtr<IDWriteFontFace> face;
+    if (FAILED(font->CreateFontFace(&face))) {
+      return;
+    }
+    *fs = DWriteFontStyle(font.Get(), face.Get());
+  }
+
+  if (style_name) {
+    ComPtr<IDWriteLocalizedStrings> face_names;
+    if (SUCCEEDED(font->GetFaceNames(&face_names))) {
+      String name = DWriteLocalizedString(face_names.Get(), font_mgr_->LocaleName());
+      if (!name.IsNull()) {
+        *style_name = name;
+      }
+    }
+  }
+}
+
+std::shared_ptr<Typeface> FontStyleSetDirectWrite::MatchStyle(const FontStyle& pattern) {
+  ComPtr<IDWriteFont> font;
+  DWriteStyle dw_style(pattern);
+
+  if (FAILED(FirstMatchingFontWithoutSimulations(font_family_.Get(), dw_style, font))) {
+    return nullptr;
+  }
+
+  ComPtr<IDWriteFontFace> font_face;
+  if (FAILED(font->CreateFontFace(&font_face))) {
+    return nullptr;
+  }
+
+  return font_mgr_->MakeTypefaceFromDWriteFont(font_face.Get(), font.Get(), font_family_.Get());
+}
 
 } // namespace
 
-// DWriteFontTypeface::Loaders and SkAutoIDWriteUnregister. Registration ownership
-// transfers to FontFace; failure paths unregister without terminating the process.
-class FontCollectionLoaders final {
-public:
-  explicit FontCollectionLoaders(IDWriteFactory* factory)
-      : factory_(factory) {
-  }
-  ~FontCollectionLoaders() {
-    if (collection_registered_)
-      factory_->UnregisterFontCollectionLoader(collection_loader_.Get());
-    if (file_registered_)
-      factory_->UnregisterFontFileLoader(file_loader_.Get());
-  }
-  HRESULT Initialize(std::shared_ptr<const FontFileData> data) {
-    file_loader_.Attach(new StreamFontFileLoader(std::move(data)));
-    HRESULT status = factory_->RegisterFontFileLoader(file_loader_.Get());
-    if (FAILED(status))
-      return status;
-    file_registered_ = true;
-    collection_loader_.Attach(new StreamFontCollectionLoader(file_loader_.Get()));
-    status = factory_->RegisterFontCollectionLoader(collection_loader_.Get());
-    if (FAILED(status))
-      return status;
-    collection_registered_ = true;
-    return S_OK;
-  }
-  IDWriteFontCollectionLoader* CollectionLoader() const {
-    return collection_loader_.Get();
-  }
-
-private:
-  ComPtr<IDWriteFactory> factory_;
-  ComPtr<IDWriteFontFileLoader> file_loader_;
-  ComPtr<IDWriteFontCollectionLoader> collection_loader_;
-  bool file_registered_ = false;
-  bool collection_registered_ = false;
-};
-
-struct FontManager::Impl {
+// SkFontMgr_New_DirectWrite(nullptr, nullptr, nullptr).
+std::shared_ptr<FontManager> MakeFontManagerDirectWrite() {
+  // sk_get_dwrite_factory.
   ComPtr<IDWriteFactory> factory;
-  ComPtr<IDWriteFontCollection> collection;
-  ComPtr<IDWriteFontFallback> fallback;
-  String locale;
-  String default_family;
-  mutable std::mutex cache_mutex;
-  // SkTypefaceCache owns faces strongly; external references prevent purging.
-  // Keep its historical default (SkGraphics.cpp) and quarter-cache purge rule.
-  mutable Vector<std::shared_ptr<FontFace>> faces;
-  static constexpr int cache_count_limit = 1024;
-
-  void Purge(int number) const {
-    std::size_t index = 0;
-    while (index < faces.size()) {
-      if (faces[index].use_count() == 1) {
-        faces[index] = std::move(faces.back());
-        faces.pop_back();
-        if (--number == 0)
-          return;
-      } else {
-        ++index;
-      }
-    }
-  }
-
-  std::shared_ptr<FontFace> MakeFace(IDWriteFontFace* native_face,
-                                     IDWriteFont* native_font, IDWriteFontFamily* family,
-                                     std::shared_ptr<FontCollectionLoaders> loaders = nullptr) const {
-    std::scoped_lock lock(cache_mutex);
-    const bool cache_face = !loaders;
-    if (cache_face) {
-      for (const std::shared_ptr<FontFace>& cached : faces) {
-        if (SameFont(cached->impl_->face.Get(), cached->impl_->font.Get(), cached->impl_->family.Get(), native_face, native_font, family))
-          return cached;
-      }
-    }
-    auto face_impl = std::make_unique<FontFace::Impl>();
-    face_impl->factory = factory;
-    face_impl->face = native_face;
-    face_impl->font = native_font;
-    face_impl->family = family;
-    face_impl->loaders = std::move(loaders);
-    auto face = std::shared_ptr<FontFace>(new FontFace(std::move(face_impl)));
-    // MakeFromStream constructs a standalone typeface; the manager's cache is
-    // only used by makeTypefaceFromDWriteFont for installed/fallback faces.
-    if (cache_face) {
-      if (faces.size() >= cache_count_limit)
-        Purge(cache_count_limit >> 2);
-      faces.push_back(face);
-    }
-    return face;
-  }
-
-  // SkFontMgr_DirectWrite::fallback, retaining the source's simulation loop.
-  std::shared_ptr<FontFace> Fallback(const WCHAR* family, NativeStyle style,
-                                     const WCHAR* locale_name, UINT32 codepoint) const {
-    WCHAR text[16];
-    const UINT32 length = EncodeCharacter(codepoint, text);
-    if (!fallback)
-      return nullptr;
-    ComPtr<IDWriteNumberSubstitution> substitution;
-    if (FAILED(factory->CreateNumberSubstitution(DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE,
-                                                 locale_name,
-                                                 TRUE,
-                                                 &substitution)))
-      return nullptr;
-    ComPtr<FontFallbackSource> source;
-    source.Attach(new FontFallbackSource(text, length, locale_name, substitution.Get()));
-    ComPtr<IDWriteFont> font;
-    bool no_simulations = false;
-    while (!no_simulations) {
-      font.Reset();
-      UINT32 mapped_length = 0;
-      FLOAT scale = 0;
-      if (FAILED(fallback->MapCharacters(source.Get(), 0, length, collection.Get(), family, style.weight, style.slant, style.width, &mapped_length, &font, &scale)) || !font)
-        return nullptr;
-      const DWRITE_FONT_SIMULATIONS simulations = font->GetSimulations();
-      no_simulations = simulations == DWRITE_FONT_SIMULATIONS_NONE || HasBitmapStrikes(font.Get());
-      if (simulations & DWRITE_FONT_SIMULATIONS_BOLD) {
-        style.weight = DWRITE_FONT_WEIGHT_REGULAR;
-        continue;
-      }
-      if (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) {
-        style.slant = DWRITE_FONT_STYLE_NORMAL;
-        continue;
-      }
-    }
-    ComPtr<IDWriteFontFace> face;
-    ComPtr<IDWriteFontFamily> matched_family;
-    if (FAILED(font->CreateFontFace(&face)) || FAILED(font->GetFontFamily(&matched_family)))
-      return nullptr;
-    // MapCharacters' scale is intentionally unused, as it is upstream.
-    return MakeFace(face.Get(), font.Get(), matched_family.Get());
-  }
-
-  // SkFontMgr_DirectWrite::layoutFallback; retained for factories predating v2.
-  std::shared_ptr<FontFace> LayoutFallback(const WCHAR* family, NativeStyle style,
-                                           const WCHAR* locale_name, UINT32 codepoint) const {
-    WCHAR text[16];
-    const UINT32 length = EncodeCharacter(codepoint, text);
-    bool no_simulations = false;
-    std::shared_ptr<FontFace> result;
-    while (!no_simulations) {
-      ComPtr<IDWriteTextFormat> format;
-      ComPtr<IDWriteTextLayout> layout;
-      if (FAILED(factory->CreateTextFormat(family ? family : L"", collection.Get(), style.weight, style.slant, style.width, 72, locale_name, &format)) || FAILED(factory->CreateTextLayout(text, length, format.Get(), 200, 200, &layout)))
-        return nullptr;
-      ComPtr<FontFallbackRenderer> renderer;
-      renderer.Attach(new FontFallbackRenderer(collection.Get(), codepoint));
-      if (FAILED(layout->SetFontCollection(collection.Get(), {0, length})) || FAILED(layout->Draw(nullptr, renderer.Get(), 50, 50)))
-        return nullptr;
-      no_simulations = !renderer->has_simulations;
-      if (no_simulations && renderer->face)
-        result = MakeFace(renderer->face.Get(), renderer->font.Get(), renderer->family.Get());
-      if (style.weight != DWRITE_FONT_WEIGHT_REGULAR) {
-        style.weight = DWRITE_FONT_WEIGHT_REGULAR;
-        continue;
-      }
-      if (style.slant != DWRITE_FONT_STYLE_NORMAL) {
-        style.slant = DWRITE_FONT_STYLE_NORMAL;
-        continue;
-      }
-    }
-    return result;
-  }
-};
-
-FontManager::FontManager(std::unique_ptr<Impl> implementation)
-    : impl_(std::move(implementation)) {
-}
-FontManager::~FontManager() = default;
-
-void FontManager::PurgeUnusedFaces() const {
-  std::scoped_lock lock(impl_->cache_mutex);
-  impl_->Purge(static_cast<int>(impl_->faces.size()));
-}
-
-// SkFontMgr_New_DirectWrite, with a shared DirectWrite factory and the system
-// collection. Browser-process services/sandbox proxies are outside this port.
-std::shared_ptr<FontManager> FontManager::Create() {
-  auto implementation = std::make_unique<Impl>();
-  if (FAILED(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(implementation->factory.GetAddressOf()))) || FAILED(implementation->factory->GetSystemFontCollection(&implementation->collection, FALSE)))
+  if (FAILED(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
+                                 reinterpret_cast<IUnknown**>(factory.GetAddressOf())))) {
     return nullptr;
+  }
+
+  ComPtr<IDWriteFontCollection> system_font_collection;
+  if (FAILED(factory->GetSystemFontCollection(&system_font_collection, FALSE))) {
+    return nullptr;
+  }
+
+  // It is possible to have been provided a font fallback when factory2 is not
+  // available.
+  ComPtr<IDWriteFontFallback> system_font_fallback;
   ComPtr<IDWriteFactory2> factory2;
-  if (SUCCEEDED(implementation->factory.As(&factory2)) && FAILED(factory2->GetSystemFontFallback(&implementation->fallback)))
-    return nullptr;
-  WCHAR locale[LOCALE_NAME_MAX_LENGTH];
-  const int locale_length = GetUserDefaultLocaleName(locale, LOCALE_NAME_MAX_LENGTH);
-  implementation->locale = locale_length ? FromWide(locale, locale_length - 1) : String(u"");
-  implementation->default_family = String(u"");
-  if (!implementation->fallback) {
-    NONCLIENTMETRICSW metrics{};
-    metrics.cbSize = sizeof(metrics);
-    if (SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0))
-      implementation->default_family = FromWide(metrics.lfMessageFont.lfFaceName,
-                                                std::wcslen(metrics.lfMessageFont.lfFaceName));
-  }
-  return std::shared_ptr<FontManager>(new FontManager(std::move(implementation)));
-}
-
-std::uint32_t FontManager::FamilyCount() const {
-  return impl_->collection->GetFontFamilyCount();
-}
-String FontManager::FamilyName(std::uint32_t index) const {
-  ComPtr<IDWriteFontFamily> family;
-  ComPtr<IDWriteLocalizedStrings> names;
-  if (FAILED(impl_->collection->GetFontFamily(index, &family)) || FAILED(family->GetFamilyNames(&names)))
-    return String();
-  const std::unique_ptr<wchar_t[]> locale = ToWide(impl_->locale);
-  return DWriteLocalizedString(names.Get(), locale.get());
-}
-Vector<FontStyle> FontManager::FamilyStyles(const String& name) const {
-  Vector<FontStyle> result;
-  const std::unique_ptr<wchar_t[]> wide = ToWide(name);
-  UINT32 index = 0;
-  BOOL exists = FALSE;
-  ComPtr<IDWriteFontFamily> family;
-  if (FAILED(impl_->collection->FindFamilyName(wide.get(), &index, &exists)) || !exists || FAILED(impl_->collection->GetFontFamily(index, &family)))
-    return result;
-  for (UINT32 i = 0; i < family->GetFontCount(); ++i) {
-    ComPtr<IDWriteFont> font;
-    ComPtr<IDWriteFontFace> face;
-    if (FAILED(family->GetFont(i, &font)) || FAILED(font->CreateFontFace(&face)))
-      break;
-    result.push_back(DWriteStyle(font.Get(), face.Get()));
-  }
-  return result;
-}
-std::shared_ptr<FontFace> FontManager::MatchFamily(
-    const String& name, const FontStyle& style) const {
-  if (name.IsNull())
-    return nullptr;
-  const std::unique_ptr<wchar_t[]> wide = ToWide(name);
-  UINT32 index = 0;
-  BOOL exists = FALSE;
-  ComPtr<IDWriteFontFamily> family;
-  ComPtr<IDWriteFont> font;
-  ComPtr<IDWriteFontFace> face;
-  if (FAILED(impl_->collection->FindFamilyName(wide.get(), &index, &exists)) || !exists || FAILED(impl_->collection->GetFontFamily(index, &family)) || FAILED(FirstMatchingFontWithoutSimulations(family.Get(), NativeStyle(style), &font)) || FAILED(font->CreateFontFace(&face)))
-    return nullptr;
-  return impl_->MakeFace(face.Get(), font.Get(), family.Get());
-}
-std::shared_ptr<FontFace> FontManager::MatchCharacter(const String& family,
-                                                      const FontStyle& style, const String& locale, std::uint32_t codepoint) const {
-  const std::unique_ptr<wchar_t[]> wide_family = ToWide(family);
-  const std::unique_ptr<wchar_t[]> wide_locale =
-      ToWide(locale.IsNull() ? impl_->locale : locale);
-  const WCHAR* family_name = family.IsNull() ? nullptr : wide_family.get();
-  // onMatchFamilyStyleCharacter accepts a locale stack but DWrite sees only its
-  // last item. Blink already selects that locale before entering this adapter.
-  if (impl_->fallback)
-    return impl_->Fallback(family_name, NativeStyle(style), wide_locale.get(), codepoint);
-  return impl_->LayoutFallback(family_name, NativeStyle(style), wide_locale.get(), codepoint);
-}
-
-// content/browser/renderer_host/dwrite_font_proxy_impl_win.cc:
-// DWriteFontProxyImpl::MatchUniqueFont, plus FontFilePathAndTtcIndex from
-// dwrite_font_file_util_win.cc. Keep PostScript-before-full-name matching and
-// reopen the first match at its TTC index, as Blink's local() path does.
-// Copyright 2018, 2019 The Chromium Authors. BSD license in dwrite_internal.h.
-std::shared_ptr<FontFace> FontManager::MatchUniqueName(const String& unique_name) const {
-  ComPtr<IDWriteFontCollection1> collection1;
-  ComPtr<IDWriteFontSet> font_set;
-  if (FAILED(impl_->collection.As(&collection1)) || FAILED(collection1->GetFontSet(&font_set)))
-    return nullptr;
-  const std::unique_ptr<wchar_t[]> name = ToWide(unique_name);
-  ComPtr<IDWriteFontSet> filtered;
-  const auto filter = [&font_set, &filtered, &name](DWRITE_FONT_PROPERTY_ID id) -> bool {
-    DWRITE_FONT_PROPERTY property{id, name.get(), L""};
-    filtered.Reset();
-    return SUCCEEDED(font_set->GetMatchingFonts(&property, 1, &filtered));
-  };
-  if (!filter(DWRITE_FONT_PROPERTY_ID_POSTSCRIPT_NAME))
-    return nullptr;
-  if (!filtered->GetFontCount() && !filter(DWRITE_FONT_PROPERTY_ID_FULL_NAME))
-    return nullptr;
-  if (!filtered->GetFontCount())
-    return nullptr;
-  ComPtr<IDWriteFontFaceReference> reference;
-  ComPtr<IDWriteFontFace3> face;
-  if (FAILED(filtered->GetFontFaceReference(0, &reference)) || FAILED(reference->CreateFontFace(&face)))
-    return nullptr;
-  UINT32 count = 0;
-  ComPtr<IDWriteFontFile> file;
-  ComPtr<IDWriteFontFileLoader> loader;
-  ComPtr<IDWriteLocalFontFileLoader> local_loader;
-  if (FAILED(face->GetFiles(&count, nullptr)) || count != 1 || FAILED(face->GetFiles(&count, file.GetAddressOf())) || FAILED(file->GetLoader(&loader)) || FAILED(loader.As(&local_loader)))
-    return nullptr;
-  const void* key = nullptr;
-  UINT32 key_size = 0;
-  UINT32 path_length = 0;
-  if (FAILED(file->GetReferenceKey(&key, &key_size)) || FAILED(local_loader->GetFilePathLengthFromKey(key, key_size, &path_length)))
-    return nullptr;
-  std::unique_ptr<wchar_t[]> path =
-      std::make_unique<wchar_t[]>(static_cast<std::size_t>(path_length) + 1);
-  if (FAILED(local_loader->GetFilePathFromKey(key, key_size, path.get(), path_length + 1)))
-    return nullptr;
-  return CreateFromFile(FromWide(path.get(), path_length), face->GetIndex());
-}
-
-std::shared_ptr<FontFace> FontManager::DefaultFont(const FontStyle& style) const {
-  const std::unique_ptr<wchar_t[]> locale = ToWide(impl_->locale);
-  if (impl_->fallback)
-    return impl_->Fallback(nullptr, NativeStyle(style), locale.get(), 32);
-  std::shared_ptr<FontFace> default_face = MatchFamily(impl_->default_family, style);
-  if (default_face)
-    return default_face;
-  ComPtr<IDWriteFontFamily> family;
-  ComPtr<IDWriteFont> font;
-  ComPtr<IDWriteFontFace> face;
-  if (FAILED(impl_->collection->GetFontFamily(0, &family)) || FAILED(FirstMatchingFontWithoutSimulations(family.Get(), NativeStyle(style), &font)) || FAILED(font->CreateFontFace(&face)))
-    return nullptr;
-  return impl_->MakeFace(face.Get(), font.Get(), family.Get());
-}
-
-// DWriteFontTypeface::MakeFromStream: keep the custom collection and search the
-// first non-simulated font with exactly the requested TTC index.
-std::shared_ptr<FontFace> FontManager::CreateFromData(
-    std::span<const std::uint8_t> bytes, std::uint32_t collection_index) const {
-  auto data = std::make_shared<FontFileData>();
-  data->size = bytes.size();
-  data->bytes = std::make_unique<std::uint8_t[]>(data->size);
-  if (!bytes.empty())
-    std::memcpy(data->bytes.get(), bytes.data(), bytes.size());
-  auto loaders = std::make_shared<FontCollectionLoaders>(impl_->factory.Get());
-  ComPtr<IDWriteFontCollection> collection;
-  if (FAILED(loaders->Initialize(data)) || FAILED(impl_->factory->CreateCustomFontCollection(loaders->CollectionLoader(), nullptr, 0, &collection)))
-    return nullptr;
-  for (UINT32 i = 0; i < collection->GetFontFamilyCount(); ++i) {
-    ComPtr<IDWriteFontFamily> family;
-    if (FAILED(collection->GetFontFamily(i, &family)))
+  if (SUCCEEDED(factory.As(&factory2))) {
+    if (FAILED(factory2->GetSystemFontFallback(&system_font_fallback))) {
       return nullptr;
-    for (UINT32 j = 0; j < family->GetFontCount(); ++j) {
-      ComPtr<IDWriteFont> font;
-      if (FAILED(family->GetFont(j, &font)))
-        return nullptr;
-      if (font->GetSimulations() != DWRITE_FONT_SIMULATIONS_NONE)
-        continue;
-      ComPtr<IDWriteFontFace> face;
-      if (FAILED(font->CreateFontFace(&face)))
-        return nullptr;
-      if (face->GetIndex() != collection_index)
-        continue;
-      return impl_->MakeFace(face.Get(), font.Get(), family.Get(), std::move(loaders));
     }
   }
-  return nullptr;
-}
 
-std::shared_ptr<FontFace> FontManager::CreateFromFile(
-    const String& path, std::uint32_t collection_index) const {
-  const std::unique_ptr<wchar_t[]> wide = ToWide(path);
-  const HANDLE file = CreateFileW(wide.get(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-  if (file == INVALID_HANDLE_VALUE)
-    return nullptr;
-  struct FileCloser {
-    HANDLE file;
-    ~FileCloser() {
-      CloseHandle(file);
+  const WCHAR* default_family_name = L"";
+  int default_family_name_len = 1;
+  NONCLIENTMETRICSW metrics;
+  metrics.cbSize = sizeof(metrics);
+
+  if (nullptr == system_font_fallback) {
+    if (SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0)) {
+      default_family_name = metrics.lfMessageFont.lfFaceName;
+      default_family_name_len = LF_FACESIZE;
     }
-  } closer{file};
-  LARGE_INTEGER length{};
-  if (!GetFileSizeEx(file, &length) || length.QuadPart < 0 || static_cast<ULONGLONG>(length.QuadPart) > std::numeric_limits<std::size_t>::max())
-    return nullptr;
-  const std::size_t data_size = static_cast<std::size_t>(length.QuadPart);
-  std::unique_ptr<std::uint8_t[]> data =
-      std::make_unique<std::uint8_t[]>(data_size);
-  std::size_t position = 0;
-  while (position < data_size) {
-    const DWORD request = static_cast<DWORD>(std::min<std::size_t>(
-        data_size - position,
-        std::numeric_limits<DWORD>::max()));
-    DWORD read = 0;
-    if (!ReadFile(file, data.get() + position, request, &read, nullptr) || !read)
-      return nullptr;
-    position += read;
   }
-  return CreateFromData(std::span<const std::uint8_t>(data.get(), data_size),
-                        collection_index);
+
+  WCHAR locale_name_storage[LOCALE_NAME_MAX_LENGTH];
+  const WCHAR* locale_name = L"";
+  int locale_name_len = 1;
+
+  int size = GetUserDefaultLocaleName(locale_name_storage, LOCALE_NAME_MAX_LENGTH);
+  if (size) {
+    locale_name = locale_name_storage;
+    locale_name_len = size;
+  }
+
+  return std::make_shared<FontManagerDirectWrite>(factory.Get(), system_font_collection.Get(), system_font_fallback.Get(),
+                                                  locale_name, locale_name_len,
+                                                  default_family_name, default_family_name_len);
 }
 
 } // namespace bkfont

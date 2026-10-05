@@ -1,4 +1,4 @@
-// Source: base/i18n/string_search.h
+// Ported from: chromium/base/i18n/string_search.h
 // Copyright 2011 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -17,6 +17,7 @@
 struct UStringSearch;
 
 namespace bkfont::base {
+
 namespace i18n {
 
 // The ICU search object is owned, not a Chromium-instrumented borrowed pointer.
@@ -116,4 +117,5 @@ private:
 };
 
 } // namespace i18n
+
 } // namespace bkfont::base

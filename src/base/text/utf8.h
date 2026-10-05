@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/utf8.h
+// Ported from: blink/renderer/platform/wtf/text/utf8.h
 /*
  * Copyright (C) 2007 Apple Inc.  All rights reserved.
  *

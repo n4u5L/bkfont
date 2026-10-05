@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_data_for_range_set.h
+// Ported from: blink/renderer/platform/fonts/font_data_for_range_set.h
 /*
  * Copyright (C) 2008, 2009 Apple Inc. All rights reserved.
  *

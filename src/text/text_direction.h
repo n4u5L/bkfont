@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/text/text_direction.h
+// Ported from: blink/renderer/platform/text/text_direction.h
 /*
  * Copyright (C) 2003, 2006 Apple Computer, Inc.  All rights reserved.
  *

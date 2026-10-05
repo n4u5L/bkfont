@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_fallback_iterator.cc
+// Ported from: blink/renderer/platform/fonts/font_fallback_iterator.cc
 // Copyright 2015 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -79,9 +79,9 @@ std::shared_ptr<FontDataForRangeSet> FontFallbackIterator::UniqueOrNext(
   if (!candidate->HasFontData())
     return Next(hint_list);
 
-  const auto& candidate_typeface = candidate->FontData()->PlatformData().GetFontFace();
+  const auto& candidate_typeface = candidate->FontData()->PlatformData().Typeface();
   if (!candidate_typeface) return Next(hint_list);
-  uint64_t candidate_id = candidate_typeface->UniqueId();
+  uint64_t candidate_id = candidate_typeface->UniqueID();
   if (unique_font_data_for_range_sets_returned_.Contains(candidate_id)) {
     return Next(hint_list);
   }

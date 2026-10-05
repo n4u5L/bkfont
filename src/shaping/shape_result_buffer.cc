@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/shaping/shape_result_buffer.cc
+// Ported from: blink/renderer/platform/fonts/shaping/shape_result_buffer.cc
 // Copyright 2016 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -56,8 +56,8 @@ void ShapeResultBuffer::ComputeRangeIn(const ShapeResult& result,
     if (!context.from_x && context.from >= 0 && context.from < num_characters) {
       context.from_x = result.runs_[i]->XPositionForVisualOffset(
                            context.from,
-                           AdjustMidCluster::kToStart)
-                       + context.current_x;
+                           AdjustMidCluster::kToStart) +
+                       context.current_x;
     } else {
       context.from -= num_characters;
     }
@@ -65,8 +65,8 @@ void ShapeResultBuffer::ComputeRangeIn(const ShapeResult& result,
     if (!context.to_x && context.to >= 0 && context.to < num_characters) {
       context.to_x = result.runs_[i]->XPositionForVisualOffset(
                          context.to,
-                         AdjustMidCluster::kToEnd)
-                     + context.current_x;
+                         AdjustMidCluster::kToEnd) +
+                     context.current_x;
     } else {
       context.to -= num_characters;
     }

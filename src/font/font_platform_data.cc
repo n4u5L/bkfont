@@ -1,3 +1,6 @@
+// Ported from: blink/renderer/platform/fonts/font_platform_data.cc
+// (Linux branch)
+
 /*
  * Copyright (C) 2011 Brent Fulgham
  *
@@ -18,19 +21,23 @@
  *
  */
 
-// Port source: platform/fonts/font_platform_data.cc (Windows and backend-independent paths).
+
 #include "font_platform_data.h"
-#include "shaping/harfbuzz_face.h"
+
 #include <cstring>
-#include <cmath>
-#include "base/math_extras.h"
-#include "font_cache.h"
+#include <utility>
+
 #include "runtime_enabled_features.h"
+#include "shaping/harfbuzz_face.h"
+
 namespace bkfont {
+
 FontPlatformData::FontPlatformData() = default;
+
 FontPlatformData::FontPlatformData(HashTableDeletedValueType)
     : is_hash_table_deleted_value_(true) {
 }
+
 FontPlatformData::FontPlatformData(const FontPlatformData& source)
     : typeface_(source.typeface_),
       text_size_(source.text_size_),
@@ -40,126 +47,123 @@ FontPlatformData::FontPlatformData(const FontPlatformData& source)
       text_rendering_(source.text_rendering_),
       orientation_(source.orientation_),
       resolved_font_features_(source.resolved_font_features_),
-      use_anti_alias_(source.use_anti_alias_),
-      use_subpixel_rendering_(source.use_subpixel_rendering_) {
+      style_(source.style_) {
 }
+
 FontPlatformData::FontPlatformData(const FontPlatformData& src, float text_size)
     : FontPlatformData(src.typeface_, String(), text_size, src.synthetic_bold_,
                        src.synthetic_italic_, src.text_rendering_, src.resolved_font_features_, src.orientation_) {
 }
-FontPlatformData::FontPlatformData(std::shared_ptr<FontFace> face, const String&,
-                                   float size, bool bold, bool italic, TextRenderingMode rendering,
-                                   ResolvedFontFeatures features, FontOrientation orientation)
-    : typeface_(std::move(face)),
-      text_size_(size),
-      synthetic_bold_(bold),
-      synthetic_italic_(italic),
-      text_rendering_(rendering),
+
+FontPlatformData::FontPlatformData(std::shared_ptr<bkfont::Typeface> typeface,
+                                   const String&,
+                                   float text_size,
+                                   bool synthetic_bold,
+                                   bool synthetic_italic,
+                                   TextRenderingMode text_rendering,
+                                   ResolvedFontFeatures resolved_font_features,
+                                   FontOrientation orientation)
+    : typeface_(std::move(typeface)),
+      text_size_(text_size),
+      synthetic_bold_(synthetic_bold),
+      synthetic_italic_(synthetic_italic),
+      text_rendering_(text_rendering),
       orientation_(orientation),
-      resolved_font_features_(std::move(features)),
-      use_anti_alias_(!RuntimeEnabledFeatures::NoFontAntialiasingEnabled() && FontCache::AntialiasedTextEnabled()),
-      use_subpixel_rendering_(use_anti_alias_ && FontCache::LcdTextEnabled()) {
+      resolved_font_features_(std::move(resolved_font_features)) {
+  // QuerySystemRenderStyle's Linux geometric-precision adjustment. System
+  // preference queries are replaced by the same resolved defaults everywhere.
+  if (text_rendering == kGeometricPrecision && style_.use_anti_alias) {
+    style_.use_subpixel_positioning = true;
+    style_.use_hinting = false;
+    style_.hint_style = FontHinting::kNone;
+  }
 }
+
 FontPlatformData::~FontPlatformData() = default;
+
 bool FontPlatformData::operator==(const FontPlatformData& a) const {
   const bool equal_faces = (!typeface_ || !a.typeface_)
                                ? typeface_ == a.typeface_
-                               : typeface_->UniqueId() == a.typeface_->UniqueId();
-  return equal_faces && text_size_ == a.text_size_ && is_hash_table_deleted_value_ == a.is_hash_table_deleted_value_ && synthetic_bold_ == a.synthetic_bold_ && synthetic_italic_ == a.synthetic_italic_ && avoid_embedded_bitmaps_ == a.avoid_embedded_bitmaps_ && text_rendering_ == a.text_rendering_ && resolved_font_features_ == a.resolved_font_features_ && use_anti_alias_ == a.use_anti_alias_ && use_subpixel_rendering_ == a.use_subpixel_rendering_ && orientation_ == a.orientation_;
+                               : bkfont::Typeface::Equal(typeface_.get(), a.typeface_.get());
+  return equal_faces && text_size_ == a.text_size_ &&
+         is_hash_table_deleted_value_ == a.is_hash_table_deleted_value_ &&
+         synthetic_bold_ == a.synthetic_bold_ &&
+         synthetic_italic_ == a.synthetic_italic_ &&
+         avoid_embedded_bitmaps_ == a.avoid_embedded_bitmaps_ &&
+         text_rendering_ == a.text_rendering_ &&
+         resolved_font_features_ == a.resolved_font_features_ &&
+         style_ == a.style_ && orientation_ == a.orientation_;
 }
-uint64_t FontPlatformData::UniqueID() const {
-  return typeface_->UniqueId();
+
+std::uint32_t FontPlatformData::UniqueID() const {
+  return typeface_->UniqueID();
 }
+
 String FontPlatformData::FontFamilyName() const {
-  return typeface_->FamilyName();
+  auto font_family_iterator = typeface_->CreateFamilyNameIterator();
+  bkfont::Typeface::LocalizedString localized_string{String(""), String("")};
+  while (font_family_iterator->Next(&localized_string) &&
+         localized_string.string.empty()) {
+  }
+  // Converting an empty SkString upstream produces a non-null empty String.
+  return localized_string.string.IsNull() ? String("") : localized_string.string;
 }
+
 String FontPlatformData::GetPostScriptName() const {
-  return typeface_->PostScriptName();
+  if (!typeface_) {
+    return String();
+  }
+  String postscript_name("");
+  bool success = typeface_->GetPostScriptName(&postscript_name);
+  return success ? postscript_name : String();
 }
+
 bool FontPlatformData::IsAhem() const {
   return FontFamilyName() == "Ahem";
 }
+
 HarfBuzzFace* FontPlatformData::GetHarfBuzzFace() const {
-  if (!harfbuzz_face_) harfbuzz_face_ = std::make_unique<HarfBuzzFace>(this, UniqueID());
+  if (!harfbuzz_face_) {
+    harfbuzz_face_ = std::make_unique<HarfBuzzFace>(this, UniqueID());
+  }
   return harfbuzz_face_.get();
 }
+
 bool FontPlatformData::HasSpaceInLigaturesOrKerning(TypesettingFeatures features) const {
   HarfBuzzFace* face = GetHarfBuzzFace();
   return face && face->HasSpaceInLigaturesOrKerning(features);
 }
+
 unsigned FontPlatformData::GetHash() const {
-  unsigned h = static_cast<unsigned>(UniqueID());
-  h ^= 0x01010101 * ((static_cast<int>(is_hash_table_deleted_value_) << 3) | (static_cast<int>(orientation_) << 2) | (static_cast<int>(synthetic_bold_) << 1) | static_cast<int>(synthetic_italic_));
-  uint32_t size_bytes;
-  std::memcpy(&size_bytes, &text_size_, sizeof(uint32_t));
+  unsigned h = UniqueID();
+  h ^= 0x01010101 * ((static_cast<int>(is_hash_table_deleted_value_) << 3) |
+                     (static_cast<int>(orientation_) << 2) |
+                     (static_cast<int>(synthetic_bold_) << 1) |
+                     static_cast<int>(synthetic_italic_));
+  std::uint32_t size_bytes;
+  std::memcpy(&size_bytes, &text_size_, sizeof(size_bytes));
   return h ^ size_bytes;
 }
-bool FontPlatformData::FontContainsCharacter(UChar32 character) const {
-  return typeface_->ContainsCharacter(character);
-}
-} // namespace bkfont
 
-namespace bkfont {
-FontRenderOptions FontPlatformData::RenderOptions() const {
-  FontRenderOptions options;
-  options.synthetic_bold = synthetic_bold_;
-  options.synthetic_italic = synthetic_italic_;
-  options.anti_alias = use_anti_alias_;
-  options.subpixel_rendering = use_subpixel_rendering_;
-  options.subpixel_positioning = use_anti_alias_;
-  options.embedded_bitmaps = !avoid_embedded_bitmaps_;
-  return options;
+bool FontPlatformData::FontContainsCharacter(UChar32 character) const {
+  return CreatePlatformFont().UnicharToGlyph(character);
 }
+
 PlatformFont FontPlatformData::CreatePlatformFont(const FontDescription*) const {
   PlatformFont font(typeface_);
-  font.SetSize(text_size_);
+  style_.ApplyToPlatformFont(&font);
+
+  const float text_size = text_size_ >= 0 ? text_size_ : 12;
+  font.SetSize(text_size);
   font.SetEmbolden(synthetic_bold_);
   font.SetSkewX(synthetic_italic_ ? -1.0f / 4 : 0);
+  font.SetEmbeddedBitmaps(!avoid_embedded_bitmaps_);
 
-  bool use_subpixel_rendering = use_subpixel_rendering_;
-  bool use_anti_alias = use_anti_alias_;
-
-  if (use_subpixel_rendering) {
-    font.SetEdging(PlatformFont::Edging::kSubpixelAntiAlias);
-  } else if (use_anti_alias) {
-    font.SetEdging(PlatformFont::Edging::kAntiAlias);
-  } else {
+  // WebTestSupport's antialiasing override is outside this port.
+  if (RuntimeEnabledFeatures::NoFontAntialiasingEnabled()) {
     font.SetEdging(PlatformFont::Edging::kAlias);
   }
-
-  // Only use sub-pixel positioning if anti aliasing is enabled. Otherwise,
-  // without font smoothing, subpixel text positioning leads to uneven spacing
-  // since subpixel test placement coordinates would be passed to Skia, which
-  // only has non-antialiased glyphs to draw, so they necessarily get clamped at
-  // pixel positions, which leads to uneven spacing, either too close or too far
-  // away from adjacent glyphs. We avoid this by linking the two flags.
-  if (use_anti_alias) {
-    font.SetSubpixel(true);
-  }
-
-  // The WebTestSupport subpixel override has no counterpart here.
-
-  font.SetEmbeddedBitmaps(!avoid_embedded_bitmaps_);
   return font;
 }
-bool FontPlatformData::MeasureGlyph(uint16_t glyph, PlatformGlyphMetrics* metrics) const {
-  const bool measured = typeface_->MeasureGlyph(glyph, text_size_, RenderOptions(), metrics);
-  // Source: skia/skia_text_metrics.cc. Keep Blink's final rounding outside
-  // the native scaler, whose values correspond to the underlying font API.
-  if (!ShouldSubpixelPosition()) {
-    metrics->advance_x = ClampTo<int32_t>(std::floor(metrics->advance_x + 0.5f));
-    if (measured) {
-      const float right = ClampTo<int32_t>(std::ceil(metrics->left + metrics->width));
-      const float bottom = ClampTo<int32_t>(std::ceil(metrics->top + metrics->height));
-      metrics->left = ClampTo<int32_t>(std::floor(metrics->left));
-      metrics->top = ClampTo<int32_t>(std::floor(metrics->top));
-      metrics->width = right - metrics->left;
-      metrics->height = bottom - metrics->top;
-    }
-  }
-  return measured;
-}
-PlatformFontMetrics FontPlatformData::GetFontMetrics() const {
-  return typeface_->GetFontMetrics(text_size_, RenderOptions());
-}
+
 } // namespace bkfont

@@ -1,4 +1,4 @@
-// Ported from Chromium: third_party/blink/renderer/platform/fonts/shaping/variation_selector_mode.h
+// Ported from: blink/renderer/platform/fonts/shaping/variation_selector_mode.h
 // Copyright 2024 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -8,6 +8,7 @@
 #include "font/font_variant_emoji.h"
 
 namespace bkfont {
+
 enum VariationSelectorMode {
   // font-variant-emoji="normal". This value will behave as if
   // no variation selector was specified. This means that if no

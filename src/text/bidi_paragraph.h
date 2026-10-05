@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/text/bidi_paragraph.h
+// Ported from: blink/renderer/platform/text/bidi_paragraph.h
 // Copyright 2023 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -75,7 +75,7 @@ public:
   // https://unicode.org/reports/tr9/#Explicit_Directional_Overrides
   // https://unicode.org/reports/tr9/#Terminating_Explicit_Directional_Embeddings_and_Overrides
   static bkfont::String StringWithDirectionalOverride(const StringView& text,
-                                                   TextDirection direction);
+                                                      TextDirection direction);
 
   struct Run {
     Run(unsigned start, unsigned end, UBiDiLevel level)

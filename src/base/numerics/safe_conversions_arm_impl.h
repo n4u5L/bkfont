@@ -1,4 +1,4 @@
-// Source: base/numerics/safe_conversions_arm_impl.h
+// Ported from: chromium/base/numerics/safe_conversions_arm_impl.h
 // Copyright 2017 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -16,6 +16,7 @@
 #include "base/numerics/safe_conversions_impl.h"
 
 namespace bkfont::base {
+
 namespace internal {
 
 // Fast saturation to a destination type.
@@ -43,4 +44,5 @@ struct SaturateFastAsmOp {
 };
 
 } // namespace internal
+
 } // namespace bkfont::base

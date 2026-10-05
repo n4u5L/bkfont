@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/text/character.h
+// Ported from: blink/renderer/platform/text/character.h
 /*
  * Copyright (C) 2014 Google Inc. All rights reserved.
  *

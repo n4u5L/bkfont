@@ -1,4 +1,4 @@
-// Source: base/numerics/clamped_math_impl.h
+// Ported from: chromium/base/numerics/clamped_math_impl.h
 // Copyright 2017 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -16,6 +16,7 @@
 #include "base/numerics/safe_math_shared_impl.h" // IWYU pragma: export
 
 namespace bkfont::base {
+
 namespace internal {
 
 template <typename T>
@@ -295,4 +296,5 @@ BASE_FLOAT_ARITHMETIC_OPS(Div, /)
 #undef BASE_FLOAT_ARITHMETIC_OPS
 
 } // namespace internal
+
 } // namespace bkfont::base

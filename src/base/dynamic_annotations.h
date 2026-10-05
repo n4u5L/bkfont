@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/dynamic_annotations.h
+// Ported from: blink/renderer/platform/wtf/dynamic_annotations.h
 /*
  * Copyright (C) 2011 Google Inc. All rights reserved.
  *
@@ -49,7 +49,6 @@
  * information.
  */
 #include <cstddef>
-
 
 #if defined(DYNAMIC_ANNOTATIONS_ENABLED)
 /* Tell data race detector that we're not interested in reports on the given

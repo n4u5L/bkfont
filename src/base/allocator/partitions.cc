@@ -1,10 +1,12 @@
+// Ported from: blink/renderer/platform/wtf/allocator/partitions.cc
+// CRT allocation is the selected
+// native boundary. Chromium's partitions, heap profiling and OOM crash reporting
+// are not required here; allocation failure crashes like Chromium's OOM_CRASH.
+
 // Copyright 2013 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Source: platform/wtf/allocator/partitions.cc. CRT allocation is the selected
-// native boundary. Chromium's partitions, heap profiling and OOM crash reporting
-// are not required here; allocation failure crashes like Chromium's OOM_CRASH.
 #include "base/allocator/partitions.h"
 
 #include <cstdlib>

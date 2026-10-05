@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/font_variant_east_asian.h
+// Ported from: blink/renderer/platform/fonts/font_variant_east_asian.h
 // Copyright 2017 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -93,4 +93,5 @@ private:
   // Used in setVariant to store the value in m_fields.m_variantNumeric;
   friend class FontDescription;
 };
+
 } // namespace bkfont

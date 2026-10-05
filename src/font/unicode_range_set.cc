@@ -1,4 +1,4 @@
-// Port source: third_party/blink/renderer/platform/fonts/unicode_range_set.cc
+// Ported from: blink/renderer/platform/fonts/unicode_range_set.cc
 /*
  * Copyright (C) 2007, 2008, 2011 Apple Inc. All rights reserved.
  *
@@ -94,4 +94,5 @@ bool UnicodeRangeSet::operator==(const UnicodeRangeSet& other) const {
   }
   return equal;
 }
+
 } // namespace bkfont

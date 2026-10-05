@@ -1,4 +1,5 @@
-// Source: Blink platform/wtf/thread_specific.h; native TLS adapter.
+// Ported from: blink/renderer/platform/wtf/thread_specific.h
+// native TLS adapter.
 /*
  * Copyright (C) 2008 Apple Inc. All rights reserved.
  * Copyright (C) 2009 Jian Li <jianli@chromium.org>

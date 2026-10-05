@@ -1,4 +1,4 @@
-// Source: third_party/blink/renderer/platform/wtf/text/integer_to_string_conversion.h
+// Ported from: blink/renderer/platform/wtf/text/integer_to_string_conversion.h
 /*
  * Copyright (C) 2012 Apple Inc. All Rights Reserved.
  * Copyright (C) 2012 Patrick Gansterer <paroga@paroga.com>
