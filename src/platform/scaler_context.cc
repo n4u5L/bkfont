@@ -7,13 +7,16 @@
 #include <cmath>
 #include <cstring>
 #include <limits>
+#include <new>
 #include <type_traits>
 #include <utility>
 
 #include "arena.h"
 #include "base/hash/hash.h"
 #include "base/mutex.h"
+#include "paint/path_effect.h"
 #include "paint/picture.h"
+#include "paint/raster_canvas.h"
 #include "paint/scalar.h"
 #include "paint/shader.h"
 
@@ -248,14 +251,24 @@ bool ScalerContextRec::operator==(const ScalerContextRec& other) const {
   const auto bits = [](float value) {
     return std::bit_cast<std::uint32_t>(value);
   };
-  return typeface_id == other.typeface_id && bits(text_size) == bits(other.text_size) && bits(pre_scale_x) == bits(other.pre_scale_x) && bits(pre_skew_x) == bits(other.pre_skew_x) && bits(post2x2[0][0]) == bits(other.post2x2[0][0]) && bits(post2x2[0][1]) == bits(other.post2x2[0][1]) && bits(post2x2[1][0]) == bits(other.post2x2[1][0]) && bits(post2x2[1][1]) == bits(other.post2x2[1][1]) && foreground_color == other.foreground_color && lum_bits_ == other.lum_bits_ && device_gamma_ == other.device_gamma_ && contrast_ == other.contrast_ && mask_format == other.mask_format && flags == other.flags;
+  return typeface_id == other.typeface_id && bits(text_size) == bits(other.text_size) &&
+         bits(pre_scale_x) == bits(other.pre_scale_x) && bits(pre_skew_x) == bits(other.pre_skew_x) &&
+         bits(post2x2[0][0]) == bits(other.post2x2[0][0]) && bits(post2x2[0][1]) == bits(other.post2x2[0][1]) &&
+         bits(post2x2[1][0]) == bits(other.post2x2[1][0]) && bits(post2x2[1][1]) == bits(other.post2x2[1][1]) &&
+         bits(frame_width) == bits(other.frame_width) && bits(miter_limit) == bits(other.miter_limit) &&
+         stroke_join == other.stroke_join && stroke_cap == other.stroke_cap &&
+         (path_effect == other.path_effect ||
+          (path_effect && other.path_effect && path_effect->Equals(*other.path_effect))) &&
+         foreground_color == other.foreground_color && lum_bits_ == other.lum_bits_ &&
+         device_gamma_ == other.device_gamma_ && contrast_ == other.contrast_ &&
+         mask_format == other.mask_format && flags == other.flags;
 }
 
 std::size_t ScalerContextRecHash::operator()(const ScalerContextRec& rec) const {
   const auto bits = [](float value) {
     return std::bit_cast<std::uint32_t>(value);
   };
-  const std::array<std::uint32_t, 12> words = {
+  const std::array<std::uint32_t, 16> words = {
       rec.typeface_id,
       bits(rec.text_size),
       bits(rec.pre_scale_x),
@@ -264,6 +277,12 @@ std::size_t ScalerContextRecHash::operator()(const ScalerContextRec& rec) const 
       bits(rec.post2x2[0][1]),
       bits(rec.post2x2[1][0]),
       bits(rec.post2x2[1][1]),
+      bits(rec.frame_width),
+      bits(rec.miter_limit),
+      static_cast<std::uint32_t>(rec.stroke_join) | (static_cast<std::uint32_t>(rec.stroke_cap) << 8),
+      // Effects compare by value. Hash only their presence so separately
+      // allocated equivalent effects always have the same descriptor hash.
+      static_cast<std::uint32_t>(rec.path_effect != nullptr),
       rec.foreground_color,
       rec.lum_bits_,
       rec.device_gamma_ | (static_cast<std::uint32_t>(rec.contrast_) << 8),
@@ -276,6 +295,7 @@ std::size_t ScalerContextRecHash::operator()(const ScalerContextRec& rec) const 
 ScalerContext::ScalerContext(std::shared_ptr<Typeface> typeface, const ScalerContextRec& rec)
     : rec_(PreprocessRec(*typeface, rec)),
       typeface_(std::move(typeface)),
+      generate_image_from_path_(rec_.frame_width >= 0 || rec_.path_effect != nullptr),
       pre_blend_(GetMaskPreBlend(rec_)) {
 }
 
@@ -391,9 +411,7 @@ PlatformGlyph ScalerContext::InternalMakeGlyph(PackedGlyphID packed_id, MaskForm
   glyph.mask_format_ = mx.mask_format;
   glyph.scaler_context_bits_ = mx.extra_bits;
 
-  // fGenerateImageFromPath is false, so only compute_from_path requests the
-  // path here.
-  if (mx.compute_from_path) {
+  if (mx.compute_from_path || (generate_image_from_path_ && !mx.never_request_path)) {
     InternalGetPath(glyph, arena, std::move(mx.generated_path));
     const ScalarPath* dev_path = glyph.Path();
     if (dev_path) {
@@ -420,9 +438,148 @@ PlatformGlyph ScalerContext::InternalMakeGlyph(PackedGlyphID packed_id, MaskForm
 }
 
 void ScalerContext::GetImage(const PlatformGlyph& orig_glyph) {
-  // Without a mask filter the unfiltered glyph is the original glyph, and
-  // without fGenerateImageFromPath the image is always generated directly.
-  GenerateImage(orig_glyph, orig_glyph.image_);
+  // Bitmap/color glyphs without an outline retain the platform image path.
+  if (!generate_image_from_path_ || !orig_glyph.Path()) {
+    GenerateImage(orig_glyph, orig_glyph.image_);
+    return;
+  }
+  MaskBuilder mask(static_cast<std::uint8_t*>(orig_glyph.image_), orig_glyph.IRect(),
+                   orig_glyph.RowBytes(), orig_glyph.GetMaskFormat());
+  GenerateImageFromPath(mask, *orig_glyph.Path(), pre_blend_,
+                        (rec_.flags & kLCD_BGROrder_Flag) != 0,
+                        (rec_.flags & kLCD_Vertical_Flag) != 0,
+                        (rec_.flags & kGenA8FromLCD_Flag) != 0, orig_glyph.PathIsHairline());
+}
+
+namespace {
+
+// SkScalerContext.cpp's pack4xHToMask. The source has four horizontal
+// samples per pixel; vertical LCD transposes the destination writes.
+void Pack4xHToMask(const Pixmap& src, MaskBuilder& dst, const MaskGamma::PreBlend& pre_blend,
+                   bool bgr, bool vertical) {
+  static constexpr unsigned coefficients[3][12] = {
+      {0x03, 0x0b, 0x1c, 0x33, 0x40, 0x39, 0x24, 0x10, 0x05, 0x01, 0x00, 0x00},
+      {0x00, 0x02, 0x08, 0x16, 0x2b, 0x3d, 0x3d, 0x2b, 0x16, 0x08, 0x02, 0x00},
+      {0x00, 0x00, 0x01, 0x05, 0x10, 0x24, 0x39, 0x40, 0x33, 0x1c, 0x0b, 0x03},
+  };
+  const bool to_a8 = dst.format == MaskFormat::kA8;
+  const std::size_t pixel_bytes = to_a8 ? 1 : 2;
+  const int sample_width = src.Width();
+  for (int y = 0; y < src.Height(); ++y) {
+    std::uint8_t* dst_pixel = dst.image + static_cast<std::size_t>(y) * (vertical ? pixel_bytes : dst.row_bytes);
+    const std::size_t delta = vertical ? dst.row_bytes : pixel_bytes;
+    const auto* samples = src.WritableAddr8(0, y);
+    for (int sample_x = -4; sample_x < sample_width + 4; sample_x += 4) {
+      unsigned fir[3] = {};
+      for (int sample = std::max(0, sample_x - 4), coefficient = sample - (sample_x - 4);
+           sample < std::min(sample_x + 8, sample_width); ++sample, ++coefficient) {
+        for (int channel = 0; channel < 3; ++channel) {
+          fir[channel] += coefficients[channel][coefficient] * samples[sample];
+        }
+      }
+      for (unsigned& value : fir) value = std::min(value / 0x100, 255u);
+      unsigned r = fir[bgr ? 2 : 0];
+      unsigned g = fir[1];
+      unsigned b = fir[bgr ? 0 : 2];
+      if (to_a8) {
+        unsigned a = (r + g + b) / 3;
+        if (pre_blend.IsApplicable()) a = pre_blend.g[a];
+        *dst_pixel = static_cast<std::uint8_t>(a);
+      } else {
+        if (pre_blend.IsApplicable()) {
+          r = pre_blend.r[r];
+          g = pre_blend.g[g];
+          b = pre_blend.b[b];
+        }
+        const std::uint16_t pixel = Pack888ToRGB16(r, g, b);
+        std::memcpy(dst_pixel, &pixel, sizeof(pixel));
+      }
+      dst_pixel += delta;
+    }
+  }
+}
+
+void PackA8ToA1(MaskBuilder& dst, const Pixmap& src) {
+  for (int y = 0; y < dst.bounds.Height(); ++y) {
+    const std::uint8_t* src_row = src.WritableAddr8(0, y);
+    std::uint8_t* dst_row = dst.image + static_cast<std::size_t>(y) * dst.row_bytes;
+    for (int x = 0; x < dst.bounds.Width(); x += 8) {
+      unsigned bits = 0;
+      for (int bit = 0; bit < std::min(8, dst.bounds.Width() - x); ++bit) {
+        bits |= (src_row[x + bit] >> 7) << (7 - bit);
+      }
+      dst_row[x >> 3] = static_cast<std::uint8_t>(bits);
+    }
+  }
+}
+
+} // namespace
+
+void ScalerContext::GenerateImageFromPath(MaskBuilder& mask, const ScalarPath& path,
+                                          const MaskGamma::PreBlend& pre_blend,
+                                          bool bgr, bool vertical_lcd, bool a8_from_lcd, bool hairline) {
+  const std::size_t image_size = static_cast<std::size_t>(mask.bounds.Height()) * mask.row_bytes;
+  std::memset(mask.image, 0, image_size);
+  int width = mask.bounds.Width();
+  int height = mask.bounds.Height();
+  ScalarMatrix matrix = ScalarMatrix::Translate(-static_cast<float>(mask.bounds.left),
+                                                 -static_cast<float>(mask.bounds.top));
+  PlatformPaint paint;
+  paint.SetStyle(hairline ? PlatformPaint::Style::kStroke : PlatformPaint::Style::kFill);
+  paint.SetAntiAlias(mask.format != MaskFormat::kBW);
+  const bool from_lcd = mask.format == MaskFormat::kLCD16 ||
+                        (mask.format == MaskFormat::kA8 && a8_from_lcd);
+  const bool intermediate = from_lcd || mask.format == MaskFormat::kBW;
+  ScalarPath stroke_path;
+  const ScalarPath* path_to_use = &path;
+  if (from_lcd) {
+    if (vertical_lcd) {
+      width = 4 * height - 8;
+      height = mask.bounds.Width();
+      matrix = ScalarMatrix::MakeAll(0, 4, -static_cast<float>(mask.bounds.top + 1) * 4,
+                                      1, 0, -static_cast<float>(mask.bounds.left));
+    } else {
+      width = 4 * width - 8;
+      matrix = ScalarMatrix::MakeAll(4, 0, -static_cast<float>(mask.bounds.left + 1) * 4,
+                                      0, 1, -static_cast<float>(mask.bounds.top));
+    }
+    // LCD hairlines do not line up with pixels. Stroke before oversampling.
+    if (hairline) {
+      StrokeRec stroke(StrokeRec::kFill_InitStyle);
+      stroke.SetStrokeStyle(1);
+      stroke.SetStrokeParams(StrokeCap::kButt, StrokeJoin::kRound, 0);
+      if (stroke.ApplyToPath(&stroke_path, path)) {
+        path_to_use = &stroke_path;
+        paint.SetStyle(PlatformPaint::Style::kFill);
+      }
+    }
+  }
+  if (width <= 0 || height <= 0) return;
+  std::unique_ptr<std::uint8_t[]> storage;
+  Pixmap dst(ColorType::kAlpha8, width, height, mask.image, mask.row_bytes);
+  if (intermediate) {
+    const std::size_t size = static_cast<std::size_t>(width) * height;
+    storage.reset(new (std::nothrow) std::uint8_t[size]());
+    if (!storage) return;
+    dst = Pixmap(ColorType::kAlpha8, width, height, storage.get(), width);
+  }
+  {
+    // Uses the existing CPU scan converter (see path_rasterizer.h), with
+    // Skia's mask geometry, LCD filter and gamma stages above and below it.
+    RasterCanvas canvas(dst);
+    canvas.Concat(matrix);
+    canvas.DrawPath(*path_to_use, paint);
+  }
+  if (mask.format == MaskFormat::kBW) {
+    PackA8ToA1(mask, dst);
+  } else if (from_lcd) {
+    Pack4xHToMask(dst, mask, pre_blend, bgr, vertical_lcd);
+  } else if (pre_blend.IsApplicable()) {
+    for (int y = 0; y < mask.bounds.Height(); ++y) {
+      std::uint8_t* row = mask.image + static_cast<std::size_t>(y) * mask.row_bytes;
+      for (int x = 0; x < mask.bounds.Width(); ++x) row[x] = pre_blend.g[row[x]];
+    }
+  }
 }
 
 void ScalerContext::GetPath(PlatformGlyph& glyph, Arena* arena) {
@@ -468,9 +625,36 @@ void ScalerContext::InternalGetPath(PlatformGlyph& glyph, Arena* arena, std::opt
     }
   }
 
-  // The frame width is negative and there is no path effect, so the stroke
-  // and path effect stages are never reached.
-  glyph.SetPath(arena, &path, false, path_modified);
+  if (rec_.frame_width < 0 && !rec_.path_effect) {
+    glyph.SetPath(arena, &path, false, path_modified);
+    return;
+  }
+
+  // Stroke in user space, then restore the device transform. Stroking the
+  // device outline directly would give the wrong width under nonuniform scale.
+  path_modified = true;
+  const ScalarMatrix matrix = rec_.GetMatrixFrom2x2();
+  ScalarMatrix inverse;
+  if (!matrix.Invert(&inverse)) {
+    ScalarPath empty;
+    glyph.SetPath(arena, &empty, false, path_modified);
+    return;
+  }
+  path.Transform(inverse);
+  StrokeRec stroke(StrokeRec::kFill_InitStyle);
+  if (rec_.frame_width >= 0) {
+    stroke.SetStrokeStyle(rec_.frame_width);
+    stroke.SetStrokeParams(rec_.stroke_cap, rec_.stroke_join, rec_.miter_limit);
+  }
+  ScalarPath result;
+  if (rec_.path_effect && rec_.path_effect->FilterPath(&result, path, &stroke, nullptr, matrix)) {
+    path = std::move(result);
+  }
+  if (stroke.ApplyToPath(&result, path)) {
+    path = std::move(result);
+  }
+  path.Transform(matrix);
+  glyph.SetPath(arena, &path, stroke.IsHairlineStyle(), path_modified);
 }
 
 AxisAlignment ScalerContext::ComputeAxisAlignmentForHText() const {
@@ -516,7 +700,13 @@ void ScalerContext::MakeRecAndEffects(const PlatformFont& font, const PlatformPa
     flags |= kEmbolden_Flag;
   }
 
-  // The fill paint leaves the frame width at -1 and the stroke fields at 0.
+  if (paint.GetStyle() != PlatformPaint::Style::kFill && paint.GetStrokeWidth() >= 0) {
+    rec->frame_width = paint.GetStrokeWidth();
+    rec->miter_limit = paint.GetStrokeMiter();
+    rec->stroke_join = paint.GetStrokeJoin();
+    rec->stroke_cap = paint.GetStrokeCap();
+  }
+  rec->path_effect = paint.GetPathEffect();
 
   rec->mask_format = ComputeMaskFormat(font);
 

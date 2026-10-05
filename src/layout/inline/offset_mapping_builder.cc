@@ -3,6 +3,7 @@
 // Use of this source code is governed by a BSD-style license in LICENSE.
 #include "offset_mapping_builder.h"
 
+#include <cassert>
 #include <iterator>
 #include <utility>
 
@@ -18,10 +19,15 @@ OffsetMappingBuilder::SourceNodeScope::SourceNodeScope(OffsetMappingBuilder* bui
   builder_->current_layout_object_ = node;
   builder_->current_offset_ = 0;
   builder_->has_open_unit_ = false;
+  if (node) {
+    assert(!builder_->has_nonnull_node_scope_);
+    builder_->has_nonnull_node_scope_ = true;
+  }
 }
 
 OffsetMappingBuilder::SourceNodeScope::~SourceNodeScope() {
   builder_->has_open_unit_ = false;
+  if (builder_->current_layout_object_) builder_->has_nonnull_node_scope_ = false;
   builder_->current_layout_object_ = saved_layout_object_;
   builder_->current_offset_ = saved_offset_;
 }
@@ -32,6 +38,7 @@ void OffsetMappingBuilder::ReserveCapacity(unsigned capacity) {
 }
 
 void OffsetMappingBuilder::AppendIdentityMapping(unsigned length) {
+  assert(length > 0);
   const unsigned dom_start = current_offset_;
   const unsigned dom_end = dom_start + length;
   const unsigned text_content_start = destination_length_;
@@ -43,6 +50,8 @@ void OffsetMappingBuilder::AppendIdentityMapping(unsigned length) {
     return;
 
   if (has_open_unit_ && mapping_units_.back().GetType() == OffsetMappingUnitType::kIdentity) {
+    assert(&mapping_units_.back().GetLayoutObject() == current_layout_object_);
+    assert(mapping_units_.back().DOMEnd() == dom_start);
     mapping_units_.back().dom_end_ += length;
     mapping_units_.back().text_content_end_ += length;
     return;
@@ -54,11 +63,14 @@ void OffsetMappingBuilder::AppendIdentityMapping(unsigned length) {
 }
 
 void OffsetMappingBuilder::RevertIdentityMapping1() {
+  // Only unannotated generated content can be reverted without editing units.
+  if (current_layout_object_) NOTREACHED();
   --current_offset_;
   --destination_length_;
 }
 
 void OffsetMappingBuilder::AppendCollapsedMapping(unsigned length) {
+  assert(length > 0);
   const unsigned dom_start = current_offset_;
   const unsigned dom_end = dom_start + length;
   const unsigned text_content_start = destination_length_;
@@ -69,6 +81,8 @@ void OffsetMappingBuilder::AppendCollapsedMapping(unsigned length) {
     return;
 
   if (has_open_unit_ && mapping_units_.back().IsCollapsed()) {
+    assert(&mapping_units_.back().GetLayoutObject() == current_layout_object_);
+    assert(mapping_units_.back().DOMEnd() == dom_start);
     mapping_units_.back().dom_end_ += length;
     return;
   }
@@ -79,6 +93,7 @@ void OffsetMappingBuilder::AppendCollapsedMapping(unsigned length) {
 }
 
 void OffsetMappingBuilder::AppendVariableMapping(unsigned dom_length, unsigned text_content_length) {
+  assert(dom_length > 0 && text_content_length > 0);
   const unsigned dom_start = current_offset_;
   const unsigned dom_end = dom_start + dom_length;
   const unsigned text_content_start = destination_length_;
@@ -98,6 +113,7 @@ void OffsetMappingBuilder::AppendVariableMapping(unsigned dom_length, unsigned t
 }
 
 void OffsetMappingBuilder::CollapseTrailingSpace(unsigned space_offset) {
+  assert(space_offset < destination_length_);
   --destination_length_;
 
   OffsetMappingUnit* container_unit = nullptr;
@@ -118,6 +134,7 @@ void OffsetMappingBuilder::CollapseTrailingSpace(unsigned space_offset) {
   // container_unit->TextContentStart()
   // <= space_offset <
   // container_unit->TextContentEnd()
+  assert(container_unit->GetType() == OffsetMappingUnitType::kIdentity);
   const InlineObject& layout_object = container_unit->GetLayoutObject();
   unsigned dom_offset = container_unit->DOMStart();
   unsigned text_content_offset = container_unit->TextContentStart();
@@ -168,6 +185,7 @@ void OffsetMappingBuilder::RestoreTrailingCollapsibleSpace(const InlineObject& l
       ++unit.text_content_end_;
       continue;
     }
+    assert(unit.IsCollapsed());
     const unsigned original_dom_end = unit.dom_end_;
     unit.type_ = OffsetMappingUnitType::kIdentity;
     unit.dom_end_ = unit.dom_start_ + 1;
@@ -228,6 +246,7 @@ std::shared_ptr<const OffsetMapping> OffsetMappingBuilder::Build(const InlineObj
       ++range_end;
     // Units of the same object should be consecutive in the mapping function,
     // If not, the layout structure should be already broken.
+    assert(!unit_ranges_.Contains(node->Id()));
     unit_ranges_.insert(node->Id(), std::make_pair(range_start, range_end));
     range_start = range_end;
   }

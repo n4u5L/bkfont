@@ -7,6 +7,7 @@
 #include <span>
 
 #include "base/text/wtf_string.h"
+#include "base/vector.h"
 #include "data.h"
 #include "font_arguments.h"
 #include "font_style.h"
@@ -45,6 +46,10 @@ public:
 
   int CountFamilies() const;
   String GetFamilyName(int index) const;
+  // Local metadata extension for UI display/search. Does not change the
+  // host-selected GetFamilyName or create/rasterize a typeface. Backends
+  // without localized collection metadata return their host-selected name.
+  Vector<Typeface::LocalizedString> GetFamilyNames(int index) const;
   std::shared_ptr<FontStyleSet> CreateStyleSet(int index) const;
 
   // Never returns null; will return an empty set if the name is not found.
@@ -109,6 +114,7 @@ public:
 protected:
   virtual int OnCountFamilies() const = 0;
   virtual void OnGetFamilyName(int index, String* family_name) const = 0;
+  virtual Vector<Typeface::LocalizedString> OnGetFamilyNames(int index) const;
   virtual std::shared_ptr<FontStyleSet> OnCreateStyleSet(int index) const = 0;
 
   // May return null if the name is not found.

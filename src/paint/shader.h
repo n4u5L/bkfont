@@ -125,6 +125,13 @@ public:
 };
 
 class Image;
+class Picture;
+
+// SkPictureShader: rasterizes one tile at the current transform's resolution,
+// then repeats, mirrors, clamps or decals it independently in each axis.
+std::shared_ptr<const Shader> MakePictureShader(std::shared_ptr<const Picture>, const ScalarRect& tile,
+                                                TileMode x, TileMode y, FilterMode = FilterMode::kNearest,
+                                                const ScalarMatrix& local_matrix = ScalarMatrix());
 
 // SkImageShader with kClamp tiling in both axes, as SkCanvas::drawImage
 // uses. Cubic resampling and anisotropic filtering are not ported.

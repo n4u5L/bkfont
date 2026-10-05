@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <limits>
 #include <span>
+#include <utility>
 
 namespace bkfont {
 
@@ -16,6 +17,54 @@ namespace bkfont {
 struct ScalarPoint {
   float x = 0;
   float y = 0;
+
+  bool IsZero() const {
+    return (0 == x) & (0 == y);
+  }
+  // SkPoint::isFinite.
+  bool IsFinite() const {
+    float accum = 0;
+    accum *= x;
+    accum *= y;
+    return accum == 0;
+  }
+  float Dot(ScalarPoint v) const {
+    return x * v.x + y * v.y;
+  }
+  float Cross(ScalarPoint v) const {
+    return x * v.y - y * v.x;
+  }
+
+  friend bool operator==(ScalarPoint a, ScalarPoint b) {
+    return a.x == b.x && a.y == b.y;
+  }
+  friend ScalarPoint operator+(ScalarPoint a, ScalarPoint b) {
+    return {a.x + b.x, a.y + b.y};
+  }
+  friend ScalarPoint operator-(ScalarPoint a, ScalarPoint b) {
+    return {a.x - b.x, a.y - b.y};
+  }
+  friend ScalarPoint operator-(ScalarPoint a) {
+    return {-a.x, -a.y};
+  }
+  friend ScalarPoint operator*(ScalarPoint a, float scale) {
+    return {a.x * scale, a.y * scale};
+  }
+  ScalarPoint& operator+=(ScalarPoint v) {
+    x += v.x;
+    y += v.y;
+    return *this;
+  }
+  ScalarPoint& operator-=(ScalarPoint v) {
+    x -= v.x;
+    y -= v.y;
+    return *this;
+  }
+  ScalarPoint& operator*=(float scale) {
+    x *= scale;
+    y *= scale;
+    return *this;
+  }
 };
 
 // SkRect.
@@ -32,11 +81,59 @@ struct ScalarRect {
     return {x, y, x + w, y + h};
   }
 
+  // SkRect::set(p0, p1): the sorted bounds of two points.
+  static ScalarRect MakeBounds(ScalarPoint p0, ScalarPoint p1) {
+    return {std::min(p0.x, p1.x), std::min(p0.y, p1.y), std::max(p0.x, p1.x), std::max(p0.y, p1.y)};
+  }
+
   float Width() const {
     return right - left;
   }
   float Height() const {
     return bottom - top;
+  }
+  float CenterX() const {
+    return left * 0.5f + right * 0.5f;
+  }
+  float CenterY() const {
+    return top * 0.5f + bottom * 0.5f;
+  }
+
+  bool IsFinite() const {
+    float accum = 0;
+    accum *= left;
+    accum *= top;
+    accum *= right;
+    accum *= bottom;
+    return accum == 0;
+  }
+
+  void Sort() {
+    if (left > right) std::swap(left, right);
+    if (top > bottom) std::swap(top, bottom);
+  }
+
+  void Inset(float dx, float dy) {
+    left += dx;
+    top += dy;
+    right -= dx;
+    bottom -= dy;
+  }
+
+  // SkRect::intersect: false (and unchanged) when the rects do not intersect.
+  bool Intersect(const ScalarRect& r) {
+    const float l = std::max(left, r.left);
+    const float t = std::max(top, r.top);
+    const float rr = std::min(right, r.right);
+    const float b = std::min(bottom, r.bottom);
+    if (!(l < rr && t < b)) return false;
+    *this = {l, t, rr, b};
+    return true;
+  }
+
+  // SkRect::contains(const SkRect&).
+  bool Contains(const ScalarRect& r) const {
+    return !r.IsEmpty() && !IsEmpty() && left <= r.left && top <= r.top && right >= r.right && bottom >= r.bottom;
   }
 
   // Written as the NOT of a non-empty rect, so NaN values are empty.

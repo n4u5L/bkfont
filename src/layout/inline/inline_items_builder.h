@@ -2,27 +2,31 @@
 // Copyright 2016 The Chromium Authors
 // Use of this source code is governed by a BSD-style license in LICENSE.
 //
-// Subset for the local model: text, forced breaks, generated break
-// opportunities and atomic inlines. Inline containers are culled and have no
-// bidi controls, so their open/close items (opaque to collapsing) are omitted.
-// There is no text-transform, ::first-letter, ruby, SVG, float or
-// out-of-flow content. `text-wrap-mode` is still the IFC-wide wrap option.
+// Subset for the local model: text, whitespace controls, generated break
+// opportunities, atomic inlines, bidi controls for unicode-bidi and inline
+// container boundaries. Containers do not generate box fragments.
+// There is no ::first-letter, ruby, SVG, float or out-of-flow content.
 #pragma once
 
 #include "base/heap_vector.h"
 #include "base/text/string_builder.h"
+#include "base/text/character_names.h"
 #include "base/text/string_view.h"
 #include "layout/inline/fragment_items.h"
 #include "layout/inline/offset_mapping_builder.h"
+#include "layout/inline/transformed_string.h"
 
 namespace bkfont {
 
 class InlineItemsBuilder {
 public:
-  InlineItemsBuilder(HeapVector<InlineItem>* items, OffsetMappingBuilder* mapping_builder, bool auto_wrap)
+  // `block_object` is the root object; it owns the bidi controls of the
+  // block itself.
+  InlineItemsBuilder(HeapVector<InlineItem>* items, OffsetMappingBuilder* mapping_builder,
+                     const InlineObject& block_object)
       : items_(items),
         mapping_builder_(mapping_builder),
-        auto_wrap_(auto_wrap) {
+        block_object_(&block_object) {
   }
   InlineItemsBuilder(const InlineItemsBuilder&) = delete;
   InlineItemsBuilder& operator=(const InlineItemsBuilder&) = delete;
@@ -38,29 +42,46 @@ public:
   // Append an atomic inline; it is not collapsible.
   void AppendAtomicInline(const InlineObject& layout_object);
 
+  // The block container is the root object; its unicode-bidi applies to the
+  // paragraph.
+  void EnterBlock(const ComputedStyle&);
+  void EnterInline(const InlineObject&);
+  void ExitInline(const InlineObject&);
+
+  bool HasBidiControls() const { return has_bidi_controls_; }
+  bool HasUnicodeBidiPlainText() const { return has_unicode_bidi_plain_text_; }
+
   // Segment Break Transformation Rules define to keep trailing new lines, but
   // they are removed in Phase II. Trailing collapsible spaces are not added in
   // Phase I.
   void ExitBlock();
 
 private:
-  void AppendTextItem(StringView, const InlineObject&);
-  InlineItem& AppendTextItem(InlineItem::InlineItemType, StringView, const InlineObject&);
+  struct BidiContext {
+    const InlineObject* node;
+    UChar enter;
+    UChar exit;
+  };
+  void EnterBidiContext(const InlineObject*, UChar enter, UChar exit);
+  void EnterBidiContext(const InlineObject*, const ComputedStyle&, UChar ltr_enter, UChar rtl_enter, UChar exit);
+  void Exit(const InlineObject*);
+  void AppendTextItem(const TransformedString&, const InlineObject&);
+  InlineItem& AppendTextItem(InlineItem::InlineItemType, const TransformedString&, const InlineObject&);
   void AppendEmptyTextItem(const InlineObject&);
   void AppendGeneratedBreakOpportunity(const InlineObject&);
-  void AppendTransformedString(StringView);
-  void AppendCollapseWhitespace(StringView, const ComputedStyle&, const InlineObject&);
-  void AppendPreserveWhitespace(StringView, const ComputedStyle&, const InlineObject&);
-  void AppendPreserveNewline(StringView, const ComputedStyle&, const InlineObject&);
+  void AppendTransformedString(const TransformedString&);
+  void AppendCollapseWhitespace(const TransformedString&, const ComputedStyle&, const InlineObject&);
+  void AppendPreserveWhitespace(const TransformedString&, const ComputedStyle&, const InlineObject&);
+  void AppendPreserveNewline(const TransformedString&, const ComputedStyle&, const InlineObject&);
   void AppendForcedBreak(const InlineObject&);
   void AppendForcedBreakCollapseWhitespace(const InlineObject&);
   InlineItem& AppendBreakOpportunity(const InlineObject&);
   InlineItem& Append(InlineItem::InlineItemType, UChar, const InlineObject&);
-  InlineItem& AppendOpaque(InlineItem::InlineItemType, UChar, const InlineObject&);
+  InlineItem& AppendOpaque(InlineItem::InlineItemType, UChar, const InlineObject*);
   bool ShouldInsertBreakOpportunityAfterLeadingPreservedSpaces(StringView, const ComputedStyle&,
                                                                unsigned index) const;
-  void InsertBreakOpportunityAfterLeadingPreservedSpaces(StringView, const ComputedStyle&, const InlineObject&,
-                                                         unsigned* start);
+  void InsertBreakOpportunityAfterLeadingPreservedSpaces(const TransformedString&, const ComputedStyle&,
+                                                         const InlineObject&, unsigned* start);
   InlineItem* LastItemToCollapseWith();
   void RemoveTrailingCollapsibleSpaceIfExists();
   void RemoveTrailingCollapsibleSpace(InlineItem*);
@@ -69,9 +90,14 @@ private:
 
   HeapVector<InlineItem>* items_;
   OffsetMappingBuilder* mapping_builder_;
-  // ShouldWrapLine() of every item: the IFC-wide wrap option.
-  const bool auto_wrap_;
+  const InlineObject* block_object_;
   StringBuilder text_;
+  Vector<BidiContext> bidi_context_;
+  bool has_bidi_controls_ = false;
+  bool has_unicode_bidi_plain_text_ = false;
+  // LayoutText::PreviousCharacter() for text-transform: capitalize, the last
+  // character of the previous non-empty text in the formatting context.
+  UChar previous_character_ = uchar::kSpace;
 };
 
 } // namespace bkfont

@@ -20,6 +20,13 @@ public:
   void Restore() override;
   int GetSaveCount() const override;
   void Concat(const ScalarMatrix& matrix) override;
+  int SaveLayer(const ScalarRect*, const PlatformPaint*) override;
+  void DrawRect(const ScalarRect&, const PlatformPaint&) override;
+  void DrawLine(ScalarPoint, ScalarPoint, const PlatformPaint&) override;
+  void DrawPath(const ScalarPath&, const PlatformPaint&) override;
+  void DrawPicture(const Picture&) override;
+  void ClipRect(const ScalarRect&, bool anti_alias = false) override;
+  void ClipOutRect(const ScalarRect&, bool anti_alias = false) override;
 
   using PaintCanvas::DrawTextBlob;
   void DrawTextBlob(const std::shared_ptr<const TextBlob>& blob, float x, float y,

@@ -246,8 +246,10 @@ void GlyphRunListPainterCPU::DrawForBitmapDevice(Canvas* canvas, BitmapDevicePai
         PlatformPaint path_paint = paint;
         path_paint.SetAntiAlias(run_font.HasSomeAntiAliasing());
 
-        // The paint is always a fill without a path effect or a mask filter.
-        const bool needs_exact_ctm = path_paint.GetShader() != nullptr;
+        const bool stroking = path_paint.GetStyle() != PlatformPaint::Style::kFill;
+        const bool hairline = path_paint.GetStrokeWidth() == 0;
+        const bool needs_exact_ctm = path_paint.GetShader() || path_paint.GetPathEffect() ||
+                                     (stroking && !hairline);
 
         if (!needs_exact_ctm) {
           for (std::size_t i = 0; i < prepared.accepted_glyphs.size(); ++i) {

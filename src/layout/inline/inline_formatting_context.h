@@ -12,6 +12,7 @@
 #include "paint/device_scale.h"
 #include "text/text_break_iterator.h"
 #include "text/writing_mode.h"
+#include "style/style_host_context.h"
 #include "style/style_resolver.h"
 #include "style/style_sheet.h"
 
@@ -33,18 +34,13 @@ struct InlineLayoutEpoch {
   InlineLayoutState state = InlineLayoutState::kDirty;
 };
 
+// The block container's layout inputs that are not CSS. Its writing mode,
+// direction, unicode-bidi, line breaking, alignment and indentation are the
+// computed style of the root object.
 struct InlineLayoutOptions {
-  // Whitespace follows each object's 'white-space-collapse'. |wrap| stands
-  // in for 'text-wrap-mode' of every object.
   // Available space is already in layout/framebuffer pixels, like the
   // viewport supplied by WebFrameWidget. It is not multiplied by page zoom.
   LayoutUnit available_inline_size{640};
-  WritingMode writing_mode = WritingMode::kHorizontalTb;
-  TextDirection direction = TextDirection::kLtr;
-  LineBreakType word_break = LineBreakType::kNormal;
-  LineBreakStrictness line_break = LineBreakStrictness::kDefault;
-  bool wrap = true;
-  bool break_long_words = false;
   bool operator==(const InlineLayoutOptions&) const = default;
 };
 
@@ -57,7 +53,8 @@ struct InlineHitTestOptions {
 class InlineFormattingContext final : private FontCacheClient {
 public:
   explicit InlineFormattingContext(const InlineStyle&, InlineLayoutOptions = {});
-  explicit InlineFormattingContext(const StyleResolverSettings&, InlineLayoutOptions = {});
+  // The InlineStyle constructor takes the font selector of `style.font`.
+  InlineFormattingContext(const Settings&, std::shared_ptr<FontSelector>, InlineLayoutOptions = {});
   ~InlineFormattingContext() override;
   InlineFormattingContext(const InlineFormattingContext&) = delete;
   InlineFormattingContext& operator=(const InlineFormattingContext&) = delete;
@@ -78,7 +75,12 @@ public:
   void SetRules(const InlineObject&, Vector<AtomicString>);
   bkfont::StyleSheet& StyleSheet() { return style_sheet_; }
   const bkfont::StyleSheet& StyleSheet() const { return style_sheet_; }
-  void SetRootDefaults(const StyleResolverSettings&);
+  // Document-level style inputs. Changing either recalculates every style.
+  const StyleHostContext& StyleHost() const {
+    return style_host_;
+  }
+  void SetSettings(const Settings&);
+  void SetFontSelector(std::shared_ptr<FontSelector>);
   const ComputedStyle& ComputedStyleFor(const InlineObject&);
   // Recalculates only objects marked by a mutation and the descendants that
   // inherit from a changed style (Document::UpdateStyleAndLayoutTree).
@@ -99,13 +101,13 @@ public:
   // Invalid factors leave both the context and font cache unchanged.
   bool SetZoomFactors(float device_scale_factor, float page_zoom_factor = 1);
   const DeviceScale& GetDeviceScale() const {
-    return device_scale_;
+    return style_host_.GetDeviceScale();
   }
   float PageZoomFactor() const {
-    return page_zoom_factor_;
+    return style_host_.PageZoomFactor();
   }
   float LayoutZoomFactor() const {
-    return device_scale_.factor * page_zoom_factor_;
+    return style_host_.LayoutZoomFactor();
   }
 
   InlineLayoutState State() const {
@@ -148,10 +150,11 @@ private:
     kRecalcDescendants
   };
   void MarkDirty(const InlineObject&);
+  void OwnStyleMayHaveChanged(const InlineObject&, bool had_own_style);
   void SetNeedsStyleRecalc(const InlineObject&, StyleChangeType);
   void MarkAncestorsWithChildNeedsStyleRecalc(const InlineObject&);
   void RulesChanged(const AtomicString& name);
-  void RecalcStyle(InlineObject&, const ComputedStyle* parent, const ComputedStyle* root, StyleRecalcChange);
+  void RecalcStyle(InlineObject&, const ComputedStyle* parent, StyleRecalcChange);
   void Retire(InlineObject&);
   void Validate(const InlineObject&) const;
   Vector<PhysicalRect> CollectSelectionRects(const InlineSelection&, const PhysicalOffset* paint_offset);
@@ -163,20 +166,18 @@ private:
   std::unique_ptr<FragmentItems> fragments_;
   std::shared_ptr<InlineLayoutEpoch> epoch_ = std::make_shared<InlineLayoutEpoch>();
   InlineLayoutOptions options_;
-  StyleResolverSettings style_settings_;
+  // Settings, font selector, root style and zoom factors. Root declarations
+  // do not affect the cached initial style.
+  StyleHostContext style_host_;
   bkfont::StyleSheet style_sheet_;
-  // Recreated after root defaults or zoom change.
-  std::shared_ptr<const ComputedStyle> initial_style_;
   StyleDifference invalidation_;
   // The root needs or has a descendant needing style recalc.
   bool styles_dirty_ = true;
   bool resolving_style_ = false;
-  // InlineNode::NeedsCollectInlines(): text, tree, base direction, zoom, font
-  // data or a reshaping style change. Otherwise layout reuses shape results.
+  // InlineNode::NeedsCollectInlines(): text, tree, base direction, wrapping,
+  // zoom, font data or a reshaping style change. Otherwise reuse shape results.
   bool needs_collect_inlines_ = true;
   uint64_t layout_generation_ = 0;
-  DeviceScale device_scale_;
-  float page_zoom_factor_ = 1;
   InlineNodeId next_id_ = 1;
 };
 

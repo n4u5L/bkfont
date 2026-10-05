@@ -486,6 +486,7 @@ public:
 protected:
   int OnCountFamilies() const override;
   void OnGetFamilyName(int index, String* family_name) const override;
+  Vector<Typeface::LocalizedString> OnGetFamilyNames(int index) const override;
   std::shared_ptr<FontStyleSet> OnCreateStyleSet(int index) const override;
   std::shared_ptr<FontStyleSet> OnMatchFamily(const String& family_name) const override;
   std::shared_ptr<Typeface> OnMatchFamilyStyle(const String& family_name,
@@ -549,6 +550,26 @@ void FontManagerDirectWrite::OnGetFamilyName(int index, String* family_name) con
   if (!name.IsNull()) {
     *family_name = name;
   }
+}
+
+Vector<Typeface::LocalizedString> FontManagerDirectWrite::OnGetFamilyNames(int index) const {
+  Vector<Typeface::LocalizedString> result;
+  ComPtr<IDWriteFontFamily> family;
+  ComPtr<IDWriteLocalizedStrings> names;
+  if (FAILED(font_collection_->GetFontFamily(static_cast<UINT32>(index), &family)) ||
+      FAILED(family->GetFamilyNames(&names))) return result;
+  result.ReserveInitialCapacity(names->GetCount());
+  for (UINT32 i = 0; i < names->GetCount(); ++i) {
+    UINT32 name_length = 0, locale_length = 0;
+    if (FAILED(names->GetStringLength(i, &name_length)) ||
+        FAILED(names->GetLocaleNameLength(i, &locale_length))) continue;
+    auto name = std::make_unique<WCHAR[]>(static_cast<std::size_t>(name_length) + 1);
+    auto locale = std::make_unique<WCHAR[]>(static_cast<std::size_t>(locale_length) + 1);
+    if (FAILED(names->GetString(i, name.get(), name_length + 1)) ||
+        FAILED(names->GetLocaleName(i, locale.get(), locale_length + 1))) continue;
+    result.push_back(Typeface::LocalizedString{FromWide(name.get(), name_length), FromWide(locale.get(), locale_length)});
+  }
+  return result;
 }
 
 std::shared_ptr<FontStyleSet> FontManagerDirectWrite::OnCreateStyleSet(int index) const {

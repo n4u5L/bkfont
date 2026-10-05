@@ -14,6 +14,7 @@
 #include "paint/platform_paint.h"
 #include "text/tab_size.h"
 #include "style/computed_style.h"
+#include "style/inline_style.h"
 #include "style/style_declaration.h"
 
 namespace bkfont {
@@ -75,6 +76,9 @@ public:
   // Own a snapshot when retaining style across explicit update calls.
   std::shared_ptr<const ComputedStyle> StyleSnapshot() const { return computed_style_; }
   const StyleDeclaration& InlineDeclaration() const { return declaration_; }
+  // Whether the object has style inputs of its own (legacy style, named rules
+  // or declarations) instead of only inheriting.
+  bool HasOwnStyle() const { return style_ || !rules_.empty() || !declaration_.IsEmpty(); }
   const Vector<AtomicString>& Rules() const { return rules_; }
   const std::shared_ptr<const InlineStyle>& SpecifiedStyle() const {
     return style_;

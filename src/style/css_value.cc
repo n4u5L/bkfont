@@ -5,12 +5,17 @@
 
 #include "base/notreached.h"
 #include "style/css_color.h"
+#include "style/css_font_values.h"
 #include "style/css_identifier_value.h"
 #include "style/css_inherited_value.h"
 #include "style/css_initial_value.h"
 #include "style/css_math_function_value.h"
 #include "style/css_numeric_literal_value.h"
+#include "style/css_shadow_value.h"
+#include "style/css_string_value.h"
 #include "style/css_unset_value.h"
+#include "style/css_value_list.h"
+#include "style/css_value_pair.h"
 
 namespace bkfont {
 namespace {
@@ -25,20 +30,25 @@ inline bool CompareCSSValues(const CSSValue& first, const CSSValue& second) {
 bool CSSValue::operator==(const CSSValue& other) const {
   if (class_type_ == other.class_type_) {
     switch (GetClassType()) {
-      case kColorClass:
-        return CompareCSSValues<cssvalue::CSSColor>(*this, other);
-      case kIdentifierClass:
-        return CompareCSSValues<CSSIdentifierValue>(*this, other);
-      case kInheritedClass:
-        return CompareCSSValues<CSSInheritedValue>(*this, other);
-      case kInitialClass:
-        return CompareCSSValues<CSSInitialValue>(*this, other);
-      case kMathFunctionClass:
-        return CompareCSSValues<CSSMathFunctionValue>(*this, other);
-      case kNumericLiteralClass:
-        return CompareCSSValues<CSSNumericLiteralValue>(*this, other);
-      case kUnsetClass:
-        return CompareCSSValues<cssvalue::CSSUnsetValue>(*this, other);
+      case kAlternateClass: return CompareCSSValues<cssvalue::CSSAlternateValue>(*this, other);
+      case kColorClass: return CompareCSSValues<cssvalue::CSSColor>(*this, other);
+      case kCustomIdentClass: return CompareCSSValues<CSSCustomIdentValue>(*this, other);
+      case kFontFamilyClass: return CompareCSSValues<CSSFontFamilyValue>(*this, other);
+      case kFontFeatureClass: return CompareCSSValues<cssvalue::CSSFontFeatureValue>(*this, other);
+      case kFontStyleRangeClass: return CompareCSSValues<cssvalue::CSSFontStyleRangeValue>(*this, other);
+      case kFontVariationClass: return CompareCSSValues<cssvalue::CSSFontVariationValue>(*this, other);
+      case kFunctionClass: return CompareCSSValues<CSSFunctionValue>(*this, other);
+      case kIdentifierClass: return CompareCSSValues<CSSIdentifierValue>(*this, other);
+      case kInheritedClass: return CompareCSSValues<CSSInheritedValue>(*this, other);
+      case kInitialClass: return CompareCSSValues<CSSInitialValue>(*this, other);
+      case kMathFunctionClass: return CompareCSSValues<CSSMathFunctionValue>(*this, other);
+      case kNumericLiteralClass: return CompareCSSValues<CSSNumericLiteralValue>(*this, other);
+      case kPaletteMixClass: return CompareCSSValues<cssvalue::CSSPaletteMixValue>(*this, other);
+      case kShadowClass: return CompareCSSValues<CSSShadowValue>(*this, other);
+      case kStringClass: return CompareCSSValues<CSSStringValue>(*this, other);
+      case kUnsetClass: return CompareCSSValues<cssvalue::CSSUnsetValue>(*this, other);
+      case kValueListClass: return CompareCSSValues<CSSValueList>(*this, other);
+      case kValuePairClass: return CompareCSSValues<CSSValuePair>(*this, other);
     }
     NOTREACHED();
   }

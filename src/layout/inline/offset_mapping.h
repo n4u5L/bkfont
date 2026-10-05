@@ -160,7 +160,8 @@ public:
   // Returns all OffsetMappingUnits whose DOM ranges has non-empty (but
   // possibly collapsed) intersections with the passed in DOM range. If a unit
   // partially intersects the range, it is clamped with only the part within the
-  // range returned. Both positions must be in the same object.
+  // range returned. Positions in different objects or reversed ranges return
+  // no units.
   UnitVector GetMappingUnitsForDOMRange(const InlinePosition& start, const InlinePosition& end) const;
 
   // Returns all OffsetMappingUnits associated to |object|.
@@ -205,21 +206,23 @@ public:
 
   // Returns all OffsetMappingUnits whose text content ranges has non-empty
   // (but possibly collapsed) intersection with (start, end). Note that units
-  // that only "touch" |start| or |end| are excluded.
+  // that only "touch" |start| or |end| are excluded. Reversed ranges return
+  // no units.
   std::span<const OffsetMappingUnit> GetMappingUnitsForTextContentOffsetRange(unsigned start,
                                                                               unsigned end) const;
 
-  // Returns the first |OffsetMappingUnit| where |TextContentStart() >=
-  // offset|.
+  // Finds the first unit with TextContentEnd() >= |offset|. If its next unit
+  // starts at |offset|, returns that next unit instead, as Blink does at a
+  // collapsed boundary.
   const OffsetMappingUnit* GetFirstMappingUnit(unsigned offset) const;
 
-  // Returns the last |OffsetMappingUnit| where |TextContentStart() >= offset|.
+  // Returns the last unit whose text content range contains |offset|.
   const OffsetMappingUnit* GetLastMappingUnit(unsigned offset) const;
 
   // ------ APIs inspecting the text content string ------
 
-  // Returns false if all characters in [start, end) of |text_| are bidi
-  // control characters. Returns true otherwise.
+  // Returns true if all characters in [start, end) of |text_| are bidi
+  // control characters (also true for an empty range).
   bool HasBidiControlCharactersOnly(unsigned start, unsigned end) const;
 
 private:

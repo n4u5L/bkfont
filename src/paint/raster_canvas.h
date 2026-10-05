@@ -8,6 +8,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <span>
 #include <vector>
 
@@ -26,13 +27,22 @@ public:
   // props have an unknown pixel geometry, so text is never drawn with LCD
   // masks, as SkCanvas(const SkBitmap&).
   explicit RasterCanvas(const Pixmap& pixmap);
-  RasterCanvas(const Pixmap& pixmap, const SurfaceProps& props);
+  // An initial clear discards old pixels without widening pixels that will
+  // immediately be overwritten. Omission preserves the pixmap as before.
+  // A device origin lets a sub-pixmap retain global raster coordinates, like
+  // a bounded layer. It avoids changing curve subdivision or glyph hinting
+  // when repainting only part of a device.
+  RasterCanvas(const Pixmap& pixmap, const SurfaceProps& props, std::optional<ColorARGB> initial_clear = std::nullopt,
+               int origin_x = 0, int origin_y = 0);
   ~RasterCanvas() override;
   RasterCanvas(const RasterCanvas&) = delete;
   RasterCanvas& operator=(const RasterCanvas&) = delete;
 
   // Writes the pixels back to the pixmap, rounding to 8 bits.
   void Flush();
+  // Writes only the intersection with the base device; coordinates include
+  // its origin. Drawing state and float pixels remain available for reuse.
+  void Flush(const IntRect& bounds);
 
   int Save() override;
   int SaveLayer(const ScalarRect* bounds, const PlatformPaint* paint) override;
@@ -44,6 +54,8 @@ public:
 
   void ClipRect(const ScalarRect& rect, bool do_anti_alias) override;
   void ClipPath(const ScalarPath& path, bool do_anti_alias) override;
+  void ClipOutRect(const ScalarRect&, bool do_anti_alias) override;
+  void ClipOutPath(const ScalarPath&, bool do_anti_alias) override;
 
   void DrawPaint(const PlatformPaint& paint) override;
   void DrawPath(const ScalarPath& path, const PlatformPaint& paint) override;
@@ -61,6 +73,8 @@ private:
     // The paint the layer is composited with when restored.
     BlendMode blend_mode = BlendMode::kSrcOver;
     float alpha = 1;
+    std::shared_ptr<const ImageFilter> image_filter;
+    ScalarMatrix filter_matrix;
     // The color type and props of the SkBitmapDevice of the layer. Layers
     // are N32 and do not preserve LCD text.
     ColorType color_type = ColorType::kN32;
@@ -80,8 +94,10 @@ private:
   struct Clip {
     // Conservative device bounds of the clip.
     IntRect bounds;
-    // Device-sized coverage, or null for full coverage inside bounds.
-    std::shared_ptr<const std::vector<float>> coverage;
+    // Only pixels differing from full coverage need storage. Outside this
+    // mask (but inside clip bounds), coverage is one. Save shares the mask;
+    // clip mutations detach it before writing.
+    std::shared_ptr<CoverageMask> coverage;
   };
 
   struct State {
@@ -92,7 +108,7 @@ private:
   };
 
   float ClipCoverage(const Clip& clip, int x, int y) const;
-  void IntersectClip(const CoverageMask& mask);
+  void IntersectClip(CoverageMask mask);
   Layer& TopLayer();
 
   // Draws src over the pixels of geometry (or the whole clip when null),

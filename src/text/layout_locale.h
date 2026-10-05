@@ -8,6 +8,7 @@
 #include "base/memory/raw_ptr.h"
 #include "platform_export.h"
 #include "quotes_data.h"
+#include "text/hyphenation.h"
 #include "base/allocator/allocator.h"
 #include "base/forward.h"
 #include "base/std_lib_extras.h"
@@ -90,6 +91,8 @@ public:
 
   scoped_refptr<QuotesData> GetQuotesData() const;
 
+  Hyphenation* GetHyphenation() const;
+
   AtomicString LocaleWithBreakKeyword(LineBreakStrictness,
                                       bool use_phrase = false) const;
 
@@ -111,6 +114,7 @@ private:
   mutable std::string string_for_sk_font_mgr_;
   mutable CaseMap::Locale locale_for_case_map_;
   mutable scoped_refptr<QuotesData> quotes_data_;
+  mutable scoped_refptr<Hyphenation> hyphenation_;
 
   // hb_language_t is defined in hb.h, which not all files can include.
   raw_ptr<const hb_language_impl_t> harfbuzz_language_;
@@ -118,6 +122,7 @@ private:
   UScriptCode script_;
   mutable UScriptCode script_for_han_ = USCRIPT_COMMON;
 
+  mutable unsigned hyphenation_computed_ : 1 = false;
   mutable unsigned has_script_for_han_ : 1 = false;
   mutable unsigned quotes_data_computed_ : 1 = false;
   mutable unsigned case_map_computed_ : 1 = false;

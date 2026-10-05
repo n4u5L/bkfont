@@ -29,7 +29,7 @@ StrikeSpec::StrikeSpec(const PlatformFont& font,
                        ScalerContextFlags scaler_context_flags,
                        const ScalarMatrix& device_matrix)
     : typeface_(font.GetTypeface()) {
-  // CreateDescriptorAndEffectsUsingPaint. The effects are always empty.
+  // CreateDescriptorAndEffectsUsingPaint.
   ScalerContext::MakeRecAndEffects(font, paint, surface_props, scaler_context_flags, device_matrix, &descriptor_);
 }
 
@@ -66,9 +66,11 @@ std::tuple<StrikeSpec, float> StrikeSpec::MakePath(const PlatformFont& font,
   path_font.SetSubpixel(false);
 
   // The factor to get from the size stored in the strike to the size needed
-  // for the source. SetupForAsPaths would also reset the paint to a fill
-  // without a path effect, which it already is.
+  // for the source. The caller applies the stroke and effect when drawing
+  // these canonical outlines, so neither belongs in the path strike.
   float strike_to_source_scale = path_font.SetupForAsPaths();
+  path_paint.SetStyle(PlatformPaint::Style::kFill);
+  path_paint.SetPathEffect(nullptr);
 
   return {StrikeSpec(path_font, path_paint, surface_props, scaler_context_flags, ScalarMatrix()),
           strike_to_source_scale};
@@ -104,9 +106,12 @@ StrikeSpec StrikeSpec::MakeWithNoDevice(const PlatformFont& font, const Platform
                     ScalerContextFlags::kFakeGammaAndBoostContrast, ScalarMatrix());
 }
 
-bool StrikeSpec::ShouldDrawAsPath(const PlatformPaint&, const PlatformFont& font, const ScalarMatrix& view_matrix) {
-  // hairline glyphs are fast enough, so we don't need to cache them; the
-  // fill paint is never a hairline. ScalarMatrix has no perspective.
+bool StrikeSpec::ShouldDrawAsPath(const PlatformPaint& paint, const PlatformFont& font, const ScalarMatrix& view_matrix) {
+  // Hairline glyphs are fast enough that they need not be cached.
+  if (paint.GetStyle() == PlatformPaint::Style::kStroke && paint.GetStrokeWidth() == 0) {
+    return true;
+  }
+  // ScalarMatrix has no perspective.
 
   ScalarMatrix text_matrix = MakeTextMatrix(font);
   text_matrix.PostConcat(view_matrix);

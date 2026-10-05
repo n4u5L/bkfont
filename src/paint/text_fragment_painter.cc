@@ -10,12 +10,18 @@
 
 #include "font/font.h"
 #include "font/simple_font_data.h"
+#include "font/plain_text_node.h"
 #include "font/text_fragment_paint_info.h"
 #include "layout/text_combine.h"
 #include "paint/line_relative_rect.h"
 #include "platform_paint.h"
 #include "shaping/shape_result_view.h"
 #include "affine_transform.h"
+#include "style/computed_style.h"
+#include "text/text_run.h"
+#include "text_decoration_painter.h"
+#include "text_painter.h"
+#include "text_shadow_painter.h"
 
 namespace bkfont {
 
@@ -41,7 +47,8 @@ void PaintTextFragment(PaintCanvas* canvas,
                        const PhysicalRect& physical_box,
                        const PlatformPaint& paint,
                        const TextCombine* text_combine,
-                       NodeId node_id) {
+                       NodeId node_id,
+                       const ComputedStyle* text_style, std::span<const DecoratingBox> decorating_boxes) {
   // Determine whether or not we’ll need a writing-mode rotation, but don’t
   // actually rotate until we reach the steps that need it.
   std::optional<AffineTransform> rotation;
@@ -73,7 +80,17 @@ void PaintTextFragment(PaintCanvas* canvas,
     canvas->Concat(rotation->ToScalarMatrix());
   }
 
-  font->DrawText(canvas, fragment_paint_info, PointF(text_origin), node_id, paint);
+  if (text_style) {
+    TextPainter::Paint(canvas, fragment_paint_info, *font, PointF(text_origin), rotated_box, *text_style, node_id, decorating_boxes);
+  } else {
+    font->DrawText(canvas, fragment_paint_info, PointF(text_origin), node_id, paint);
+  }
+}
+
+void PaintTextFragment(PaintCanvas* canvas, const TextFragmentPaintInfo& info, const Font& font,
+                       WritingMode writing_mode, const PhysicalRect& box, const ComputedStyle& style, NodeId node,
+                       std::span<const DecoratingBox> decorating_boxes) {
+  PaintTextFragment(canvas, info, font, writing_mode, box, style.TextPaint(), nullptr, node, &style, decorating_boxes);
 }
 
 void PaintTextCombine(PaintCanvas* canvas,
@@ -100,6 +117,69 @@ void PaintTextCombine(PaintCanvas* canvas,
     const PhysicalRect physical_box = PhysicalBoxRect(item.rect, paint_offset, line_box_offset, &text_combine);
     PaintTextFragment(canvas, fragment_paint_info, text_combine.StyleFont(), WritingMode::kHorizontalTb,
                       physical_box, paint, &text_combine, node_id);
+  }
+}
+
+void PaintTextCombine(PaintCanvas* canvas, const TextCombine& combine, const PhysicalOffset& offset,
+                      const ComputedStyle& style, NodeId node_id) {
+  const TextPaintStyle paint_style = TextPaintStyle::FromStyle(style);
+  const LineRelativeRect frame = combine.ComputeTextFrameRect(offset);
+  const Font& parent_font = *style.GetFont();
+  const SimpleFontData* data = parent_font.PrimaryFont();
+  const PointF origin(frame.LineLeft().ToFloat(), frame.LineOver().ToFloat() + (data ? data->GetFontMetrics().Ascent() : 0));
+
+  // The combined composition takes one emphasis mark. Blink uses U+3042 as
+  // a representative ideograph because U+FFFC has unsuitable glyph metrics.
+  const UChar placeholder_character = 0x3042;
+  const String placeholder(std::span<const UChar>(&placeholder_character, 1));
+  std::unique_ptr<PlainTextNode> emphasis_node;
+  if (style.GetTextEmphasisMark() != TextEmphasisMark::kNone) {
+    const TextRun run{StringView(placeholder)};
+    emphasis_node = std::make_unique<PlainTextNode>(run, false, parent_font, false, nullptr);
+  }
+  // Match the ordinary fragment order, including each stage's shadows.
+  const auto lines = style.TextDecorationsInEffect();
+  const auto before_text = TextDecorationLine::kUnderline | TextDecorationLine::kOverline |
+                           TextDecorationLine::kSpellingError | TextDecorationLine::kGrammarError;
+  for (int phase = 0; phase < 3; ++phase) {
+  if (phase == 0 && (lines & before_text) == TextDecorationLine::kNone) continue;
+  if (phase == 2 && (lines & TextDecorationLine::kLineThrough) == TextDecorationLine::kNone) continue;
+  PaintWithTextShadow(canvas, paint_style, [&](PaintCanvas* canvas, bool shadow) {
+    const auto decorations = [&](bool through) {
+      PaintCanvasAutoRestore restore(canvas, true);
+      canvas->Concat(frame.ComputeRelativeToPhysicalTransform(style.GetWritingMode()).ToScalarMatrix());
+      PaintTextDecorations(canvas, TextFragmentPaintInfo{}, parent_font, origin, frame, style, paint_style, through, shadow);
+    };
+    if (phase == 0) { decorations(false); return; }
+    if (phase == 2) { decorations(true); return; }
+    {
+      PaintCanvasAutoRestore restore(canvas, false);
+      if (combine.NeedsAffineTransformInPaint()) {
+        canvas->Save();
+        canvas->Concat(combine.ComputeAffineTransformForPaint(offset).ToScalarMatrix());
+      }
+      for (const auto& item : combine.Items()) {
+        if (!item.shape_result || item.start == item.end) continue;
+        const auto view = ShapeResultView::Create(item.shape_result.get());
+        const TextFragmentPaintInfo info{StringView(combine.GetTextContent()), item.start, item.end, view.get()};
+        const PhysicalRect box = PhysicalBoxRect(item.rect, offset, PhysicalOffset(), &combine);
+        PaintTextFragment(canvas, info, combine.StyleFont(), WritingMode::kHorizontalTb, box,
+                           paint_style.FillPaint(shadow), &combine, node_id);
+        if (paint_style.stroke_width > 0) {
+          PaintTextFragment(canvas, info, combine.StyleFont(), WritingMode::kHorizontalTb, box,
+                             paint_style.StrokePaint(shadow), &combine, node_id);
+        }
+      }
+    }
+    if (emphasis_node && !emphasis_node->ItemList().empty()) {
+      if (const auto* view = emphasis_node->ItemList()[0].EnsureView()) {
+        PaintCanvasAutoRestore restore(canvas, true);
+        canvas->Concat(frame.ComputeRelativeToPhysicalTransform(style.GetWritingMode()).ToScalarMatrix());
+        const TextFragmentPaintInfo info{StringView(placeholder), 0, 1, view};
+        TextPainter::PaintEmphasis(canvas, info, parent_font, origin, style, paint_style, shadow);
+      }
+    }
+  });
   }
 }
 

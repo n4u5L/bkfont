@@ -4,10 +4,12 @@
 #include "offset_mapping.h"
 
 #include <algorithm>
+#include <cassert>
 #include <functional>
 #include <iterator>
 #include <tuple>
-#include <unicode/uchar.h>
+
+#include "text/character.h"
 
 namespace bkfont {
 
@@ -35,6 +37,8 @@ OffsetMappingUnit::OffsetMappingUnit(OffsetMappingUnitType type, const InlineObj
       dom_end_(dom_end),
       text_content_start_(text_content_start),
       text_content_end_(text_content_end) {
+  assert(dom_start_ <= dom_end_);
+  assert(text_content_start_ <= text_content_end_);
 }
 
 bool OffsetMappingUnit::Concatenate(const OffsetMappingUnit& other) {
@@ -52,6 +56,7 @@ bool OffsetMappingUnit::Concatenate(const OffsetMappingUnit& other) {
 }
 
 unsigned OffsetMappingUnit::ConvertDOMOffsetToTextContent(unsigned offset) const {
+  assert(offset >= dom_start_ && offset <= dom_end_);
   // DOM start is always mapped to text content start.
   if (offset == dom_start_)
     return text_content_start_;
@@ -67,6 +72,7 @@ unsigned OffsetMappingUnit::ConvertDOMOffsetToTextContent(unsigned offset) const
 }
 
 unsigned OffsetMappingUnit::ConvertTextContentToFirstDOMOffset(unsigned offset) const {
+  assert(offset >= text_content_start_ && offset <= text_content_end_);
   // Always return DOM start for collapsed units.
   if (text_content_start_ == text_content_end_)
     return dom_start_;
@@ -79,6 +85,7 @@ unsigned OffsetMappingUnit::ConvertTextContentToFirstDOMOffset(unsigned offset) 
 }
 
 unsigned OffsetMappingUnit::ConvertTextContentToLastDOMOffset(unsigned offset) const {
+  assert(offset >= text_content_start_ && offset <= text_content_end_);
   // Always return DOM end for collapsed units.
   if (text_content_start_ == text_content_end_)
     return dom_end_;
@@ -92,6 +99,16 @@ OffsetMapping::OffsetMapping(UnitVector&& units, RangeMap&& ranges, String text,
       ranges_(std::move(ranges)),
       text_(text),
       boundaries_(std::move(boundaries)) {
+#ifndef NDEBUG
+  for (const auto& unit : units_) {
+    assert(unit.TextContentStart() <= text_.length());
+    assert(unit.TextContentEnd() <= text_.length());
+  }
+  for (const auto& range : ranges_) {
+    assert(range.value.first < range.value.second);
+    assert(range.value.second <= units_.size());
+  }
+#endif
 }
 
 const OffsetMappingUnit* OffsetMapping::GetMappingUnitForPosition(const InlinePosition& position) const {
@@ -116,7 +133,8 @@ const OffsetMappingUnit* OffsetMapping::GetMappingUnitForPosition(const InlinePo
 
 OffsetMapping::UnitVector OffsetMapping::GetMappingUnitsForDOMRange(const InlinePosition& start,
                                                                     const InlinePosition& end) const {
-  if (start.node != end.node) return UnitVector();
+  // InlinePosition pairs do not have EphemeralRange's ordering guarantee.
+  if (start.node != end.node || start.offset > end.offset) return UnitVector();
   const unsigned start_offset = start.offset;
   const unsigned end_offset = end.offset;
   unsigned range_start = 0;
@@ -169,7 +187,8 @@ std::span<const OffsetMappingUnit> OffsetMapping::GetMappingUnitsForNode(const I
 
 std::span<const OffsetMappingUnit> OffsetMapping::GetMappingUnitsForTextContentOffsetRange(unsigned start,
                                                                                          unsigned end) const {
-  if (units_.empty() || units_.front().TextContentStart() >= end || units_.back().TextContentEnd() <= start)
+  if (start > end || units_.empty() || units_.front().TextContentStart() >= end ||
+      units_.back().TextContentEnd() <= start)
     return {};
 
   const auto units = std::span<const OffsetMappingUnit>(units_.data(), units_.size());
@@ -275,7 +294,7 @@ InlinePosition OffsetMapping::GetFirstPosition(unsigned offset) const {
 }
 
 const OffsetMappingUnit* OffsetMapping::GetFirstMappingUnit(unsigned offset) const {
-  // Find the first unit where |unit.TextContentEnd() <= offset|
+  // Find the first unit where |unit.TextContentEnd() >= offset|.
   if (units_.empty() || units_.front().TextContentStart() > offset)
     return nullptr;
   const auto* const end = units_.data() + units_.size();
@@ -335,7 +354,7 @@ InlinePosition OffsetMapping::GetPosition(unsigned offset, TextAffinity affinity
 bool OffsetMapping::HasBidiControlCharactersOnly(unsigned start, unsigned end) const {
   if (start > end || end > text_.length()) return false;
   for (unsigned i = start; i < end; ++i) {
-    if (!u_hasBinaryProperty(text_[i], UCHAR_BIDI_CONTROL))
+    if (!Character::IsBidiControl(text_[i]))
       return false;
   }
   return true;

@@ -15,8 +15,13 @@
 #include <cstdint>
 #include <cstring>
 #include <utility>
+#if defined(__SSE2__) || defined(_M_X64)
+#include <emmintrin.h>
+#endif
 
 #include "glyph_run.h"
+#include "image_filter.h"
+#include "path_effect.h"
 #include "platform/platform_glyph.h"
 #include "text_blob.h"
 
@@ -47,6 +52,15 @@ float Clamp01(float v) {
 
 PMColor4f Clamp01(const PMColor4f& c) {
   return {Clamp01(c.r), Clamp01(c.g), Clamp01(c.b), Clamp01(c.a)};
+}
+
+void FillSolid(PMColor4f* pixels, int count, const PMColor4f& color) {
+#if defined(__SSE2__) || defined(_M_X64)
+  const __m128 value = _mm_loadu_ps(&color.r);
+  for (int i = 0; i < count; ++i) _mm_storeu_ps(&pixels[i].r, value);
+#else
+  std::fill_n(pixels, count, color);
+#endif
 }
 
 // SkBlendMode_ShouldPreScaleCoverage: these modes scale the source by the
@@ -248,16 +262,32 @@ RasterCanvas::RasterCanvas(const Pixmap& pixmap)
     : RasterCanvas(pixmap, SurfaceProps()) {
 }
 
-RasterCanvas::RasterCanvas(const Pixmap& pixmap, const SurfaceProps& props)
-    : pixmap_(pixmap), device_bounds_(IntRect::MakeWH(pixmap.Width(), pixmap.Height())) {
+RasterCanvas::RasterCanvas(const Pixmap& pixmap, const SurfaceProps& props, std::optional<ColorARGB> initial_clear,
+                           int origin_x, int origin_y)
+    : pixmap_(pixmap), device_bounds_(IntRect::MakeXYWH(origin_x, origin_y, pixmap.Width(), pixmap.Height())) {
   base_.bounds = device_bounds_;
   base_.color_type = pixmap.GetColorType();
   base_.props = props;
   if (!device_bounds_.IsEmpty()) {
-    base_.pixels.resize(static_cast<std::size_t>(device_bounds_.Width()) * static_cast<std::size_t>(device_bounds_.Height()));
-    for (int y = 0; y < pixmap_.Height(); ++y) {
-      for (int x = 0; x < pixmap_.Width(); ++x) {
-        base_.At(x, y) = pixmap_.GetPMColor4f(x, y);
+    base_.pixels.resize(static_cast<std::size_t>(device_bounds_.Width()) * static_cast<std::size_t>(device_bounds_.Height()),
+                        initial_clear ? Color4f::FromColor(*initial_clear).Premul() : PMColor4f{});
+    if (!initial_clear) {
+      for (int y = 0; y < pixmap_.Height(); ++y) {
+        PMColor4f* dst = base_.pixels.data() + static_cast<std::size_t>(y) * pixmap_.Width();
+        const std::uint8_t* src = pixmap_.WritableAddr8(0, y);
+        constexpr float scale = 1 / 255.0f;
+        for (int x = 0; x < pixmap_.Width(); ++x) {
+          // The same widening as Pixmap::GetPMColor4f, without a separately
+          // compiled function call and coordinate lookup for every pixel.
+          if (pixmap_.GetColorType() == ColorType::kAlpha8) {
+            dst[x] = {0, 0, 0, src[x] * scale};
+          } else {
+            PMColor color;
+            std::memcpy(&color, src + static_cast<std::size_t>(x) * 4, 4);
+            dst[x] = {((color >> kR32Shift) & 255) * scale, ((color >> kG32Shift) & 255) * scale,
+                      ((color >> kB32Shift) & 255) * scale, ((color >> kA32Shift) & 255) * scale};
+          }
+        }
       }
     }
   } else {
@@ -275,9 +305,38 @@ RasterCanvas::~RasterCanvas() {
 }
 
 void RasterCanvas::Flush() {
-  for (int y = 0; y < pixmap_.Height(); ++y) {
-    for (int x = 0; x < pixmap_.Width(); ++x) {
-      const PMColor4f& c = base_.At(x, y);
+  Flush(base_.bounds);
+}
+
+void RasterCanvas::Flush(const IntRect& bounds) {
+  const IntRect area = Intersect(bounds, base_.bounds);
+  if (area.IsEmpty()) return;
+  const int left = area.left - base_.bounds.left, right = area.right - base_.bounds.left;
+  for (int y = area.top - base_.bounds.top; y < area.bottom - base_.bounds.top; ++y) {
+    int x = left;
+#if defined(__SSE2__) || defined(_M_X64)
+    if (pixmap_.GetColorType() == ColorType::kN32) {
+      // The N32 store stage: four pixels at a time, with exactly the scalar
+      // clamp, multiply, +0.5 and truncation (no rounding-mode dependence).
+      static_assert(sizeof(PMColor4f) == 4 * sizeof(float));
+      const __m128 zero = _mm_setzero_ps(), one = _mm_set1_ps(1), factor = _mm_set1_ps(255), half = _mm_set1_ps(0.5f);
+      const auto bytes = [&](const __m128 value) {
+        const auto clamped = _mm_min_ps(one, _mm_max_ps(zero, value));
+        const auto scaled = _mm_add_ps(_mm_mul_ps(clamped, factor), half);
+        static_assert(kB32Shift == 0 && kG32Shift == 8 && kR32Shift == 16 && kA32Shift == 24);
+        return _mm_cvttps_epi32(_mm_shuffle_ps(scaled, scaled, _MM_SHUFFLE(3, 0, 1, 2)));
+      };
+      const PMColor4f* row = base_.pixels.data() + static_cast<std::size_t>(y) * pixmap_.Width();
+      for (; x + 4 <= right; x += 4) {
+        const auto first = _mm_packs_epi32(bytes(_mm_loadu_ps(&row[x].r)), bytes(_mm_loadu_ps(&row[x + 1].r)));
+        const auto second = _mm_packs_epi32(bytes(_mm_loadu_ps(&row[x + 2].r)), bytes(_mm_loadu_ps(&row[x + 3].r)));
+        const auto packed = _mm_packus_epi16(first, second);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(pixmap_.WritableAddr8(x, y)), packed);
+      }
+    }
+#endif
+    for (; x < right; ++x) {
+      const PMColor4f& c = base_.pixels[static_cast<std::size_t>(y) * pixmap_.Width() + x];
       std::uint8_t* p = pixmap_.WritableAddr8(x, y);
       if (pixmap_.GetColorType() == ColorType::kAlpha8) {
         p[0] = ToByte(c.a);
@@ -303,11 +362,16 @@ int RasterCanvas::SaveLayer(const ScalarRect* bounds, const PlatformPaint* paint
   const State& top = states_.back();
 
   IntRect layer_bounds = top.clip.bounds;
+  if (paint && paint->GetImageFilter()) {
+    layer_bounds = paint->GetImageFilter()->RequiredInput(layer_bounds, top.matrix);
+  }
   // SkCanvas ignores the content bounds hint when restoring transparent
   // pixels can also change the destination outside those bounds.
   if (bounds && (!paint || !BlendModeAffectsTransparentBlack(paint->GetBlendMode()))) {
     ScalarRect mapped = *bounds;
     top.matrix.MapRect(&mapped);
+    // Account for device-pixel rounding/hinting of bounded shadow sources.
+    if (paint && paint->GetImageFilter()) mapped.Outset(1, 1);
     layer_bounds = Intersect(layer_bounds, RoundOut(mapped));
   }
 
@@ -319,6 +383,8 @@ int RasterCanvas::SaveLayer(const ScalarRect* bounds, const PlatformPaint* paint
   if (paint) {
     layer->blend_mode = paint->GetBlendMode();
     layer->alpha = paint->GetAlphaf();
+    layer->image_filter = paint->GetImageFilter();
+    layer->filter_matrix = top.matrix;
   }
   // Without kPreserveLCDText_SaveLayerFlag the layer device has an unknown
   // pixel geometry. A8 and other narrow devices are upgraded to N32.
@@ -342,6 +408,12 @@ void RasterCanvas::Restore() {
   std::unique_ptr<Layer> layer = std::move(states_.back().layer);
   states_.pop_back();
   if (layer) {
+    if (layer->image_filter) {
+      FilterImage source{layer->bounds, std::move(layer->pixels)};
+      FilterImage filtered = layer->image_filter->Apply(source, layer->filter_matrix, states_.back().clip.bounds);
+      layer->bounds = filtered.bounds;
+      layer->pixels = std::move(filtered.pixels);
+    }
     // The restored clip is the clip in effect when the layer was saved.
     CompositeLayer(*layer, states_.back().clip, &TopLayer());
   }
@@ -360,29 +432,97 @@ const ScalarMatrix& RasterCanvas::GetTotalMatrix() const {
 }
 
 void RasterCanvas::ClipRect(const ScalarRect& rect, bool do_anti_alias) {
+  const ScalarMatrix& matrix = states_.back().matrix;
+  const bool rect_stays_rect = (matrix.GetSkewX() == 0 && matrix.GetSkewY() == 0) ||
+                               (matrix.GetScaleX() == 0 && matrix.GetScaleY() == 0);
+  if (rect_stays_rect) {
+    ScalarRect mapped = rect;
+    matrix.MapRect(&mapped);
+    if (!mapped.IsFinite() || mapped.IsEmpty()) {
+      states_.back().clip = {};
+      return;
+    }
+    const bool integral = mapped.left == std::floor(mapped.left) && mapped.top == std::floor(mapped.top) &&
+                           mapped.right == std::floor(mapped.right) && mapped.bottom == std::floor(mapped.bottom);
+    if (!do_anti_alias || integral) {
+      if (!do_anti_alias) {
+        // Match the aliased path rasterizer's pixel-center inclusion rule.
+        mapped = {std::ceil(mapped.left - 0.5f), std::ceil(mapped.top - 0.5f),
+                    std::ceil(mapped.right - 0.5f), std::ceil(mapped.bottom - 0.5f)};
+      }
+      Clip& clip = states_.back().clip;
+      clip.bounds = Intersect(clip.bounds, RoundOut(mapped));
+      if (clip.bounds.IsEmpty()) clip.coverage.reset();
+      return;
+    }
+  }
   ClipPath(ScalarPath::Rect(rect), do_anti_alias);
 }
 
 void RasterCanvas::ClipPath(const ScalarPath& path, bool do_anti_alias) {
   CoverageMask mask;
   RasterizePath(path, states_.back().matrix, states_.back().clip.bounds, do_anti_alias, &mask);
-  IntersectClip(mask);
+  IntersectClip(std::move(mask));
 }
 
-void RasterCanvas::IntersectClip(const CoverageMask& mask) {
+void RasterCanvas::ClipOutRect(const ScalarRect& rect, bool aa) {
+  ClipOutPath(ScalarPath::Rect(rect), aa);
+}
+
+void RasterCanvas::ClipOutPath(const ScalarPath& path, bool aa) {
+  CoverageMask mask;
+  Clip& clip = states_.back().clip;
+  RasterizePath(path, states_.back().matrix, clip.bounds, aa, &mask);
+  if (mask.IsEmpty()) return;
+  if (!clip.coverage) {
+    for (float& value : mask.coverage) value = 1 - value;
+    clip.coverage = std::make_shared<CoverageMask>(std::move(mask));
+    return;
+  }
+  const IntRect old_bounds = clip.coverage->bounds;
+  if (!ContainsNoEmptyCheck(old_bounds, mask.bounds)) {
+    const IntRect retained = Intersect(old_bounds, clip.bounds);
+    IntRect bounds = mask.bounds;
+    if (!retained.IsEmpty()) {
+      bounds = {std::min(bounds.left, retained.left), std::min(bounds.top, retained.top),
+                  std::max(bounds.right, retained.right), std::max(bounds.bottom, retained.bottom)};
+    }
+    auto expanded = std::make_shared<CoverageMask>();
+    expanded->bounds = bounds;
+    expanded->coverage.assign(static_cast<std::size_t>(bounds.Width()) * bounds.Height(), 1);
+    for (int y = retained.top; y < retained.bottom; ++y) {
+      std::copy_n(clip.coverage->coverage.data() + static_cast<std::size_t>(y - old_bounds.top) * old_bounds.Width() +
+                      retained.left - old_bounds.left, retained.Width(),
+                  expanded->coverage.data() + static_cast<std::size_t>(y - bounds.top) * bounds.Width() +
+                      retained.left - bounds.left);
+    }
+    clip.coverage = std::move(expanded);
+  } else if (clip.coverage.use_count() != 1) {
+    clip.coverage = std::make_shared<CoverageMask>(*clip.coverage);
+  }
+  CoverageMask& coverage = *clip.coverage;
+  for (int y = mask.bounds.top; y < mask.bounds.bottom; ++y) {
+    float* dst = coverage.coverage.data() + static_cast<std::size_t>(y - coverage.bounds.top) * coverage.bounds.Width() +
+                   mask.bounds.left - coverage.bounds.left;
+    const float* src = mask.coverage.data() + static_cast<std::size_t>(y - mask.bounds.top) * mask.bounds.Width();
+    for (int x = 0; x < mask.bounds.Width(); ++x) dst[x] *= 1 - src[x];
+  }
+}
+
+void RasterCanvas::IntersectClip(CoverageMask mask) {
   Clip& clip = states_.back().clip;
   Clip result;
   result.bounds = mask.bounds;
   if (!result.bounds.IsEmpty()) {
-    auto coverage = std::make_shared<std::vector<float>>(
-        static_cast<std::size_t>(device_bounds_.Width()) * static_cast<std::size_t>(device_bounds_.Height()), 0.0f);
-    for (int y = result.bounds.top; y < result.bounds.bottom; ++y) {
-      for (int x = result.bounds.left; x < result.bounds.right; ++x) {
-        (*coverage)[static_cast<std::size_t>(y) * static_cast<std::size_t>(device_bounds_.Width()) + static_cast<std::size_t>(x)] =
-            mask.At(x, y) * ClipCoverage(clip, x, y);
+    if (clip.coverage) {
+      for (int y = result.bounds.top; y < result.bounds.bottom; ++y) {
+        for (int x = result.bounds.left; x < result.bounds.right; ++x) {
+          mask.coverage[static_cast<std::size_t>(y - result.bounds.top) * result.bounds.Width() + x - result.bounds.left] *=
+              ClipCoverage(clip, x, y);
+        }
       }
     }
-    result.coverage = std::move(coverage);
+    result.coverage = std::make_shared<CoverageMask>(std::move(mask));
   }
   clip = std::move(result);
 }
@@ -391,10 +531,11 @@ float RasterCanvas::ClipCoverage(const Clip& clip, int x, int y) const {
   if (x < clip.bounds.left || x >= clip.bounds.right || y < clip.bounds.top || y >= clip.bounds.bottom) {
     return 0;
   }
-  if (!clip.coverage) {
+  if (!clip.coverage || x < clip.coverage->bounds.left || x >= clip.coverage->bounds.right ||
+      y < clip.coverage->bounds.top || y >= clip.coverage->bounds.bottom) {
     return 1;
   }
-  return (*clip.coverage)[static_cast<std::size_t>(y) * static_cast<std::size_t>(device_bounds_.Width()) + static_cast<std::size_t>(x)];
+  return clip.coverage->At(x, y);
 }
 
 RasterCanvas::Layer& RasterCanvas::TopLayer() {
@@ -418,7 +559,47 @@ void RasterCanvas::DrawPath(const ScalarPath& path, const PlatformPaint& paint) 
     return;
   }
   CoverageMask mask;
-  RasterizePath(path, states_.back().matrix, states_.back().clip.bounds, paint.IsAntiAlias(), &mask);
+  const ScalarMatrix& matrix = states_.back().matrix;
+  // SkDrawBase::drawRect uses a rectangle scan/blit path when the CTM
+  // preserves rectangles. Pixel-aligned fills have unit coverage everywhere
+  // inside: there is no reason to allocate and scan a float coverage image.
+  ScalarRect rect;
+  const bool rect_stays_rect = (matrix.GetSkewX() == 0 && matrix.GetSkewY() == 0) ||
+                              (matrix.GetScaleX() == 0 && matrix.GetScaleY() == 0);
+  if (paint.IsFillStyleWithoutEffects() && rect_stays_rect && path.IsRect(&rect)) {
+    matrix.MapRect(&rect);
+    if (IsFinite(rect) && !paint.IsAntiAlias()) {
+      // Aliased rectangles include pixel centers, with an exclusive far edge.
+      rect = {std::ceil(rect.left - 0.5f), std::ceil(rect.top - 0.5f),
+                std::ceil(rect.right - 0.5f), std::ceil(rect.bottom - 0.5f)};
+    }
+    if (IsFinite(rect) && rect.left == std::floor(rect.left) && rect.top == std::floor(rect.top) &&
+        rect.right == std::floor(rect.right) && rect.bottom == std::floor(rect.bottom)) {
+      const IntRect saved = states_.back().clip.bounds;
+      states_.back().clip.bounds = Intersect(saved, RoundOut(rect));
+      Fill(nullptr, paint, matrix);
+      states_.back().clip.bounds = saved;
+      return;
+    }
+  }
+  if (paint.IsFillStyleWithoutEffects()) {
+    RasterizePath(path, matrix, states_.back().clip.bounds, paint.IsAntiAlias(), &mask);
+  } else {
+    ScalarPath fill_path;
+    if (FillPathWithPaint(path, paint, &fill_path, nullptr, matrix)) {
+      RasterizePath(fill_path, matrix, states_.back().clip.bounds, paint.IsAntiAlias(), &mask);
+    } else {
+      // Local deviation from SkScan's hairline rasterizer: approximate a
+      // hairline by a one-device-pixel outline, independent of canvas scale.
+      fill_path.Transform(matrix);
+      StrokeRec hairline(StrokeRec::kFill_InitStyle);
+      hairline.SetStrokeStyle(1);
+      hairline.SetStrokeParams(paint.GetStrokeCap(), StrokeJoin::kRound, 0);
+      ScalarPath hairline_path;
+      hairline.ApplyToPath(&hairline_path, fill_path);
+      RasterizePath(hairline_path, ScalarMatrix(), states_.back().clip.bounds, paint.IsAntiAlias(), &mask);
+    }
+  }
   if (mask.IsEmpty()) {
     return;
   }
@@ -434,6 +615,8 @@ void RasterCanvas::DrawImage(std::shared_ptr<const Image> image, float x, float 
   // filled by an image shader.
   const ScalarRect dst = ScalarRect::MakeXYWH(x, y, static_cast<float>(image->Width()), static_cast<float>(image->Height()));
   PlatformPaint real_paint = paint ? *paint : PlatformPaint();
+  real_paint.SetStyle(PlatformPaint::Style::kFill);
+  real_paint.SetPathEffect(nullptr);
   real_paint.SetShader(MakeImageShader(std::move(image), sampling, ScalarMatrix::Translate(x, y)));
   DrawPath(ScalarPath::Rect(dst), real_paint);
 }
@@ -463,6 +646,18 @@ void RasterCanvas::Fill(const CoverageMask* geometry, const PlatformPaint& paint
   }
 
   const BlendMode mode = paint.GetBlendMode();
+  // SkBlitter's solid Src/opaque SrcOver specializations. With a rectangular
+  // clip and full coverage the destination is not read; other modes, shaders
+  // and fractional/path coverage continue through the general pipeline.
+  if (!context && !geometry && !state.clip.coverage &&
+      (mode == BlendMode::kSrc || mode == BlendMode::kClear || (mode == BlendMode::kSrcOver && solid.a == 1))) {
+    const PMColor4f color = mode == BlendMode::kClear ? PMColor4f{} : solid;
+    for (int y = area.top; y < area.bottom; ++y) {
+      PMColor4f* row = layer.pixels.data() + layer.Index(area.left, y);
+      FillSolid(row, area.Width(), color);
+    }
+    return;
+  }
   std::vector<PMColor4f> span(static_cast<std::size_t>(area.Width()));
   for (int y = area.top; y < area.bottom; ++y) {
     if (context) {
@@ -489,8 +684,8 @@ void RasterCanvas::OnDrawGlyphRunList(const GlyphRunList& glyph_run_list, const 
     return;
   }
 
-  // aboutToDraw starts no auto layer: paints have no image filter or mask
-  // filter.
+  // Image filters are applied explicitly through SaveLayer. This backend
+  // does not create an implicit filtered layer for each glyph draw.
   DrawGlyphRunList(glyph_run_list, paint);
 }
 
@@ -499,8 +694,11 @@ bool RasterCanvas::InternalQuickReject(const ScalarRect& bounds, const PlatformP
     return true;
   }
 
-  // The paint is a fill without effects, so its fast bounds are the bounds.
-  return QuickReject(bounds);
+  if (paint.GetPathEffect() || paint.GetImageFilter()) return false;
+  ScalarRect expanded = bounds;
+  const float radius = StrokeRec(paint).GetInflationRadius();
+  expanded.Outset(radius, radius);
+  return QuickReject(expanded);
 }
 
 bool RasterCanvas::QuickReject(const ScalarRect& src) const {

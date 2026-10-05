@@ -10,24 +10,26 @@
 
 namespace bkfont {
 
+// css_value_id_mappings.h. Include it where ConvertTo() is instantiated.
+template <class T>
+T CssValueIDToPlatformEnum(CSSValueID);
+
 class CSSIdentifierValue : public CSSValue {
 public:
   static std::shared_ptr<const CSSIdentifierValue> Create(CSSValueID value_id) {
     return std::make_shared<const CSSIdentifierValue>(value_id);
   }
 
-  explicit CSSIdentifierValue(CSSValueID value_id)
-      : CSSValue(kIdentifierClass),
-        value_id_(value_id) {
+  explicit CSSIdentifierValue(CSSValueID value_id) : CSSValue(kIdentifierClass), value_id_(value_id) {}
+
+  CSSValueID GetValueID() const { return value_id_; }
+
+  template <typename T>
+  T ConvertTo() const { // Overridden for special cases in css_value_id_mappings.h
+    return CssValueIDToPlatformEnum<T>(value_id_);
   }
 
-  CSSValueID GetValueID() const {
-    return value_id_;
-  }
-
-  bool Equals(const CSSIdentifierValue& other) const {
-    return value_id_ == other.value_id_;
-  }
+  bool Equals(const CSSIdentifierValue& other) const { return value_id_ == other.value_id_; }
 
 private:
   CSSValueID value_id_;
@@ -35,9 +37,7 @@ private:
 
 template <>
 struct DowncastTraits<CSSIdentifierValue> {
-  static bool AllowFrom(const CSSValue& value) {
-    return value.IsIdentifierValue();
-  }
+  static bool AllowFrom(const CSSValue& value) { return value.IsIdentifierValue(); }
 };
 
 } // namespace bkfont

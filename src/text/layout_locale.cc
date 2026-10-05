@@ -288,6 +288,14 @@ const LayoutLocale& LayoutLocale::GetSystem() {
   return *data.system_locale;
 }
 
+Hyphenation* LayoutLocale::GetHyphenation() const {
+  if (hyphenation_computed_) return hyphenation_.get();
+
+  hyphenation_computed_ = true;
+  hyphenation_ = Hyphenation::PlatformGetHyphenation(LocaleString());
+  return hyphenation_.get();
+}
+
 scoped_refptr<LayoutLocale> LayoutLocale::CreateForTesting(
     const AtomicString& locale) {
   return base::AdoptRef(new LayoutLocale(locale));

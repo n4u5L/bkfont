@@ -1,127 +1,168 @@
-// Grouped immutable style and COW builder, following core/style/computed_style
-// and build/scripts/core/style/templates/computed_style_base.h.tmpl.
+// Subset of core/style/computed_style.h over the generated ComputedStyleBase.
+// A published ComputedStyle is immutable; ComputedStyleBuilder is the only
+// mutation interface and copies a field group on its first write to it.
 #pragma once
 
 #include <memory>
 
-#include "style/computed_style_base_constants.h"
-#include "style/style_color.h"
-#include "style/inline_style.h"
+#include "base/text/text_offset_map.h"
+#include "font/font_baseline.h"
+#include "text/hyphenation.h"
+#include "style/computed_style_base.h"
+#include "style/css_to_length_conversion_data.h"
 #include "style/style_difference.h"
-#include "style/white_space.h"
 
 namespace bkfont {
 
 class ComputedStyleBuilder;
 
-class ComputedStyle final {
+class ComputedStyle final : public ComputedStyleBase {
 public:
-  const Font* GetFont() const { return &font_->font; }
+  // ComputedStyle::CreateInitialStyleSingleton(). The host keeps the style
+  // instead of a process-wide singleton (no GC, no Document).
+  static std::shared_ptr<const ComputedStyle> CreateInitialStyleSingleton();
+
+  // Fonts.
+  const Font* GetFont() const { return &FontInternal(); }
   const FontDescription& GetFontDescription() const { return GetFont()->GetFontDescription(); }
-  Length LineHeight() const { return inherited_->line_height; }
-  const Length& SpecifiedLineHeight() const { return inherited_->line_height; }
-  const TabSize& GetTabSize() const { return inherited_->tab_size; }
+  float SpecifiedFontSize() const { return GetFontDescription().SpecifiedSize(); }
+  float ComputedFontSize() const { return GetFontDescription().ComputedSize(); }
+  LayoutUnit ComputedFontSizeAsFixed() const;
+  FontSizeStyle GetFontSizeStyle() const { return FontSizeStyle(*GetFont(), SpecifiedLineHeight(), EffectiveZoom()); }
+  FontBaseline GetFontBaseline() const;
+
+  // Line height and spacing.
+  Length LineHeight() const { return LineHeightInternal(); }
+  const Length& SpecifiedLineHeight() const { return LineHeightInternal(); }
+  static float ComputedLineHeight(const Length&, const Font&);
+  float ComputedLineHeight() const { return ComputedLineHeight(LineHeight(), *GetFont()); }
+  LayoutUnit ComputedLineHeightAsFixed() const;
   float LetterSpacing() const { return GetFontDescription().LetterSpacing(); }
   float WordSpacing() const { return GetFontDescription().WordSpacing(); }
   const Length& ComputedLetterSpacing() const { return GetFontDescription().ComputedLetterSpacing(); }
   const Length& ComputedWordSpacing() const { return GetFontDescription().ComputedWordSpacing(); }
-  Color4f Color() const { return inherited_->paint.GetColor4f(); }
-  const StyleColorValue& TextFillColor() const { return inherited_->text_fill_color; }
-  EVisibility Visibility() const { return inherited_->visibility; }
-  WhiteSpaceCollapse GetWhiteSpaceCollapse() const { return inherited_->white_space_collapse; }
+
+  // Writing modes and direction.
+  bool IsLeftToRightDirection() const { return Direction() == TextDirection::kLtr; }
+  bool IsHorizontalWritingMode() const { return bkfont::IsHorizontalWritingMode(GetWritingMode()); }
+  bool IsHorizontalTypographicMode() const { return bkfont::IsHorizontalTypographicMode(GetWritingMode()); }
+  bool IsFlippedLinesWritingMode() const { return bkfont::IsFlippedLinesWritingMode(GetWritingMode()); }
+  bool IsFlippedBlocksWritingMode() const { return bkfont::IsFlippedBlocksWritingMode(GetWritingMode()); }
+
+  // Colors. The computed color is the color of the legacy paint; the other
+  // colors resolve currentcolor against it (VisitedDependentColor()).
+  Color4f Color() const { return LegacyPaint().GetColor4f(); }
+  const StyleColorValue& TextFillColor() const { return ComputedStyleBase::TextFillColor(); }
+  const StyleColorValue& TextStrokeColor() const { return ComputedStyleBase::TextStrokeColor(); }
+  const StyleColorValue& TextDecorationColor() const { return ComputedStyleBase::TextDecorationColor(); }
+  const StyleColorValue& TextEmphasisColor() const { return ComputedStyleBase::TextEmphasisColor(); }
+  Color4f ResolvedTextFillColor() const { return TextFillColor().Resolve(Color()); }
+  Color4f ResolvedTextStrokeColor() const { return TextStrokeColor().Resolve(Color()); }
+  Color4f ResolvedTextDecorationColor() const { return TextDecorationColor().Resolve(Color()); }
+  Color4f ResolvedTextEmphasisColor() const { return TextEmphasisColor().Resolve(Color()); }
+
+  // White space and wrapping.
+  EWhiteSpace WhiteSpace() const { return ToWhiteSpace(GetWhiteSpaceCollapse(), GetTextWrapMode()); }
+  bool ShouldWrapLine() const { return bkfont::ShouldWrapLine(GetTextWrapMode()); }
   bool ShouldPreserveWhiteSpaces() const { return bkfont::ShouldPreserveWhiteSpaces(GetWhiteSpaceCollapse()); }
   bool ShouldCollapseWhiteSpaces() const { return bkfont::ShouldCollapseWhiteSpaces(GetWhiteSpaceCollapse()); }
   bool ShouldPreserveBreaks() const { return bkfont::ShouldPreserveBreaks(GetWhiteSpaceCollapse()); }
   bool ShouldCollapseBreaks() const { return bkfont::ShouldCollapseBreaks(GetWhiteSpaceCollapse()); }
   bool ShouldBreakSpaces() const { return bkfont::ShouldBreakSpaces(GetWhiteSpaceCollapse()); }
+  // ComputedStyle::BreakOnlyAfterWhiteSpace().
+  bool BreakOnlyAfterWhiteSpace() const {
+    return ShouldPreserveWhiteSpaces() || GetLineBreak() == LineBreak::kAfterWhiteSpace;
+  }
+  // ComputedStyle::BreakWords().
+  bool BreakWords() const {
+    return (WordBreak() == EWordBreak::kBreakWord || OverflowWrap() != EOverflowWrap::kNormal) && ShouldWrapLine();
+  }
+
+  // text-align for a line; text-align-last applies to the last line of the
+  // block and lines before a forced break.
+  ETextAlign GetTextAlign() const { return ComputedStyleBase::GetTextAlign(); }
+  ETextAlign GetTextAlign(bool is_last_line) const;
+
+  // Hyphenation.
+  Hyphenation* GetHyphenation() const;
+  Hyphenation* GetHyphenationWithLimits() const;
+  const AtomicString& HyphenString() const;
+
+  // text-transform; `offset_map` receives the length changes.
+  String ApplyTextTransform(const String&, UChar previous_character, TextOffsetMap* offset_map) const;
+
+  // vertical-align.
+  EVerticalAlign VerticalAlign() const { return static_cast<EVerticalAlign>(VerticalAlignInternal()); }
+
+  // Emphasis marks.
+  TextEmphasisMark GetTextEmphasisMark() const;
+  const AtomicString& TextEmphasisMarkString() const;
+  LineLogicalSide GetTextEmphasisLineLogicalSide() const;
+
+  // Text decorations.
+  TextDecorationLine TextDecorationsInEffect() const;
+  const AppliedTextDecorationVector& AppliedTextDecorations() const;
+  std::shared_ptr<const AppliedTextDecorationVector> AppliedTextDecorationData() const {
+    return IsDecoratingBox() ? applied_text_decorations_ : SharedBaseTextDecorationData();
+  }
+  // https://drafts.csswg.org/css-text-decor-3/#decorating-box
+  bool IsDecoratingBox() const { return GetTextDecorationLine() != TextDecorationLine::kNone; }
+  bool HasAppliedTextDecorations() const { return IsDecoratingBox() || BaseTextDecorationData(); }
+  bool TextDecorationVisualOverflowChanged(const ComputedStyle&) const;
+  bool HasTextShadow() const { return TextShadow(); }
+
   PlatformPaint TextPaint() const;
-  LayoutUnit LegacyBaselineShift() const { return inherited_->baseline_shift; }
-  float EffectiveZoom() const { return effective_zoom_; }
+  PlatformPaint TextStrokePaint() const;
   StyleDifference VisualInvalidationDiff(const ComputedStyle&) const;
   bool operator==(const ComputedStyle&) const;
-  bool InheritedEqual(const ComputedStyle&) const;
-  bool HasExplicitInheritance() const { return non_inherited_->explicit_inheritance; }
 
 private:
   friend class ComputedStyleBuilder;
-  struct FontData {
-    explicit FontData(Font value) : font(std::move(value)) {}
-    Font font;
-  };
-  struct InheritedData {
-    Length line_height = Length::Auto();
-    TabSize tab_size{8};
-    PlatformPaint paint;
-    StyleColorValue text_fill_color = StyleColorValue::CurrentColor();
-    EVisibility visibility = EVisibility::kVisible;
-    WhiteSpaceCollapse white_space_collapse = WhiteSpaceCollapse::kCollapse;
-    LayoutUnit baseline_shift;
-    bool operator==(const InheritedData&) const;
-  };
-  // Groups for non-inherited longhands. ComputedStyleBuilder takes them from
-  // the initial style, never from the parent (ComputedStyleBase::InheritFrom).
-  struct NonInheritedData {
-    // Resolver dependency, local to this element; never inherited itself.
-    bool explicit_inheritance = false;
-    bool operator==(const NonInheritedData&) const = default;
-  };
-  ComputedStyle(std::shared_ptr<const FontData> font, std::shared_ptr<const InheritedData> inherited,
-                std::shared_ptr<const NonInheritedData> non_inherited, float zoom)
-      : font_(std::move(font)), inherited_(std::move(inherited)),
-        non_inherited_(std::move(non_inherited)), effective_zoom_(zoom) {}
-  std::shared_ptr<const FontData> font_;
-  std::shared_ptr<const InheritedData> inherited_;
-  std::shared_ptr<const NonInheritedData> non_inherited_;
-  float effective_zoom_;
+  ComputedStyle() = default;
+  explicit ComputedStyle(const ComputedStyleBuilder&);
+  // StyleCachedData::applied_text_decorations_, computed eagerly.
+  std::shared_ptr<const AppliedTextDecorationVector> applied_text_decorations_;
 };
 
-class ComputedStyleBuilder {
+class ComputedStyleBuilder final : public ComputedStyleBuilderBase {
 public:
-  explicit ComputedStyleBuilder(const Font& initial_font, float zoom = 1);
-  // Copies every group of an existing style.
-  explicit ComputedStyleBuilder(const ComputedStyle&);
-  // StyleResolver's base: non-inherited groups from the initial style and
-  // inherited groups from the parent, as ComputedStyleBuilder::InheritFrom().
+  // Starts from every group of an existing style.
+  explicit ComputedStyleBuilder(const ComputedStyle& style);
+  // StyleResolver's base: non-inherited fields from the initial style and
+  // inherited fields from the parent. Text decorations propagate from the
+  // parent (ComputedStyleBuilder's constructor and StyleAdjuster).
   ComputedStyleBuilder(const ComputedStyle& initial_style, const ComputedStyle& parent_style);
-  void InheritFrom(const ComputedStyle& parent_style);
-  void SetHasExplicitInheritance(bool);
-  const Font* GetFont() const { return &font_.Read().font; }
-  Length LineHeight() const { return inherited_.Read().line_height; }
-  void SetFont(const Font&);
-  void SetLineHeight(const Length&);
-  void SetTabSize(const TabSize&);
-  void SetColor(Color4f);
-  void SetTextFillColor(StyleColorValue);
-  void SetVisibility(EVisibility);
-  void SetWhiteSpaceCollapse(WhiteSpaceCollapse);
-  void SetLegacyPaint(const PlatformPaint&);
-  void SetLegacyBaselineShift(LayoutUnit);
-  // Publishing freezes writable groups. Further use (or copying) of this
-  // builder cannot mutate a previously published style.
-  std::shared_ptr<const ComputedStyle> Build();
+  ComputedStyleBuilder(const ComputedStyleBuilder&) = delete;
+  ComputedStyleBuilder(ComputedStyleBuilder&&) = default;
+  ComputedStyleBuilder& operator=(const ComputedStyleBuilder&) = delete;
+  ComputedStyleBuilder& operator=(ComputedStyleBuilder&&) = default;
 
-private:
-  template <typename T> class Group {
-  public:
-    explicit Group(std::shared_ptr<const T> value) : source_(std::move(value)) {}
-    const T& Read() const { return writable_ ? *writable_ : *source_; }
-    T& Access() {
-      if (!writable_) { writable_ = std::make_shared<T>(*source_); source_.reset(); }
-      else if (writable_.use_count() != 1) writable_ = std::make_shared<T>(*writable_);
-      return *writable_;
-    }
-    std::shared_ptr<const T> Freeze() {
-      if (writable_) { source_ = writable_; writable_.reset(); }
-      return source_;
-    }
-  private:
-    std::shared_ptr<const T> source_;
-    std::shared_ptr<T> writable_;
-  };
-  Group<ComputedStyle::FontData> font_;
-  Group<ComputedStyle::InheritedData> inherited_;
-  Group<ComputedStyle::NonInheritedData> non_inherited_;
-  float effective_zoom_;
+  // Both publish the current groups as an immutable style. A later write
+  // through this builder copies the group first.
+  std::shared_ptr<const ComputedStyle> TakeStyle();
+  std::shared_ptr<const ComputedStyle> CloneStyle() const;
+
+  const Font* GetFont() const { return &FontInternal(); }
+  const FontDescription& GetFontDescription() const { return GetFont()->GetFontDescription(); }
+  FontSizeStyle GetFontSizeStyle() const { return FontSizeStyle(*GetFont(), LineHeight(), EffectiveZoom()); }
+  const Length& LineHeight() const { return LineHeightInternal(); }
+  Color4f Color() const { return LegacyPaint().GetColor4f(); }
+  const StyleColorValue& TextFillColor() const { return ComputedStyleBuilderBase::TextFillColor(); }
+  EVerticalAlign VerticalAlign() const { return static_cast<EVerticalAlign>(VerticalAlignInternal()); }
+  void SetFontDescription(const FontDescription&);
+  // The computed color is the color of the legacy paint.
+  void SetColor(Color4f);
+  void SetTabSize(const TabSize&);
+  bool SetEffectiveZoom(float);
+  void SetLetterSpacing(const Length&);
+  void SetWordSpacing(const Length&);
+  void SetVerticalAlign(EVerticalAlign v) { SetVerticalAlignInternal(static_cast<unsigned>(v)); }
+  void SetVerticalAlignLength(const Length& length) {
+    SetVerticalAlignInternal(static_cast<unsigned>(EVerticalAlign::kLength));
+    SetVerticalAlignLengthInternal(length);
+  }
+  FontOrientation ComputeFontOrientation() const;
+  void UpdateFontOrientation();
 };
 
 } // namespace bkfont

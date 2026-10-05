@@ -85,6 +85,17 @@ String FontManager::GetFamilyName(int index) const {
   return family_name;
 }
 
+Vector<Typeface::LocalizedString> FontManager::GetFamilyNames(int index) const {
+  return OnGetFamilyNames(index);
+}
+
+Vector<Typeface::LocalizedString> FontManager::OnGetFamilyNames(int index) const {
+  Vector<Typeface::LocalizedString> names;
+  String name = GetFamilyName(index);
+  if (!name.empty()) names.push_back(Typeface::LocalizedString{std::move(name), String()});
+  return names;
+}
+
 std::shared_ptr<FontStyleSet> FontManager::CreateStyleSet(int index) const {
   return EmptyOnNull(OnCreateStyleSet(index));
 }

@@ -88,6 +88,7 @@ private:
   const InlineObject* current_layout_object_ = nullptr;
   unsigned current_offset_ = 0;
   bool has_open_unit_ = false;
+  bool has_nonnull_node_scope_ = false;
 
   // Length of the current destination string.
   unsigned destination_length_ = 0;

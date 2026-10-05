@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "glyph_run.h"
+#include "path_effect.h"
 #include "text_blob.h"
 
 namespace bkfont {
@@ -22,6 +23,8 @@ struct Picture::Op {
     kConcat,
     kClipRect,
     kClipPath,
+    kClipOutRect,
+    kClipOutPath,
     kDrawPaint,
     kDrawPath,
     kDrawImage,
@@ -78,6 +81,12 @@ void PlaybackOps(const std::vector<Picture::Op>& ops, Canvas* canvas) {
       break;
     case Op::Type::kClipPath:
       canvas->ClipPath(op.path, op.anti_alias);
+      break;
+    case Op::Type::kClipOutRect:
+      canvas->ClipOutRect(op.rect, op.anti_alias);
+      break;
+    case Op::Type::kClipOutPath:
+      canvas->ClipOutPath(op.path, op.anti_alias);
       break;
     case Op::Type::kDrawPaint:
       canvas->DrawPaint(op.paint);
@@ -243,7 +252,8 @@ public:
     }
     ops_.push_back(std::move(op));
     State state = states_.back();
-    state.layer_affects_transparent_black = paint && BlendModeAffectsTransparentBlack(paint->GetBlendMode());
+    state.layer_affects_transparent_black = paint &&
+        (BlendModeAffectsTransparentBlack(paint->GetBlendMode()) || paint->GetImageFilter());
     states_.push_back(state);
     return previous;
   }
@@ -302,13 +312,36 @@ public:
     AddBounds(cull_rect_);
   }
 
+  void ClipOutRect(const ScalarRect& rect, bool aa) override {
+    Picture::Op op;
+    op.type = Picture::Op::Type::kClipOutRect;
+    op.rect = rect;
+    op.anti_alias = aa;
+    ops_.push_back(std::move(op));
+  }
+  void ClipOutPath(const ScalarPath& path, bool aa) override {
+    Picture::Op op;
+    op.type = Picture::Op::Type::kClipOutPath;
+    op.path = path;
+    op.anti_alias = aa;
+    ops_.push_back(std::move(op));
+  }
+
   void DrawPath(const ScalarPath& path, const PlatformPaint& paint) override {
     Picture::Op op;
     op.type = Picture::Op::Type::kDrawPath;
     op.path = path;
     op.paint = paint;
     ops_.push_back(std::move(op));
-    AddLocalBounds(path.GetBounds());
+    if (paint.GetPathEffect()) {
+      ScalarPath fill_path;
+      const bool fill = FillPathWithPaint(path, paint, &fill_path, nullptr, states_.back().matrix);
+      ScalarRect bounds = fill_path.GetBounds();
+      if (fill) AddLocalBounds(bounds);
+      else AddHairlineBounds(bounds);
+    } else {
+      AddPaintBounds(path.GetBounds(), paint);
+    }
   }
 
   void DrawImage(std::shared_ptr<const Image> image, float x, float y,
@@ -360,7 +393,7 @@ protected:
     ops_.push_back(std::move(op));
     ScalarRect dst = blob->Bounds();
     dst.Offset(x, y);
-    AddLocalBounds(dst);
+    AddPaintBounds(dst, paint);
   }
 
   // The blob of a glyph run list is not shared, so the runs are always
@@ -404,6 +437,26 @@ private:
     ScalarRect mapped = local;
     states_.back().matrix.MapRect(&mapped);
     AddBounds(IntersectRects(mapped, cull_rect_));
+  }
+
+  void AddPaintBounds(ScalarRect bounds, const PlatformPaint& paint) {
+    if (paint.GetPathEffect() || paint.GetImageFilter()) {
+      AddBounds(cull_rect_);
+      return;
+    }
+    if (paint.GetStyle() == PlatformPaint::Style::kStroke && paint.GetStrokeWidth() == 0) {
+      AddHairlineBounds(bounds);
+      return;
+    }
+    const float radius = StrokeRec(paint).GetInflationRadius();
+    bounds.Outset(radius, radius);
+    AddLocalBounds(bounds);
+  }
+
+  void AddHairlineBounds(ScalarRect bounds) {
+    states_.back().matrix.MapRect(&bounds);
+    bounds.Outset(1, 1); // Hairlines have device-space thickness.
+    AddBounds(IntersectRects(bounds, cull_rect_));
   }
 
   void AddBounds(const ScalarRect& bounds) {

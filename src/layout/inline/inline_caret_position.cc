@@ -5,6 +5,7 @@
 
 #include <algorithm>
 
+#include "base/text/character_names.h"
 #include "editing/bidi_adjustment.h"
 #include "runtime_enabled_features.h"
 
@@ -64,8 +65,13 @@ InlinePosition InlineCaretPosition::ToPositionInDOMTreeWithAffinity(const Offset
 
 InlineCaretPosition ComputeInlineCaretPosition(InlineFormattingContext& context, InlinePosition position) {
   const auto& fragments = context.Fragments();
-  const auto offset = fragments.Mapping().GetTextContentOffset(position);
-  if (!offset) return {};
+  const auto mapped_offset = fragments.Mapping().GetTextContentOffset(position);
+  if (!mapped_offset) return {};
+  // Blink resolves upstream before ZWS so the two affinities remain distinct
+  // when a line breaks before a generated break opportunity.
+  const unsigned offset = position.affinity == TextAffinity::kUpstream && *mapped_offset &&
+                                  fragments.TextContent()[*mapped_offset - 1] == uchar::kZeroWidthSpace
+                              ? *mapped_offset - 1 : *mapped_offset;
   const auto* preferred = context.Find(position.node);
   if (preferred && !preferred->IsText()) preferred = nullptr;
   InlineCaretPosition candidate;
@@ -75,9 +81,15 @@ InlineCaretPosition ComputeInlineCaretPosition(InlineFormattingContext& context,
     const FragmentItem& item = *cursor.Current();
     if (item.IsGeneratedText() || item.Type() == FragmentItem::kLine) continue;
     const auto range = item.TextOffset();
-    if (*offset < range.start && !fragments.Mapping().HasBidiControlCharactersOnly(*offset, range.start)) continue;
-    if (*offset > range.end && !fragments.Mapping().HasBidiControlCharactersOnly(range.end, *offset)) continue;
-    const unsigned clamped = std::clamp(*offset, range.start, range.end);
+    if (item.IsAtomicInline()) {
+      // TryResolveInlineCaretPositionByBoxFragmentSide accepts only the two
+      // box boundaries; skipping adjacent bidi controls is text-only.
+      if (offset != range.start && offset != range.end) continue;
+    } else {
+      if (offset < range.start && !fragments.Mapping().HasBidiControlCharactersOnly(offset, range.start)) continue;
+      if (offset > range.end && !fragments.Mapping().HasBidiControlCharactersOnly(range.end, offset)) continue;
+    }
+    const unsigned clamped = std::clamp(offset, range.start, range.end);
     const InlineCaretPosition current{cursor, item.IsAtomicInline() ? (clamped == range.start ? InlineCaretPositionType::kBeforeBox : InlineCaretPositionType::kAfterBox) : InlineCaretPositionType::kAtTextOffset, clamped};
     const bool resolved = (clamped > range.start && clamped < range.end) ||
                           (clamped == range.start && CanResolveBefore(cursor, position.affinity)) ||

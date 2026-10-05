@@ -9,38 +9,32 @@
 
 namespace bkfont {
 
-// Represents a numeric literal: a number, percentage or length with a unit.
+// Represents a numeric literal: a number, percentage, length or angle with a
+// unit.
 class CSSNumericLiteralValue : public CSSPrimitiveValue {
 public:
   static std::shared_ptr<const CSSNumericLiteralValue> Create(double num, UnitType type) {
     return std::make_shared<const CSSNumericLiteralValue>(num, type);
   }
 
-  CSSNumericLiteralValue(double num, UnitType type)
-      : CSSPrimitiveValue(kNumericLiteralClass),
-        num_(num),
-        type_(type) {
-  }
+  CSSNumericLiteralValue(double num, UnitType type) : CSSPrimitiveValue(kNumericLiteralClass), num_(num), type_(type) {}
 
-  UnitType GetType() const {
-    return type_;
-  }
-  bool IsNumber() const {
-    return type_ == UnitType::kNumber;
-  }
-  bool IsPercentage() const {
-    return type_ == UnitType::kPercentage;
-  }
-  bool IsLength() const {
-    return CSSPrimitiveValue::IsLength(type_);
-  }
-  double DoubleValue() const {
-    return num_;
-  }
+  UnitType GetType() const { return type_; }
+  bool IsNumber() const { return type_ == UnitType::kNumber || type_ == UnitType::kInteger; }
+  bool IsInteger() const { return type_ == UnitType::kInteger; }
+  bool IsPercentage() const { return type_ == UnitType::kPercentage; }
+  bool IsLength() const { return CSSPrimitiveValue::IsLength(type_); }
+  bool IsAngle() const { return CSSPrimitiveValue::IsAngle(type_); }
+  bool IsFontRelativeLength() const { return CSSPrimitiveValue::IsFontRelativeLength(type_); }
+  double DoubleValue() const { return num_; }
 
-  bool Equals(const CSSNumericLiteralValue& other) const {
-    return type_ == other.type_ && num_ == other.num_;
-  }
+  double ComputeDegrees() const;
+  double ComputeLengthPx(const CSSToLengthConversionData&) const;
+  int ComputeInteger() const;
+  double ComputeNumber() const;
+  double ComputePercentage() const;
+
+  bool Equals(const CSSNumericLiteralValue& other) const { return type_ == other.type_ && num_ == other.num_; }
 
 private:
   double num_;
@@ -49,9 +43,7 @@ private:
 
 template <>
 struct DowncastTraits<CSSNumericLiteralValue> {
-  static bool AllowFrom(const CSSValue& value) {
-    return value.IsNumericLiteralValue();
-  }
+  static bool AllowFrom(const CSSValue& value) { return value.IsNumericLiteralValue(); }
 };
 
 } // namespace bkfont

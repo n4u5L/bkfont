@@ -9,6 +9,8 @@
 #include <limits>
 #include <utility>
 
+#include "path_geometry.h"
+
 namespace bkfont {
 
 namespace {
@@ -77,6 +79,15 @@ public:
     current_ = e;
   }
 
+  void ConicTo(ScalarPoint control, ScalarPoint end, float weight) {
+    const Conic conic(current_, control, end, weight);
+    ScalarPoint quads[1 + 2 * (1 << Conic::kMaxConicToQuadPOW2)];
+    const int count = conic.ChopIntoQuadsPOW2(quads, conic.ComputeQuadPOW2(kFlattenTolerance));
+    for (int i = 0; i < count; ++i) {
+      QuadTo(quads[2 * i + 1], quads[2 * i + 2]);
+    }
+  }
+
   void CloseContour() {
     if (open_) {
       LineTo(start_);
@@ -103,6 +114,7 @@ void FlattenPath(const ScalarPath& path, const ScalarMatrix& matrix, std::vector
   Flattener flattener(edges);
   const auto points = path.Points();
   std::size_t index = 0;
+  std::size_t conic_index = 0;
   const auto next = [&]() {
     return matrix.MapPoint(points[index++]);
   };
@@ -118,6 +130,12 @@ void FlattenPath(const ScalarPath& path, const ScalarMatrix& matrix, std::vector
       ScalarPoint c = next();
       ScalarPoint e = next();
       flattener.QuadTo(c, e);
+      break;
+    }
+    case ScalarPath::Verb::kConic: {
+      ScalarPoint c = next();
+      ScalarPoint e = next();
+      flattener.ConicTo(c, e, path.ConicWeights()[conic_index++]);
       break;
     }
     case ScalarPath::Verb::kCubic: {
@@ -404,6 +422,7 @@ void RasterizePath(const ScalarPath& path, const ScalarMatrix& matrix, const Int
                    bool anti_alias, CoverageMask* mask) {
   mask->bounds = IntRect();
   mask->coverage.clear();
+  if (clip.IsEmpty() || path.IsEmpty() || !matrix.IsFinite()) return;
 
   std::vector<Edge> edges;
   FlattenPath(path, matrix, &edges);

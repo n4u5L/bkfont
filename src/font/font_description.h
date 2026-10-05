@@ -398,6 +398,20 @@ public:
   const FontVariationSettings* VariationSettings() const {
     return variation_settings_.get();
   }
+  // Local: the shared values, as FontBuilder copies them between
+  // descriptions (upstream passes scoped_refptr implicitly).
+  const std::shared_ptr<const FontFeatureSettings>& SharedFeatureSettings() const {
+    return feature_settings_;
+  }
+  const std::shared_ptr<const FontVariationSettings>& SharedVariationSettings() const {
+    return variation_settings_;
+  }
+  const std::shared_ptr<const FontPalette>& SharedFontPalette() const {
+    return font_palette_;
+  }
+  const std::shared_ptr<const FontVariantAlternates>& SharedFontVariantAlternates() const {
+    return font_variant_alternates_;
+  }
   FontVariantPosition VariantPosition() const {
     return static_cast<FontVariantPosition>(fields_.variant_position_);
   }

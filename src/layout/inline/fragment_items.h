@@ -3,6 +3,9 @@
 // Use of this source code is governed by a BSD-style license in LICENSE.
 #pragma once
 
+#include "base/hash_map.h"
+#include "layout/text_combine.h"
+
 #include <span>
 #include <unicode/ubidi.h>
 
@@ -16,13 +19,17 @@ namespace bkfont {
 
 // Subset of Blink's InlineItem: a range of the text content from one object,
 // with the collapsing state InlineItemsBuilder needs. Empty and collapsed-away
-// text items have zero length.
+// text items and inline container boundaries have zero length.
 struct InlineItem {
   enum InlineItemType {
     kText,
-    // Forced breaks and generated break opportunities.
+    // Forced breaks, tabs, ignored controls and generated break opportunities.
     kControl,
-    kAtomicInline
+    kAtomicInline,
+    kOpenTag,
+    kCloseTag,
+    // Bidi controls injected for unicode-bidi; no fragments.
+    kBidiControl
   };
   // Whether the end of this item is collapsible or not, and if so, whether the
   // trailing collapsible space is collapsed (removed) or not.
@@ -43,6 +50,9 @@ struct InlineItem {
   CollapseType end_collapse_type = kNotCollapsible;
   // True if the collapsible space run at the end contains a newline.
   bool is_end_collapsible_newline = false;
+  // Generated break opportunities participate in breaking, but create no
+  // fragments and have no source character in the offset mapping.
+  bool is_generated_for_line_break = false;
 };
 
 // A shaping run of the collected inline items: consecutive items with the same
@@ -77,6 +87,9 @@ public:
   PhysicalSize SizeInPhysicalCoordinates() const {
     return physical_size_;
   }
+  // The block's writing mode and direction when laid out.
+  WritingMode GetWritingMode() const { return writing_mode_; }
+  TextDirection Direction() const { return direction_; }
   // One-based, as in Blink. Zero denotes no fragments in this snapshot.
   size_t FirstInlineFragmentItemIndex(const InlineObject&) const;
   std::span<const size_t> Lines() const {
@@ -113,6 +126,10 @@ private:
   HeapVector<InlineItemRun> runs_;
   Vector<UBiDiLevel> levels_;
   PhysicalSize physical_size_;
+  WritingMode writing_mode_ = WritingMode::kHorizontalTb;
+  // LayoutTextCombine boxes by the object whose text they combine.
+  HashMap<const InlineObject*, std::shared_ptr<const TextCombine>> text_combines_;
+  TextDirection direction_ = TextDirection::kLtr;
   size_t reused_line_count_ = 0;
 };
 

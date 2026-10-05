@@ -21,8 +21,7 @@ class Picture;
 class TextBlob;
 
 // SkCanvas, reduced to the operations that glyph drawing, text blob drawing
-// and OpenType SVG decoders use. Paints are always fills; clips are always
-// intersections.
+// and OpenType SVG decoders use.
 class Canvas {
 public:
   Canvas();
@@ -43,11 +42,14 @@ public:
 
   virtual void ClipRect(const ScalarRect& rect, bool do_anti_alias) = 0;
   virtual void ClipPath(const ScalarPath& path, bool do_anti_alias) = 0;
+  virtual void ClipOutRect(const ScalarRect& rect, bool do_anti_alias) = 0;
+  virtual void ClipOutPath(const ScalarPath& path, bool do_anti_alias) = 0;
 
   // Fills the clip.
   virtual void DrawPaint(const PlatformPaint& paint) = 0;
   virtual void DrawPath(const ScalarPath& path, const PlatformPaint& paint) = 0;
   void DrawRect(const ScalarRect& rect, const PlatformPaint& paint);
+  void DrawLine(ScalarPoint start, ScalarPoint end, const PlatformPaint& paint);
   // SkCanvas::drawImage: the image is drawn at (x, y) with kFast_SrcRectConstraint.
   virtual void DrawImage(std::shared_ptr<const Image> image, float x, float y,
                          const SamplingOptions& sampling, const PlatformPaint* paint) = 0;

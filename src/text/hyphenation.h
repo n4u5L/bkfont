@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <filesystem>
+
 #include <cassert>
 
 #include "base/vector.h"
@@ -16,6 +18,8 @@
 #include "base/text/string_hash.h"
 #include "base/text/unicode.h"
 #include "base/wtf_size_t.h"
+#include "base/memory/scoped_refptr.h"
+#include "base/text/atomic_string.h"
 
 namespace bkfont {
 
@@ -55,6 +59,13 @@ public:
   void ResetLimits() {
     SetLimits(0, 0, 0);
   }
+
+  // The hyphenation of a lower-case locale, or null when no dictionary is
+  // available (hyphenation_minikin.cc).
+  static scoped_refptr<Hyphenation> PlatformGetHyphenation(const AtomicString& locale);
+  // Host replacement for the browser's hyphenation dictionary service: the
+  // directory with "hyph-<locale>.hyb" files. Empty disables hyphens: auto.
+  static void SetDictionaryDirectory(std::filesystem::path);
 
 protected:
   void Initialize(const AtomicString& locale);

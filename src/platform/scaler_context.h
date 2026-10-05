@@ -43,16 +43,19 @@ inline bool HasScalerContextFlag(ScalerContextFlags flags, ScalerContextFlags fl
   return (static_cast<std::uint32_t>(flags) & static_cast<std::uint32_t>(flag)) != 0;
 }
 
-// SkScalerContextRec, also the whole SkDescriptor key: there are never
-// effects, since the paint has no path effect or mask filter. The stroke
-// fields are left out because the fill paint fixes them (-1/0/0/0, no
-// kFrameAndFill_Flag).
+// SkScalerContextRec and the path effect portion of SkDescriptor. The effect
+// is retained and compared by value instead of serializing it into the key.
 struct ScalerContextRec {
   std::uint32_t typeface_id = 0;
   float text_size = 0;
   float pre_scale_x = 0;
   float pre_skew_x = 0;
   float post2x2[2][2] = {};
+  float frame_width = -1;
+  float miter_limit = 0;
+  StrokeJoin stroke_join = StrokeJoin::kMiter;
+  StrokeCap stroke_cap = StrokeCap::kButt;
+  std::shared_ptr<const PathEffect> path_effect;
 
   // This will be set if to the paint's foreground color if
   // kNeedsForegroundColor is set, which will usually be the case for COLRv0
@@ -274,6 +277,9 @@ protected:
 
   static void GenerateMetricsFromPath(PlatformGlyph* glyph, const ScalarPath& path, MaskFormat format,
                                       bool vertical_lcd, bool a8_from_lcd, bool hairline);
+  static void GenerateImageFromPath(MaskBuilder& mask, const ScalarPath& path,
+                                    const MaskGamma::PreBlend& pre_blend,
+                                    bool bgr, bool vertical_lcd, bool a8_from_lcd, bool hairline);
   static void SaturateGlyphBounds(PlatformGlyph* glyph, ScalarRect&& r);
 
   // Generates the contents of image_buffer. When called, image_buffer will be
@@ -309,8 +315,7 @@ private:
   // Keeps the typeface alive while the scaler context borrows its face.
   std::shared_ptr<Typeface> typeface_;
 
-  // fGenerateImageFromPath is always false: the paint has no stroke and no
-  // path effect, so the path rasterization of images is not ported.
+  const bool generate_image_from_path_;
 
 protected:
   // MaskGamma::PreBlend converts linear masks to gamma correcting masks.

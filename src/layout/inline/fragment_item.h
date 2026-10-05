@@ -12,6 +12,8 @@
 
 namespace bkfont {
 
+class TextCombine;
+
 struct TextOffsetRange {
   unsigned start = 0;
   unsigned end = 0;
@@ -97,6 +99,8 @@ public:
   const ShapeResultView* TextShapeResult() const {
     return shape_.get();
   }
+  // The combined text of a 'text-combine-upright: all' box.
+  const TextCombine* GetTextCombine() const { return text_combine_.get(); }
   LayoutUnit InlineSize() const {
     return inline_size_;
   }
@@ -109,6 +113,14 @@ public:
   LayoutUnit Baseline() const {
     return baseline_;
   }
+  // Content tops of the containing inline boxes, including culled boxes.
+  // Stored independently from the text so child vertical-align does not move
+  // an ancestor's underline. Objects supply current styles at paint time.
+  struct InlinePaintBox {
+    const InlineObject* object;
+    LayoutUnit block_offset;
+  };
+  const Vector<InlinePaintBox>& PaintBoxes() const { return paint_boxes_; }
   float CaretInlinePosition(unsigned text_offset, const String&,
                             AdjustMidCluster = AdjustMidCluster::kToEnd) const;
   unsigned TextOffsetForPoint(float inline_position, const String&) const;
@@ -116,11 +128,13 @@ public:
 private:
   friend class FragmentItems;
   friend class InlineLayoutAlgorithm;
+  friend class InlineLayoutStateStack;
   friend class InlineFormattingContext;
   ItemType type_ = kInvalid;
   const InlineObject* object_ = nullptr;
   std::shared_ptr<const ComputedStyle> style_;
   std::shared_ptr<const ShapeResultView> shape_;
+  std::shared_ptr<const TextCombine> text_combine_;
   String generated_text_;
   mutable std::shared_ptr<ShapeResult> caret_shape_;
   PhysicalRect rect_;
@@ -130,6 +144,7 @@ private:
   LayoutUnit inline_size_;
   LayoutUnit block_size_;
   LayoutUnit baseline_;
+  Vector<InlinePaintBox> paint_boxes_;
   size_t line_index_ = 0;
   size_t descendants_count_ = 1;
   size_t fragment_id_ = 0;

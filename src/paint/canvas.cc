@@ -46,6 +46,15 @@ void Canvas::DrawRect(const ScalarRect& rect, const PlatformPaint& paint) {
   DrawPath(ScalarPath::Rect(rect), paint);
 }
 
+void Canvas::DrawLine(ScalarPoint start, ScalarPoint end, const PlatformPaint& paint) {
+  ScalarPath path;
+  path.MoveTo(start);
+  path.LineTo(end);
+  PlatformPaint stroke = paint;
+  stroke.SetStyle(PlatformPaint::Style::kStroke);
+  DrawPath(path, stroke);
+}
+
 void Canvas::DrawColor(const Color4f& color, BlendMode mode) {
   PlatformPaint paint;
   paint.SetColor(color);

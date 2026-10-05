@@ -5,6 +5,7 @@
 // found in the LICENSE file.
 
 #pragma once
+#include <span>
 
 #include "paint_canvas.h"
 #include "geometry/physical_offset.h"
@@ -16,7 +17,9 @@ namespace bkfont {
 class Font;
 class PlatformPaint;
 class TextCombine;
+class ComputedStyle;
 struct TextFragmentPaintInfo;
+struct DecoratingBox;
 
 // PhysicalBoxRect() from text_fragment_painter.cc for a non-SVG text item.
 // `rect_in_container` is the rect of the text item in its inline formatting
@@ -34,8 +37,9 @@ PhysicalRect PhysicalBoxRect(const PhysicalRect& rect_in_container,
 // runs are counter-rotated by the bloberizer (CanvasRotationInVertical).
 //
 // `font` is the scaled font of the text item; text in `text_combine` uses its
-// compressed font instead when it has one. Selection, highlights, markers,
-// decorations, emphasis marks, shadows and SVG text are not ported.
+// compressed font instead when it has one. The ComputedStyle overload also
+// paints text shadows, decorations, stroke and emphasis marks. Selection,
+// highlights, markers and SVG text are not ported.
 void PaintTextFragment(PaintCanvas*,
                        const TextFragmentPaintInfo&,
                        const Font& font,
@@ -43,7 +47,13 @@ void PaintTextFragment(PaintCanvas*,
                        const PhysicalRect& physical_box,
                        const PlatformPaint&,
                        const TextCombine* text_combine = nullptr,
-                       NodeId node_id = kInvalidNodeId);
+                       NodeId node_id = kInvalidNodeId,
+                       const ComputedStyle* text_style = nullptr,
+                       std::span<const DecoratingBox> = {});
+
+void PaintTextFragment(PaintCanvas*, const TextFragmentPaintInfo&, const Font&, WritingMode,
+                       const PhysicalRect&, const ComputedStyle&, NodeId = kInvalidNodeId,
+                       std::span<const DecoratingBox> = {});
 
 // Paints `text_combine` whose box is at `paint_offset`: the
 // LayoutTextCombine branch of BoxFragmentPainter::PaintInternal() applies the
@@ -54,5 +64,8 @@ void PaintTextCombine(PaintCanvas*,
                       const PhysicalOffset& paint_offset,
                       const PlatformPaint&,
                       NodeId node_id = kInvalidNodeId);
+
+void PaintTextCombine(PaintCanvas*, const TextCombine&, const PhysicalOffset&,
+                      const ComputedStyle&, NodeId = kInvalidNodeId);
 
 } // namespace bkfont

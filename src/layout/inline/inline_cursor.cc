@@ -205,8 +205,7 @@ InlineCursor InlineCursor::CursorForRoot() const {
 InlinePosition InlineCursor::PositionForPointInInlineFormattingContext(const PhysicalOffset& point,
                                                                        InlineHitTestOptions options) {
   if (!Current()) return {};
-  const auto& layout_options = root_->Options();
-  const WritingModeConverter converter(layout_options.writing_mode, layout_options.direction,
+  const WritingModeConverter converter(items_->GetWritingMode(), items_->Direction(),
                                         items_->SizeInPhysicalCoordinates());
   const LayoutUnit point_block_offset = converter.ToLogical(point, {LayoutUnit(1), LayoutUnit(1)}).block_offset;
   InlineCursor closest_line_after;
@@ -267,7 +266,7 @@ InlinePosition InlineCursor::PositionForPointInInlineFormattingContext(const Phy
 InlinePosition InlineCursor::PositionForPointInInlineBox(const PhysicalOffset& point) const {
   if (!Current()) return {};
   assert(Current()->Type() == FragmentItem::kLine);
-  const WritingModeConverter converter(root_->Options().writing_mode, root_->Options().direction,
+  const WritingModeConverter converter(items_->GetWritingMode(), items_->Direction(),
                                         Current()->RectInContainerFragment().size);
   const LayoutUnit point_inline_offset = converter.ToLogical(point, {LayoutUnit(1), LayoutUnit(1)}).inline_offset;
   InlineCursor closest_child_before;
@@ -308,7 +307,7 @@ InlinePosition InlineCursor::PositionForPointInChild(const PhysicalOffset& point
   if (!Current() || ShouldIgnoreForPositionForPoint(*Current())) return {};
   const auto& item = *Current();
   const auto& rect = item.RectInContainerFragment();
-  const auto writing_mode = root_->Options().writing_mode;
+  const auto writing_mode = items_->GetWritingMode();
   if (item.IsText()) {
     // TextOffsetForPoint uses a zero-size point and LTR line coordinates,
     // independently of the resolved bidi direction of this text fragment.
@@ -319,7 +318,7 @@ InlinePosition InlineCursor::PositionForPointInChild(const PhysicalOffset& point
 
   // The standalone atomic object is a replaced leaf, not an inline-block
   // containing another formatting context. Match LayoutReplaced here.
-  const WritingModeConverter converter(writing_mode, root_->Options().direction, items_->SizeInPhysicalCoordinates());
+  const WritingModeConverter converter(writing_mode, items_->Direction(), items_->SizeInPhysicalCoordinates());
   auto line = CursorForRoot();
   line.MoveToContainingLine();
   const auto& line_rect = line.Current()->RectInContainerFragment();

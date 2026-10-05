@@ -11,6 +11,8 @@
 
 namespace bkfont {
 
+class Picture;
+
 // cc::NodeId.
 using NodeId = int;
 inline constexpr NodeId kInvalidNodeId = 0;
@@ -36,6 +38,14 @@ public:
 
   // The matrix is concatenated as an SkM44 made from an SkMatrix.
   virtual void Concat(const ScalarMatrix& matrix) = 0;
+  virtual int SaveLayer(const ScalarRect* bounds, const PlatformPaint* paint) = 0;
+  virtual void DrawRect(const ScalarRect&, const PlatformPaint&) = 0;
+  virtual void DrawLine(ScalarPoint start, ScalarPoint end, const PlatformPaint&) = 0;
+  virtual void DrawPath(const ScalarPath&, const PlatformPaint&) = 0;
+  virtual void DrawPicture(const Picture&) = 0;
+  virtual void ClipRect(const ScalarRect&, bool anti_alias = false) = 0;
+  virtual void ClipOutRect(const ScalarRect&, bool anti_alias = false) = 0;
+  void Translate(float x, float y) { Concat(ScalarMatrix::Translate(x, y)); }
 
   virtual void DrawTextBlob(const std::shared_ptr<const TextBlob>& blob, float x, float y, const PlatformPaint& flags) = 0;
   virtual void DrawTextBlob(const std::shared_ptr<const TextBlob>& blob, float x, float y, NodeId node_id,

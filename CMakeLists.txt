@@ -166,6 +166,7 @@ target_sources(bkfont PRIVATE
   src/base/text/strcat.h src/base/text/strcat.cc
   src/base/text/string_buffer.h
   src/base/text/string_builder.h src/base/text/string_builder.cc
+  src/base/text/math_transform.h src/base/text/math_transform.cc
   src/base/text/string_concatenate.h src/base/text/string_concatenate.cc
   src/base/text/string_hash.h
   src/base/text/string_hasher.h
@@ -193,6 +194,24 @@ target_sources(bkfont PRIVATE
   src/style/css_primitive_value.h src/style/css_primitive_value.cc
   src/style/css_numeric_literal_value.h
   src/style/css_math_function_value.h
+  src/style/css_value_list.h
+  src/style/css_value_pair.h
+  src/style/css_string_value.h
+  src/style/css_font_values.h
+  src/style/css_shadow_value.h
+  src/style/css_property_names.h src/style/css_property_names.cc
+  src/style/css_property_validation.h src/style/css_property_validation.cc
+  src/style/css_value_id_mappings.h
+  src/style/css_value_id_mappings_generated.h
+  src/style/computed_style_constants.h
+  src/style/applied_text_decoration.h
+  src/style/shadow_data.h
+  src/style/shadow_list.h
+  src/style/style_hyphenate_limit_chars.h
+  src/style/text_decoration_thickness.h
+  src/style/font_size_functions.h src/style/font_size_functions.cc
+  src/style/font_builder.h src/style/font_builder.cc
+  src/style/style_builder_converter.h src/style/style_builder_converter.cc
   src/style/css_identifier_value.h
   src/style/css_value_keywords.h src/style/css_value_keywords.cc
   src/style/css_color.h
@@ -201,12 +220,23 @@ target_sources(bkfont PRIVATE
   src/style/css_unset_value.h
   src/style/style_color.h
   src/style/white_space.h
+  src/text/unicode_bidi.h
   src/style/computed_style_base_constants.h
+  src/style/computed_style_base.h src/style/computed_style_base.cc
   src/style/style_declaration.h src/style/style_declaration.cc
   src/style/style_sheet.h
   src/style/style_difference.h
   src/style/inline_style.h
   src/style/computed_style.h src/style/computed_style.cc
+  src/style/css_to_length_conversion_data.h src/style/css_to_length_conversion_data.cc
+  src/style/style_host_context.h src/style/style_host_context.cc
+  src/style/cascade_origin.h
+  src/style/cascade_priority.h
+  src/style/cascade_map.h
+  src/style/match_result.h
+  src/style/style_resolver_state.h src/style/style_resolver_state.cc
+  src/style/style_builder.h src/style/style_builder.cc
+  src/style/style_cascade.h src/style/style_cascade.cc
   src/style/style_resolver.h src/style/style_resolver.cc
   src/editing/bidi_adjustment.h src/editing/bidi_adjustment.cc
   src/initialize.h src/initialize.cc
@@ -302,6 +332,8 @@ target_sources(bkfont PRIVATE
   src/layout/inline/offset_mapping.h src/layout/inline/offset_mapping.cc
   src/layout/inline/offset_mapping_builder.h src/layout/inline/offset_mapping_builder.cc
   src/layout/inline/inline_items_builder.h src/layout/inline/inline_items_builder.cc
+  src/layout/inline/inline_box_state.h src/layout/inline/inline_box_state.cc
+  src/layout/inline/transformed_string.h
   src/layout/inline/fragment_item.h src/layout/inline/fragment_item.cc
   src/layout/inline/fragment_items.h src/layout/inline/fragment_items.cc
   src/layout/inline/inline_cursor.h src/layout/inline/inline_cursor.cc
@@ -324,14 +356,20 @@ target_sources(bkfont PRIVATE
   src/paint/geometry.h
   src/paint/glyph_run.h src/paint/glyph_run.cc
   src/paint/glyph_run_painter.h src/paint/glyph_run_painter.cc
+  src/paint/image_filter.h src/paint/image_filter.cc
   src/paint/line_relative_rect.h src/paint/line_relative_rect.cc
   src/paint/mask.h src/paint/mask.cc
   src/paint/mask_gamma.h src/paint/mask_gamma.cc
   src/paint/matrix.h src/paint/matrix.cc
   src/paint/paint_canvas.h
   src/paint/path.h src/paint/path.cc
+  src/paint/path_geometry.h src/paint/path_geometry.cc
+  src/paint/path_measure.h src/paint/path_measure.cc
+  src/paint/path_effect.h src/paint/path_effect.cc
+  src/paint/stroke.h src/paint/stroke.cc
   src/paint/path_rasterizer.h src/paint/path_rasterizer.cc
   src/paint/picture.h src/paint/picture.cc
+  src/paint/picture_shader.cc
   src/paint/pixmap.h src/paint/pixmap.cc
   src/paint/platform_paint.h
   src/paint/raster_canvas.h src/paint/raster_canvas.cc
@@ -342,6 +380,12 @@ target_sources(bkfont PRIVATE
   src/paint/surface_props.h
   src/paint/text_blob.h src/paint/text_blob.cc
   src/paint/text_fragment_painter.h src/paint/text_fragment_painter.cc
+  src/paint/text_paint_style.h src/paint/text_paint_style.cc
+  src/paint/text_shadow_painter.h src/paint/text_shadow_painter.cc
+  src/paint/decoration_line_painter.h src/paint/decoration_line_painter.cc
+  src/paint/text_decoration_info.h src/paint/text_decoration_info.cc
+  src/paint/text_decoration_painter.h src/paint/text_decoration_painter.cc
+  src/paint/text_painter.h src/paint/text_painter.cc
   src/platform/arena.h
   src/platform/data.h src/platform/data.cc
   src/platform/font_arguments.h
@@ -425,6 +469,9 @@ target_sources(bkfont PRIVATE
   src/text/emoji_segmentation_category_inline_header.h
   src/text/han_kerning_char_type.h
   src/text/hyphenation.h src/text/hyphenation.cc
+  src/text/capitalize.h src/text/capitalize.cc
+  src/text/hyphenation/hyphenator_aosp.h src/text/hyphenation/hyphenator_aosp.cc
+  src/text/hyphenation/hyphenation_minikin.h src/text/hyphenation/hyphenation_minikin.cc
   src/text/icu_error.h src/text/icu_error.cc
   src/text/layout_locale.h src/text/layout_locale.cc
   src/text/locale_to_script_mapping.h src/text/locale_to_script_mapping.cc
@@ -471,4 +518,9 @@ else()
     src/platform/fontconfig_util.h src/platform/fontconfig_util.cc
     src/platform/font_manager_fontconfig.h src/platform/font_manager_fontconfig.cc)
   target_link_libraries(bkfont PRIVATE Fontconfig::Fontconfig Threads::Threads)
+endif()
+
+option(BLINK_FONTS_BUILD_EXAMPLES "Build the GLFW multilingual text example" ON)
+if(BLINK_FONTS_BUILD_EXAMPLES)
+  add_subdirectory(examples)
 endif()

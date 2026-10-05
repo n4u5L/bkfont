@@ -20,8 +20,8 @@ namespace bkfont {
 
 class Strike;
 
-// SkStrikeSpec. The descriptor is the ScalerContextRec: there are never
-// effects. The StrikeForGPU cache interface is not ported.
+// SkStrikeSpec. ScalerContextRec retains the descriptor and path effect.
+// The StrikeForGPU cache interface is not ported.
 class StrikeSpec {
 public:
   StrikeSpec(const StrikeSpec&) = default;

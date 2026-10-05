@@ -131,7 +131,8 @@ void FragmentItems::DirtyTextRange(const InlineObject& object, unsigned offset) 
   size_t dirty = items_.size();
   for (size_t i = 0; i < items_.size(); ++i) {
     const auto& item = items_[i];
-    if (item.object_ == &object && item.text_offset_.end >= text_offset) {
+    if (item.object_ && (item.object_ == &object || (object.IsInline() && item.object_->IsDescendantOf(object))) &&
+        item.text_offset_.end >= text_offset) {
       dirty = item.line_index_;
       break;
     }
@@ -140,7 +141,8 @@ void FragmentItems::DirtyTextRange(const InlineObject& object, unsigned offset) 
     DirtyLinesFromChangedChild(object);
     return;
   }
-  // Reconsider the previous line: deletion may pull the next word onto it.
+  // Reconsider the previous line: a text edit or whitespace style change at
+  // an inline boundary may pull the next word onto it.
   const auto line = std::lower_bound(lines_.begin(), lines_.end(), dirty);
   if (line != lines_.begin()) dirty = *std::prev(line);
   DirtyLine(dirty);

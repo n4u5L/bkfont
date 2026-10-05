@@ -11,6 +11,7 @@
 #include "arena.h"
 #include "base/immediate_crash.h"
 #include "paint/bezier_curves.h"
+#include "paint/path_geometry.h"
 #include "paint/picture.h"
 #include "paint/scalar.h"
 #include "scaler_context.h"
@@ -274,6 +275,7 @@ std::tuple<float, float> CalculatePathGap(float top_offset, float bottom_offset,
   // line when the last point is not the move point.
   const auto points = path.Points();
   std::size_t index = 0;
+  std::size_t conic_index = 0;
   ScalarPoint move_to;
   ScalarPoint last;
   for (ScalarPath::Verb verb : path.Verbs()) {
@@ -298,6 +300,29 @@ std::tuple<float, float> CalculatePathGap(float top_offset, float bottom_offset,
       if (top_offset <= quad_bottom && quad_top <= bottom_offset) {
         add_quad(pts, top_offset);
         add_quad(pts, bottom_offset);
+        add_pts(pts);
+      }
+      last = pts[2];
+      break;
+    }
+    case ScalarPath::Verb::kConic: {
+      const ScalarPoint pts[3] = {last, points[index], points[index + 1]};
+      index += 2;
+      const float w = path.ConicWeights()[conic_index++];
+      const auto [top, bottom] = std::minmax({pts[0].y, pts[1].y, pts[2].y});
+      if (top_offset <= bottom && top <= bottom_offset) {
+        for (float y : {top_offset, bottom_offset}) {
+          float roots[2];
+          const float p0 = pts[0].y - y;
+          const float p1 = w * (pts[1].y - y);
+          const float p2 = pts[2].y - y;
+          const int count = FindUnitQuadRoots(p0 - 2 * p1 + p2, 2 * (p1 - p0), p0, roots);
+          for (int i = 0; i < count; ++i) {
+            const float t = roots[i], s = 1 - t;
+            expand_gap((s * s * pts[0].x + 2 * w * s * t * pts[1].x + t * t * pts[2].x) /
+                       (s * s + 2 * w * s * t + t * t));
+          }
+        }
         add_pts(pts);
       }
       last = pts[2];
