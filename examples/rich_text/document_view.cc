@@ -77,6 +77,7 @@ void DocumentView::Update(const Document& document, float device_scale, float zo
       block.context->SetZoomFactors(device_scale, zoom);
       const auto mode = PropertyValue(document.GetStyle(style).properties, "writing-mode", "horizontal-tb");
       block.vertical = mode == "vertical-rl" || mode == "vertical-lr";
+      block.rtl = PropertyValue(document.GetStyle(style).properties, "direction", "ltr") == "rtl";
       auto options = block.context->Options();
       options.available_inline_size = LayoutUnit(block.vertical ? 240 * scale : content_width);
       block.context->SetOptions(options);
@@ -142,8 +143,11 @@ PhysicalRect DocumentView::Caret(uint32_t offset, TextAffinity affinity) {
   return rect;
 }
 
-void DocumentView::Paint(RasterCanvas& raster, float x, float y, float clip_top, float clip_bottom, const Document::Selection& selection) {
+void DocumentView::Paint(RasterCanvas& raster, float x, float y, float clip_top, float clip_bottom, const Document::Selection& selection,
+                         bool marks) {
   CanvasPaintCanvas canvas(&raster);
+  PlatformPaint mark_paint(0xff8c9bb0);
+  mark_paint.SetAntiAlias(true);
   for (auto& block : blocks_) {
     if (y + block.y + block.height + 32 * scale_ < clip_top || y + block.y - 32 * scale_ > clip_bottom) continue;
     const PhysicalOffset origin = Offset(x + block.x, y + block.y);
@@ -161,7 +165,46 @@ void DocumentView::Paint(RasterCanvas& raster, float x, float y, float clip_top,
                       PlatformPaint(0xffc9ddfa));
     }
     block.context->Paint(&canvas, origin);
+    if (marks) {
+      // A pilcrow beside the paragraph's end caret, drawn as a path so it
+      // never depends on the fonts available for the paragraph.
+      const auto caret = block.context->CaretRect(block.Position(block.end, TextAffinity::kUpstream));
+      const float line = std::max(18 * scale_, block.vertical ? caret.Width().ToFloat() : caret.Height().ToFloat());
+      const float h = std::min(line * 0.62f, 15 * scale_), w = h * 0.62f;
+      float left = x + block.x + caret.X().ToFloat(), top = y + block.y + caret.Y().ToFloat();
+      if (block.vertical) {
+        left += (caret.Width().ToFloat() - w) / 2;
+        top += caret.Height().ToFloat() + 2 * scale_;
+      } else {
+        left += block.rtl ? -w - 2 * scale_ : 2 * scale_;
+        top += (caret.Height().ToFloat() - h) / 2;
+      }
+      const float stem = std::max(1.0f, h * 0.09f), bowl = w * 0.62f;
+      ScalarPath path;
+      // Same (clockwise) winding as AddRect, so overlaps do not cancel.
+      path.MoveTo({left + bowl, top + h * 0.5f});
+      path.CubicTo({left - bowl * 0.05f, top + h * 0.5f}, {left - bowl * 0.05f, top}, {left + bowl, top});
+      path.Close();
+      path.AddRect(ScalarRect::MakeXYWH(left + bowl - stem, top, w - bowl + stem, stem));
+      path.AddRect(ScalarRect::MakeXYWH(left + bowl - stem, top, stem, h));
+      path.AddRect(ScalarRect::MakeXYWH(left + w - stem, top, stem, h));
+      raster.DrawPath(path, mark_paint);
+    }
   }
+}
+
+std::pair<uint32_t, uint32_t> DocumentView::WordAt(uint32_t offset) const {
+  const Block& block = BlockAt(offset);
+  if (block.start == block.end) return {block.start, block.end};
+  const uint32_t length = block.end - block.start;
+  auto* words = WordBreakIterator(base::span<const UChar>(text_.data() + block.start, length));
+  if (!words) return {offset, offset};
+  // At the paragraph end, select the word before the caret, as Word does.
+  const int32_t relative = static_cast<int32_t>(std::min(std::clamp(offset, block.start, block.end) - block.start, length - 1));
+  const int32_t start = words->preceding(relative + 1), end = words->following(relative);
+  const uint32_t first = block.start + (start == icu::BreakIterator::DONE ? 0 : static_cast<uint32_t>(start));
+  const uint32_t last = block.start + (end == icu::BreakIterator::DONE ? length : static_cast<uint32_t>(end));
+  return {first, Snap(last)};
 }
 
 uint32_t DocumentView::Snap(uint32_t offset) const {

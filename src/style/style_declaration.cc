@@ -395,10 +395,17 @@ bool StyleDeclaration::SetFontVariationSettings(std::span<const std::pair<Atomic
 bool StyleDeclaration::SetFontStyleOblique(CSSLength angle) {
   auto literal = CSSNumericLiteralValue::Create(angle.value, angle.unit);
   if (!literal->IsAngle()) return false;
-  if (literal->ComputeDegrees() == 0.0) return SetKeyword(CSSPropertyID::kFontStyle, CSSValueID::kNormal);
+  if (literal->DoubleValue() == 0.0) return SetKeyword(CSSPropertyID::kFontStyle, CSSValueID::kNormal);
   return Set(CSSPropertyID::kFontStyle,
              cssvalue::CSSFontStyleRangeValue::Create(CSSIdentifierValue::Create(CSSValueID::kOblique),
                                                       CSSValueList::CreateSpaceSeparated({std::move(literal)})));
+}
+
+bool StyleDeclaration::SetFontStyleOblique(CSSCalc angle) {
+  return Set(CSSPropertyID::kFontStyle,
+             cssvalue::CSSFontStyleRangeValue::Create(
+                 CSSIdentifierValue::Create(CSSValueID::kOblique),
+                 CSSValueList::CreateSpaceSeparated({CSSMathFunctionValue::Create(std::move(angle.terms))})));
 }
 
 bool StyleDeclaration::SetTextShadow(std::span<const CSSTextShadow> shadows) {

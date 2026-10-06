@@ -94,14 +94,20 @@ bool IsInteger(const CSSValue& value, double minimum) {
   return CalcCategory(value) == Category::kNumber;
 }
 
-// ConsumeAngle() with limits for literals.
-bool IsAngle(const CSSValue& value, double minimum, double maximum) {
-  if (const auto* literal = Literal(value)) {
-    if (!literal->IsAngle()) return false;
-    const double degrees = literal->ComputeDegrees();
-    return degrees >= minimum && degrees <= maximum;
-  }
+// ConsumeAngle(): an angle literal or an angle calc(). The limits passed to
+// it only clamp a calc() (see WithParsedCalcRanges()).
+bool IsAngle(const CSSValue& value) {
+  if (const auto* literal = Literal(value)) return literal->IsAngle();
   return CalcCategory(value) == Category::kAngle;
+}
+
+// css_parsing_utils.cc IsAngleWithinLimits(): the literal's number in its own
+// unit, not in degrees, so 2rad passes and 100grad fails. A calc() passes.
+bool IsAngleWithinLimits(const CSSValue& angle) {
+  constexpr float kMaxAngle = 90.0f;
+  const auto* numeric_angle = DynamicTo<CSSNumericLiteralValue>(angle);
+  if (!numeric_angle) return true;
+  return numeric_angle->DoubleValue() >= -kMaxAngle && numeric_angle->DoubleValue() <= kMaxAngle;
 }
 
 // ConsumeColor() for the local color subset: an RGBA color or currentcolor.
@@ -251,12 +257,12 @@ bool IsFontStyle(const CSSValue& value) {
   const auto* range = DynamicTo<cssvalue::CSSFontStyleRangeValue>(value);
   if (!range || range->GetFontStyleValue()->GetValueID() != CSSValueID::kOblique) return false;
   const CSSValueList* angles = range->GetObliqueValues();
-  if (!angles || angles->length() != 1 || !IsAngle(angles->First(), kMinObliqueValue, kMaxObliqueValue))
+  if (!angles || angles->length() != 1 || !IsAngle(angles->First()) || !IsAngleWithinLimits(angles->First()))
     return false;
-  // FontStyleObliqueZeroDegreeAsNormal: a literal zero angle parses as
-  // 'normal' instead.
+  // FontStyleObliqueZeroDegreeAsNormal (IsAngleZero()): a literal zero angle
+  // parses as 'normal' instead.
   const auto* literal = DynamicTo<CSSNumericLiteralValue>(angles->First());
-  return !literal || literal->ComputeDegrees() != 0.0;
+  return !literal || literal->DoubleValue() != 0.0;
 }
 
 bool IsFontWeight(const CSSValue& value) {
@@ -544,6 +550,33 @@ std::shared_ptr<const CSSValue> WithParsedCalcRanges(CSSPropertyID id, std::shar
                                     CSSValuePair::kKeepIdenticalValues);
       }
       return WithRange(std::move(value), ValueRange::kNonNegative);
+    case kFontStyle: {
+      // ConsumeMathFunctionAngle() with kMinObliqueValue / kMaxObliqueValue:
+      // the calc() keeps kAll, but one whose simplified value (degrees, as
+      // calc() literals are canonicalized) lies outside the limits becomes
+      // that limit as a degree literal.
+      const auto* style_range = DynamicTo<cssvalue::CSSFontStyleRangeValue>(value.get());
+      if (!style_range) return value;
+      const auto* calc = DynamicTo<CSSMathFunctionValue>(style_range->GetObliqueValues()->First());
+      if (!calc) return value;
+      double degrees = 0;
+      for (const auto& term : calc->Terms())
+        degrees += term.value * CSSPrimitiveValue::ConversionToCanonicalUnitsScaleFactor(term.unit);
+      std::shared_ptr<const CSSPrimitiveValue> angle;
+      if (degrees < kMinObliqueValue)
+        angle = CSSNumericLiteralValue::Create(kMinObliqueValue, UnitType::kDegrees);
+      else if (degrees > kMaxObliqueValue)
+        angle = CSSNumericLiteralValue::Create(kMaxObliqueValue, UnitType::kDegrees);
+      else if (calc->PermittedValueRange() == ValueRange::kAll)
+        return value;
+      else
+        angle = CSSMathFunctionValue::Create(calc->Terms(), ValueRange::kAll);
+      CSSValueList::Values angles;
+      angles.push_back(std::move(angle));
+      return cssvalue::CSSFontStyleRangeValue::Create(
+          CSSIdentifierValue::Create(style_range->GetFontStyleValue()->GetValueID()),
+          CSSValueList::CreateSpaceSeparated(std::move(angles)));
+    }
     case kHyphenateLimitChars:
       if (const auto* list = DynamicTo<CSSValueList>(value.get())) return ListWithRange(*list, ValueRange::kPositiveInteger);
       return value;

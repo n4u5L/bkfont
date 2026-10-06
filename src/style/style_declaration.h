@@ -146,9 +146,13 @@ public:
   // <integer> values; 1 for a bare tag ("on").
   [[nodiscard]] bool SetFontFeatureSettings(std::span<const std::pair<AtomicString, int>>);
   [[nodiscard]] bool SetFontVariationSettings(std::span<const std::pair<AtomicString, double>>);
-  // font-style: oblique <angle>. A zero angle is stored as 'normal', as
-  // FontStyleObliqueZeroDegreeAsNormal parses it.
+  // font-style: oblique <angle>. The number must lie in [-90, 90] in the
+  // angle's own unit (IsAngleWithinLimits()). A zero angle is stored as
+  // 'normal', as FontStyleObliqueZeroDegreeAsNormal parses it.
   [[nodiscard]] bool SetFontStyleOblique(CSSLength angle);
+  // font-style: oblique calc(<angle>). A sum outside [-90deg, 90deg] is
+  // stored as that limit; a zero sum stays a calc().
+  [[nodiscard]] bool SetFontStyleOblique(CSSCalc angle);
   [[nodiscard]] bool SetTextShadow(std::span<const CSSTextShadow>);
   [[nodiscard]] bool SetTextDecorationLine(TextDecorationLine);
   [[nodiscard]] bool SetTextDecorationColor(StyleColorValue);

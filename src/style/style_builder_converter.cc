@@ -429,7 +429,7 @@ FontSelectionValue StyleBuilderConverter::ConvertFontStyle(StyleResolverState& s
       const double angle_degrees = To<CSSPrimitiveValue>(values->Item(0)).ComputeDegrees(state.CssToLengthConversionData());
       // FontStyleObliqueZeroDegreeAsNormal is stable.
       if (angle_degrees == 0.0) return kNormalSlopeValue;
-      return FontSelectionValue(static_cast<float>(angle_degrees));
+      return FontSelectionValue(angle_degrees);
     }
     const CSSIdentifierValue* style = style_range_value->GetFontStyleValue();
     if (style->GetValueID() == CSSValueID::kNormal) return kNormalSlopeValue;

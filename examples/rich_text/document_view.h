@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "document.h"
@@ -25,7 +26,7 @@ public:
   struct Block {
     uint32_t start = 0, end = 0, style = 0;
     float x = 0, y = 0, width = 0, height = 0;
-    bool vertical = false;
+    bool vertical = false, rtl = false;
     std::vector<PieceTree::Piece> pieces;
     std::vector<NodeMap> nodes;
     std::unique_ptr<bkfont::InlineFormattingContext> context;
@@ -34,8 +35,12 @@ public:
   void Update(const Document&, float device_scale, float zoom, bool force = false);
   uint32_t Hit(float x, float y, bkfont::TextAffinity* = nullptr);
   bkfont::PhysicalRect Caret(uint32_t, bkfont::TextAffinity = bkfont::TextAffinity::kDownstream);
-  void Paint(bkfont::RasterCanvas&, float x, float y, float clip_top, float clip_bottom, const Document::Selection&);
+  // `marks` paints Word-style paragraph marks (¶) after each paragraph.
+  void Paint(bkfont::RasterCanvas&, float x, float y, float clip_top, float clip_bottom, const Document::Selection&,
+             bool marks = false);
   uint32_t Move(uint32_t offset, int direction, bool word) const;
+  // The UAX #29 word (or run of spaces/punctuation) containing `offset`.
+  std::pair<uint32_t, uint32_t> WordAt(uint32_t offset) const;
   uint32_t Snap(uint32_t offset) const;
   const Block& BlockAt(uint32_t offset) const;
   const std::u16string& Text() const {

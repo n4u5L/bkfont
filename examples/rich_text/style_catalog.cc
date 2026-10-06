@@ -22,7 +22,7 @@ const PropertySpec kProperties[] = {
     {"font-family", "字体", false, 0, {"serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui"}},
     {"font-size", "字号", false, 0, {"12px", "14px", "16px", "18px", "20px", "24px", "32px", "40px", "48px"}},
     {"font-weight", "字重", false, 0, {"400", "600", "700", "900"}},
-    {"font-style", "字形", false, 0, {"normal", "italic", "oblique"}},
+    {"font-style", "字形", false, 0, {"normal", "italic", "oblique", "oblique 14deg", "oblique -15deg"}},
     {"color", "文字颜色", false, 0, {"#243247", "#185abd", "#c43e1c", "#16836b", "#7c3aed", "#808080"}},
     {"text-decoration-line", "装饰线", false, 0, {"none", "underline", "line-through", "overline", "underline line-through"}},
     {"vertical-align", "上下标", false, 0, {"baseline", "super", "sub", "middle", "4px"}},
@@ -123,6 +123,14 @@ std::shared_ptr<const CSSValue> Scalar(std::string_view text) {
     unit = Unit::kPercentage;
   else if (suffix == "pt")
     unit = Unit::kPoints;
+  else if (suffix == "deg")
+    unit = Unit::kDegrees;
+  else if (suffix == "rad")
+    unit = Unit::kRadians;
+  else if (suffix == "grad")
+    unit = Unit::kGradians;
+  else if (suffix == "turn")
+    unit = Unit::kTurns;
   else if (!suffix.empty())
     return nullptr;
   else if (text.find_first_of(".eE") == std::string_view::npos)
@@ -197,6 +205,11 @@ bool Apply(StyleDeclaration& declaration, P property, std::string_view text) {
     }
     const std::pair<AtomicString, double> value(tag, number);
     return declaration.SetFontVariationSettings({&value, 1});
+  }
+  if (property == P::kFontStyle && text.starts_with("oblique ")) {
+    const auto angle = Scalar(Trim(text.substr(8)));
+    const auto* literal = angle ? DynamicTo<CSSNumericLiteralValue>(angle.get()) : nullptr;
+    return literal && literal->IsAngle() && declaration.SetFontStyleOblique({literal->DoubleValue(), literal->GetType()});
   }
   if (property == P::kTextShadow && text != "none") {
     std::istringstream stream{std::string(text)};

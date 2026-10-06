@@ -17,8 +17,9 @@ namespace bkfont {
 bool IsValidLonghandValue(CSSPropertyID, const CSSValue&);
 
 // The value with every calc() given the range the parser records for its
-// position in the property (CSSMathFunctionValue::PermittedValueRange()).
-// `value` must be valid.
+// position in the property (CSSMathFunctionValue::PermittedValueRange()), and
+// a font-style oblique calc() outside [-90deg, 90deg] replaced by the limit,
+// as the parser does. `value` must be valid.
 std::shared_ptr<const CSSValue> WithParsedCalcRanges(CSSPropertyID, std::shared_ptr<const CSSValue> value);
 
 } // namespace bkfont
