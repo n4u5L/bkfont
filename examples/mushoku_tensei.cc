@@ -20,12 +20,10 @@
 #include <cstdio>
 #include <cstring>
 #include <fstream>
-#include <iterator>
 #include <initializer_list>
 #include <memory>
 #include <span>
 #include <utility>
-#include <vector>
 
 #include "base/hash_map.h"
 #include "font/custom_font_data.h"
@@ -87,7 +85,14 @@ public:
       std::fprintf(stderr, "font file not found: %s\n", path);
       return false;
     }
-    const std::vector<uint8_t> data((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    // One allocation of the file's size, instead of growing byte by byte.
+    file.seekg(0, std::ios::end);
+    Vector<uint8_t> data(static_cast<wtf_size_t>(file.tellg()));
+    file.seekg(0, std::ios::beg);
+    if (!file.read(reinterpret_cast<char*>(data.data()), data.size())) {
+      std::fprintf(stderr, "font file not readable: %s\n", path);
+      return false;
+    }
     String message;
     std::shared_ptr<FontCustomPlatformData> face = FontCustomPlatformData::Create(data, message);
     if (!face) {
@@ -241,7 +246,7 @@ struct Card {
   bool vertical = false;
   // The language label and the CSS used, above the text blocks.
   Block header;
-  std::vector<Block> blocks;
+  Vector<Block> blocks;
   float top = 0;
   float height = 0;
 };
@@ -726,7 +731,7 @@ std::shared_ptr<FontSelector> LoadExampleFonts() {
 
 struct Page {
   std::shared_ptr<FontSelector> fonts = LoadExampleFonts();
-  std::vector<Card> cards;
+  Vector<Card> cards;
   float scale = 0;
   int width = 0;
   float height = 0;

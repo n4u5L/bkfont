@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <span>
@@ -22,6 +23,19 @@ namespace bkfont {
 
 class RasterCanvas final : public Canvas, private GlyphRunListPainterCPU::BitmapDevicePainter {
 public:
+  // Reuses the base device allocation across sequential, bounded repaints.
+  // Must outlive the canvas and must not be shared by live canvases.
+  class ScratchBuffer {
+  public:
+    std::size_t CapacityBytes() const {
+      return pixels_.capacity() * sizeof(PMColor4f);
+    }
+
+  private:
+    friend class RasterCanvas;
+    std::vector<PMColor4f> pixels_;
+  };
+
   // pixmap must be kAlpha8 or kN32 and stay valid until Flush or
   // destruction. Its current pixels are the initial contents. The default
   // props have an unknown pixel geometry, so text is never drawn with LCD
@@ -33,7 +47,7 @@ public:
   // a bounded layer. It avoids changing curve subdivision or glyph hinting
   // when repainting only part of a device.
   RasterCanvas(const Pixmap& pixmap, const SurfaceProps& props, std::optional<ColorARGB> initial_clear = std::nullopt,
-               int origin_x = 0, int origin_y = 0);
+               int origin_x = 0, int origin_y = 0, ScratchBuffer* scratch = nullptr);
   ~RasterCanvas() override;
   RasterCanvas(const RasterCanvas&) = delete;
   RasterCanvas& operator=(const RasterCanvas&) = delete;
@@ -143,6 +157,7 @@ private:
   IntRect device_bounds_;
   Layer base_;
   std::vector<State> states_;
+  ScratchBuffer* scratch_ = nullptr;
 };
 
 } // namespace bkfont

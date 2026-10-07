@@ -107,9 +107,11 @@ std::optional<Token> ReadToken(std::string_view text) {
   return token;
 }
 
-// Space-separated tokens; quoted strings may contain spaces.
-std::optional<std::vector<Token>> ReadTokens(std::string_view text) {
-  std::vector<Token> tokens;
+// Space-separated tokens; quoted strings may contain spaces. Values rarely
+// have more than four, which then stay in the inline buffer.
+using Tokens = Vector<Token, 4>;
+std::optional<Tokens> ReadTokens(std::string_view text) {
+  Tokens tokens;
   text = Trim(text);
   while (!text.empty()) {
     if (text.front() == '"' || text.front() == '\'') {
@@ -133,8 +135,8 @@ std::optional<std::vector<Token>> ReadTokens(std::string_view text) {
 }
 
 // Comma-separated parts of a list value.
-std::vector<std::string_view> SplitCommas(std::string_view text) {
-  std::vector<std::string_view> parts;
+Vector<std::string_view, 8> SplitCommas(std::string_view text) {
+  Vector<std::string_view, 8> parts;
   while (true) {
     const size_t comma = text.find(',');
     parts.push_back(Trim(text.substr(0, comma)));

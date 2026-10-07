@@ -263,15 +263,23 @@ RasterCanvas::RasterCanvas(const Pixmap& pixmap)
 }
 
 RasterCanvas::RasterCanvas(const Pixmap& pixmap, const SurfaceProps& props, std::optional<ColorARGB> initial_clear,
-                           int origin_x, int origin_y)
-    : pixmap_(pixmap), device_bounds_(IntRect::MakeXYWH(origin_x, origin_y, pixmap.Width(), pixmap.Height())) {
+                           int origin_x, int origin_y, ScratchBuffer* scratch)
+    : pixmap_(pixmap), device_bounds_(IntRect::MakeXYWH(origin_x, origin_y, pixmap.Width(), pixmap.Height())), scratch_(scratch) {
+  if (scratch_) base_.pixels.swap(scratch_->pixels_);
   base_.bounds = device_bounds_;
   base_.color_type = pixmap.GetColorType();
   base_.props = props;
   if (!device_bounds_.IsEmpty()) {
-    base_.pixels.resize(static_cast<std::size_t>(device_bounds_.Width()) * static_cast<std::size_t>(device_bounds_.Height()),
-                        initial_clear ? Color4f::FromColor(*initial_clear).Premul() : PMColor4f{});
-    if (!initial_clear) {
+    const auto count = static_cast<std::size_t>(device_bounds_.Width()) * static_cast<std::size_t>(device_bounds_.Height());
+    // reserve avoids vector's geometric growth overshooting a tile budget.
+    if (count > base_.pixels.capacity()) base_.pixels.reserve(count);
+    if (initial_clear) {
+      const auto reused = std::min(count, base_.pixels.size());
+      const auto color = Color4f::FromColor(*initial_clear).Premul();
+      base_.pixels.resize(count, color);
+      std::fill_n(base_.pixels.begin(), reused, color);
+    } else {
+      base_.pixels.resize(count);
       for (int y = 0; y < pixmap_.Height(); ++y) {
         PMColor4f* dst = base_.pixels.data() + static_cast<std::size_t>(y) * pixmap_.Width();
         const std::uint8_t* src = pixmap_.WritableAddr8(0, y);
@@ -302,6 +310,7 @@ RasterCanvas::~RasterCanvas() {
   // SkCanvas restores every outstanding layer when it is destroyed.
   RestoreToCount(1);
   Flush();
+  if (scratch_) base_.pixels.swap(scratch_->pixels_);
 }
 
 void RasterCanvas::Flush() {

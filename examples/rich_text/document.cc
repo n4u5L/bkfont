@@ -17,7 +17,16 @@ namespace {
 
 constexpr size_t kMaxFileBytes = 16 * 1024 * 1024;
 constexpr size_t kMaxTextUnits = 2 * 1024 * 1024;
-constexpr size_t kHistoryLimit = 256;
+constexpr bkfont::wtf_size_t kHistoryLimit = 256;
+// Views catch up at every input event, so a short log suffices.
+constexpr bkfont::wtf_size_t kEditLog = 64;
+
+// Each document numbers its edits in a range of its own, so a view never
+// takes another document's edits for its own.
+uint64_t NewEditBase() {
+  static uint64_t documents = 0;
+  return ++documents << 32;
+}
 
 bool IndexValue(const Json* value, size_t limit, uint32_t& index) {
   if (!value || value->type != Json::Type::Number || value->number < 0 ||
@@ -46,8 +55,20 @@ std::filesystem::path FilePath(const std::string& path) {
 
 } // namespace
 
-Document::Document() {
-  styles_.push_back({});
+Document::Document()
+    : edit_version_(NewEditBase()) {
+  styles_.push_back(Style{});
+}
+
+bool Document::EditsSince(uint64_t version, std::span<const Edit>& edits) const {
+  if (version > edit_version_ || edit_version_ - version > edits_.size()) return false;
+  edits = std::span<const Edit>(edits_.data(), edits_.size()).last(static_cast<size_t>(edit_version_ - version));
+  return true;
+}
+void Document::RecordEdit(Edit edit) {
+  if (edits_.size() == kEditLog) edits_.EraseAt(0);
+  edits_.push_back(edit);
+  ++edit_version_;
 }
 
 uint32_t Document::Intern(Properties properties) {
@@ -59,7 +80,7 @@ uint32_t Document::Intern(Properties properties) {
   const bool valid = BuildDeclaration(properties, declaration, error);
   assert(valid);
   if (!valid) return 0;
-  styles_.push_back({std::move(properties), std::move(declaration)});
+  styles_.push_back(Style{std::move(properties), std::move(declaration)});
   return static_cast<uint32_t>(styles_.size() - 1);
 }
 
@@ -67,7 +88,7 @@ void Document::New(bool sample) {
   *this = Document();
   if (!sample) return;
   std::u16string text;
-  std::vector<PieceTree::Piece> pieces;
+  bkfont::Vector<PieceTree::Piece> pieces;
   paragraphs_.clear();
   const auto paragraph = [&](std::u16string_view content, Properties character, Properties block) {
     const uint32_t character_id = Intern(std::move(character));
@@ -75,7 +96,7 @@ void Document::New(bool sample) {
     const Offset start = static_cast<Offset>(text.size());
     text.append(content);
     text.push_back(u'\n');
-    pieces.push_back({0, start, static_cast<Offset>(content.size() + 1), character_id});
+    pieces.push_back(PieceTree::Piece{0, start, static_cast<Offset>(content.size() + 1), character_id});
   };
   paragraph(u"把想法，写成作品。", {{"font-size", "40px"}, {"font-weight", "700"}, {"color", "#185abd"}},
             {{"line-height", "1.25"}});
@@ -109,26 +130,36 @@ void Document::Select(Offset anchor, Offset focus) {
   typing_style_ = tree_.StyleAt(position);
 }
 
-Document::Offset Document::PiecesLength(const std::vector<PieceTree::Piece>& pieces) {
+Document::Offset Document::PiecesLength(const bkfont::Vector<PieceTree::Piece>& pieces) {
   Offset result = 0;
   for (const auto& piece : pieces) result += piece.length;
   return result;
 }
-Document::Change Document::BeginChange(Offset position, Offset length) const {
+bkfont::Vector<uint32_t> Document::ParagraphStyles(Offset first, Offset count) const {
+  bkfont::Vector<uint32_t> styles;
+  styles.Append(paragraphs_.data() + first, count);
+  return styles;
+}
+// `paragraphs` paragraphs from `paragraph` on are about to change.
+Document::Change Document::BeginChange(Offset position, Offset length, Offset paragraph, Offset paragraphs) const {
   Change change;
   change.position = position;
   change.before = tree_.Slice(position, length);
-  change.paragraphs_before = paragraphs_;
+  change.edit = {paragraph, paragraphs, 0};
+  change.paragraphs_before = ParagraphStyles(paragraph, paragraphs);
   change.selection_before = selection_;
   change.revision_before = revision_;
   return change;
 }
-void Document::Commit(Change change) {
-  change.paragraphs_after = paragraphs_;
+// They became `paragraphs` paragraphs.
+void Document::Commit(Change change, Offset paragraphs) {
+  change.edit.inserted = paragraphs;
+  change.paragraphs_after = ParagraphStyles(change.edit.paragraph, paragraphs);
+  RecordEdit(change.edit);
   change.selection_after = selection_;
   change.revision_after = revision_ = next_revision_++;
-  history_.resize(history_cursor_);
-  if (history_.size() == kHistoryLimit) history_.erase(history_.begin());
+  history_.Shrink(history_cursor_);
+  if (history_.size() == kHistoryLimit) history_.EraseAt(0);
   history_.push_back(std::move(change));
   history_cursor_ = history_.size();
 }
@@ -144,16 +175,15 @@ bool Document::ReplaceSelection(std::u16string_view input, std::string& error) {
   }
   const Offset first_paragraph = tree_.LineBreaksBefore(start);
   const Offset removed_paragraphs = tree_.LineBreaksBefore(start + removed) - first_paragraph;
-  const size_t inserted_paragraphs = std::count(text.begin(), text.end(), u'\n');
-  Change change = BeginChange(start, removed);
+  const auto inserted_paragraphs = static_cast<bkfont::wtf_size_t>(std::count(text.begin(), text.end(), u'\n'));
+  Change change = BeginChange(start, removed, first_paragraph, removed_paragraphs + 1);
   if (!text.empty()) change.after.push_back(tree_.Append(text, typing_style_));
   tree_.Replace(start, removed, change.after);
   const uint32_t paragraph_style = paragraphs_[first_paragraph];
-  paragraphs_.erase(paragraphs_.begin() + first_paragraph + 1,
-                    paragraphs_.begin() + first_paragraph + 1 + removed_paragraphs);
-  paragraphs_.insert(paragraphs_.begin() + first_paragraph + 1, inserted_paragraphs, paragraph_style);
+  paragraphs_.EraseAt(first_paragraph + 1, removed_paragraphs);
+  paragraphs_.InsertVector(first_paragraph + 1, bkfont::Vector<uint32_t>(inserted_paragraphs, paragraph_style));
   selection_ = {start + static_cast<Offset>(text.size()), start + static_cast<Offset>(text.size())};
-  Commit(std::move(change));
+  Commit(std::move(change), inserted_paragraphs + 1);
   error.clear();
   return true;
 }
@@ -172,18 +202,25 @@ bool Document::Format(std::string_view name, std::string_view value, std::string
     return true;
   }
   const Offset start = selection_.Start(), length = selection_.End() - start;
-  Change change = BeginChange(start, spec->paragraph ? 0 : length);
+  const Offset first = tree_.LineBreaksBefore(start);
+  const Offset last = spec->paragraph ? tree_.LineBreaksBefore(length ? selection_.End() - 1 : start)
+                                      : tree_.LineBreaksBefore(selection_.End());
+  Change change = BeginChange(start, spec->paragraph ? 0 : length, first, last - first + 1);
+  bool changed = false;
   if (spec->paragraph) {
-    const Offset first = tree_.LineBreaksBefore(start);
-    const Offset last = tree_.LineBreaksBefore(length ? selection_.End() - 1 : start);
-    for (Offset i = first; i <= last; ++i) paragraphs_[i] = changed_style(paragraphs_[i]);
+    for (Offset i = first; i <= last; ++i) {
+      const uint32_t style = changed_style(paragraphs_[i]);
+      changed = changed || style != paragraphs_[i];
+      paragraphs_[i] = style;
+    }
   } else {
     change.after = change.before;
     for (auto& piece : change.after) piece.style = changed_style(piece.style);
     tree_.Replace(start, length, change.after);
     typing_style_ = tree_.StyleAt(start);
+    changed = change.before != change.after;
   }
-  if (change.before != change.after || change.paragraphs_before != paragraphs_) Commit(std::move(change));
+  if (changed) Commit(std::move(change), last - first + 1);
   error.clear();
   return true;
 }
@@ -204,17 +241,21 @@ bool Document::SetCharacterStyle(Properties properties, std::string& error) {
   }
   typing_style_ = Intern(std::move(properties));
   if (selection_.Empty()) return true;
-  Change change = BeginChange(selection_.Start(), selection_.End() - selection_.Start());
+  const Offset first = tree_.LineBreaksBefore(selection_.Start()), last = tree_.LineBreaksBefore(selection_.End());
+  Change change = BeginChange(selection_.Start(), selection_.End() - selection_.Start(), first, last - first + 1);
   change.after = change.before;
   for (auto& piece : change.after) piece.style = typing_style_;
   tree_.Replace(change.position, PiecesLength(change.before), change.after);
-  if (change.before != change.after) Commit(std::move(change));
+  if (change.before != change.after) Commit(std::move(change), last - first + 1);
   return true;
 }
 
 void Document::Restore(const Change& change, bool forward) {
   tree_.Replace(change.position, PiecesLength(forward ? change.before : change.after), forward ? change.after : change.before);
-  paragraphs_ = forward ? change.paragraphs_after : change.paragraphs_before;
+  const Edit& edit = change.edit;
+  paragraphs_.EraseAt(edit.paragraph, forward ? edit.removed : edit.inserted);
+  paragraphs_.InsertVector(edit.paragraph, forward ? change.paragraphs_after : change.paragraphs_before);
+  RecordEdit(forward ? edit : Edit{edit.paragraph, edit.inserted, edit.removed});
   const Selection selection = forward ? change.selection_after : change.selection_before;
   Select(selection.anchor, selection.focus);
   revision_ = forward ? change.revision_after : change.revision_before;
@@ -239,7 +280,7 @@ std::string Document::SelectedText() const {
 std::string Document::Serialize() const {
   // Only persist referenced styles, in first-use order, not undo history or
   // runtime node indices. Loading reconstructs a compact original buffer.
-  std::vector<uint32_t> ids{0};
+  bkfont::Vector<uint32_t, 16> ids{0};
   const auto remap = [&](uint32_t id) {
     const auto found = std::find(ids.begin(), ids.end(), id);
     if (found != ids.end()) return static_cast<uint32_t>(found - ids.begin());
@@ -294,7 +335,7 @@ bool Document::Load(std::string_view source, std::string& error) {
       !paragraphs || paragraphs->type != Json::Type::Array || !runs || runs->type != Json::Type::Array ||
       runs->array.size() > 100000) return fail("Invalid style, paragraph or run table");
   Document loaded;
-  std::vector<uint32_t> style_ids;
+  bkfont::Vector<uint32_t> style_ids;
   for (const Json& style : styles->array) {
     if (style.type != Json::Type::Object || style.object.size() > PropertyCatalog().size()) return fail("Invalid style object");
     Properties properties;
@@ -318,7 +359,7 @@ bool Document::Load(std::string_view source, std::string& error) {
     loaded.paragraphs_.push_back(style_ids[id]);
   }
   std::u16string original;
-  std::vector<PieceTree::Piece> pieces;
+  bkfont::Vector<PieceTree::Piece> pieces;
   for (const Json& run : runs->array) {
     uint32_t id;
     const auto* text = run.Find("text");
@@ -327,7 +368,7 @@ bool Document::Load(std::string_view source, std::string& error) {
     std::u16string decoded;
     if (!DecodeUTF8(text->string, decoded) || decoded.find(u'\r') != std::u16string::npos) return fail("Text runs require Unicode with LF newlines");
     if (original.size() + decoded.size() > kMaxTextUnits) return fail("Document exceeds 2 Mi UTF-16 units");
-    if (!decoded.empty()) pieces.push_back({0, static_cast<Offset>(original.size()), static_cast<Offset>(decoded.size()), style_ids[id]});
+    if (!decoded.empty()) pieces.push_back(PieceTree::Piece{0, static_cast<Offset>(original.size()), static_cast<Offset>(decoded.size()), style_ids[id]});
     original += decoded;
   }
   loaded.tree_.Reset(std::move(original), pieces);

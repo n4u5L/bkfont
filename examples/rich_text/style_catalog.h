@@ -4,19 +4,19 @@
 #include <string>
 #include <string_view>
 #include <utility>
-#include <vector>
 
+#include "base/vector.h"
 #include "style/style_declaration.h"
 
 namespace rich_text {
 
-using Properties = std::vector<std::pair<std::string, std::string>>;
+using Properties = bkfont::Vector<std::pair<std::string, std::string>>;
 struct PropertySpec {
   const char* name;
   const char* label;
   bool paragraph;
   int tab;                          // Home, typography, paragraph, effects.
-  std::vector<std::string> choices; // CSS text, validated by the real style system.
+  bkfont::Vector<std::string> choices; // CSS text, validated by the real style system.
   // Reads CSS text into the property's typed input and sets it on the
   // declaration (StyleDeclaration::Set<Property>()). CSS-wide keywords are
   // handled by BuildDeclaration().

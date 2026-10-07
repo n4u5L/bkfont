@@ -6,12 +6,17 @@
 // Ctrl+Shift+</>, Ctrl+[/], Ctrl+Shift+= (superscript), Ctrl+Shift+C/V (copy
 // and paste formatting), Ctrl+Shift+8 (paragraph marks), Ctrl+D (格式 pane).
 // Ctrl+wheel zooms, Shift+wheel pans. The 格式 pane exposes the CSS catalogue.
+#ifdef _WIN32
+#define GLFW_INCLUDE_NONE
+#endif
 #include <GLFW/glfw3.h>
 #ifdef _WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #include <commdlg.h>
+#include <dwmapi.h>
 #include <imm.h>
+#include <psapi.h>
 #endif
 
 #include <algorithm>
@@ -27,19 +32,20 @@
 #include <optional>
 #include <span>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
-#include <unicode/uchar.h>
-#include <unicode/uscript.h>
-#include <unicode/utf16.h>
-
+#include "base/hash_map.h"
+#include "base/text/string_hash.h"
+#include "base/vector.h"
 #include "document.h"
 #include "document_view.h"
 #include "json.h"
 #include "fonts.h"
 #include "paint/path.h"
 #include "platform/font_manager.h"
+#include "../raster_tiles.h"
+#ifdef _WIN32
+#include "window_presenter_win.h"
+#endif
 #if defined(__linux__)
 #include "platform/fontconfig_util.h"
 #endif
@@ -79,6 +85,65 @@ Rect Intersect(Rect a, Rect b) {
   const float right = std::min(a.x + a.width, b.x + b.width), bottom = std::min(a.y + a.height, b.y + b.height);
   return right > x && bottom > y ? Rect{x, y, right - x, bottom - y} : Rect{};
 }
+// The areas of one layer to repaint. Rectangles merge only while their union
+// wastes little area, so distant changes stay separate repaints.
+constexpr wtf_size_t kMaxDamageRects = 8;
+using DamageList = Vector<Rect, kMaxDamageRects>;
+void AddDamage(DamageList& list, Rect rect) {
+  if (rect.Empty()) return;
+  const auto area = [](Rect r) { return r.width * r.height; };
+  for (wtf_size_t i = 0; i < list.size(); ++i) {
+    const Rect merged = Union(list[i], rect);
+    if (area(merged) <= (area(list[i]) + area(rect)) * 1.25f) {
+      list.EraseAt(i);
+      AddDamage(list, merged); // The union may now meet another rectangle.
+      return;
+    }
+  }
+  if (list.size() == kMaxDamageRects) {
+    for (const Rect& other : list) rect = Union(rect, other);
+    list.Shrink(0);
+  }
+  list.push_back(rect);
+}
+// Moves the pixels of `area` by (dx, dy) within it. The uncovered edges keep
+// stale pixels for the caller to repaint.
+void ShiftPixels(const Pixmap& pixels, IntRect area, int dx, int dy) {
+  const int rows = area.Height() - std::abs(dy);
+  const size_t bytes = static_cast<size_t>(area.Width() - std::abs(dx)) * 4;
+  const int from_x = area.left + std::max(0, -dx), to_x = area.left + std::max(0, dx);
+  const int from_y = area.top + std::max(0, -dy), to_y = area.top + std::max(0, dy);
+  // Copy the leading rows first, so that none is overwritten before it is read.
+  for (int i = 0; i < rows; ++i) {
+    const int row = dy > 0 ? rows - 1 - i : i;
+    std::memmove(pixels.WritableAddr8(to_x, to_y + row), pixels.WritableAddr8(from_x, from_y + row), bytes);
+  }
+}
+// Keep only the background covered by a transient overlay, instead of a
+// second full-window scene. Restore in reverse painting order before edits
+// or scrolling, then capture the new background before painting the overlay.
+struct SavedPixels {
+  IntRect bounds;
+  Bitmap bitmap;
+
+  void Capture(const Pixmap& source, IntRect area) {
+    if (area.Width() != bitmap.GetPixmap().Width() || area.Height() != bitmap.GetPixmap().Height()) {
+      bitmap = Bitmap(); // Release the old allocation before growing it.
+      if (!area.IsEmpty()) bitmap = Bitmap(ColorType::kN32, area.Width(), area.Height());
+    }
+    bounds = area;
+    if (area.IsEmpty()) return;
+    for (int y = 0; y < area.Height(); ++y)
+      std::memcpy(bitmap.GetPixmap().WritableAddr8(0, y), source.WritableAddr8(area.left, area.top + y),
+                    static_cast<size_t>(area.Width()) * 4);
+  }
+  void Restore(const Pixmap& target) const {
+    if (bounds.IsEmpty()) return;
+    for (int y = 0; y < bounds.Height(); ++y)
+      std::memcpy(target.WritableAddr8(bounds.left, bounds.top + y), bitmap.GetPixmap().WritableAddr8(0, y),
+                    static_cast<size_t>(bounds.Width()) * 4);
+  }
+};
 // A hit area. Disabled controls keep their tooltip but have no action.
 struct Button {
   Rect rect;
@@ -113,7 +178,7 @@ std::string FontNameLabel(std::string_view value) {
 }
 struct FontChoice {
   std::string name, value, search, key;
-  std::vector<std::string> aliases;
+  Vector<std::string> aliases;
   bool Matches(const std::string& current, const std::string& folded) const {
     if (value == current) return true;
     const auto& generic = FindProperty("font-family")->choices;
@@ -132,8 +197,8 @@ int FontNameLanguagePriority(const std::string& language) {
   return 100;
 }
 
-std::vector<FontChoice> InstalledFonts() {
-  std::vector<FontChoice> result;
+Vector<FontChoice> InstalledFonts() {
+  Vector<FontChoice> result;
   const auto add = [&](const std::string& name, const Vector<Typeface::LocalizedString>& localized) {
     if (name.empty()) return;
     const auto key = FoldFontName(name);
@@ -179,7 +244,7 @@ std::vector<FontChoice> InstalledFonts() {
 #else
   if (const auto manager = FontCache::Get().GetFontManager()) {
     const int count = manager->CountFamilies();
-    result.reserve(count);
+    result.reserve(static_cast<wtf_size_t>(count));
     for (int i = 0; i < count; ++i) add(std::string(manager->GetFamilyName(i).Utf8().c_str()), manager->GetFamilyNames(i));
   }
 #endif
@@ -229,28 +294,6 @@ ColorARGB PaletteColor(int index) {
   return row <= 3 ? Mix(base, 0xffffffff, kAccent[row - 1]) : Mix(base, 0xff000000, kAccent[row - 1]);
 }
 
-// Word's count: every Han/kana character is a word; other words are runs of
-// letters and digits.
-size_t CountWords(std::u16string_view text) {
-  size_t count = 0;
-  bool word = false;
-  for (size_t i = 0; i < text.size();) {
-    UChar32 c;
-    U16_NEXT(text.data(), i, text.size(), c);
-    UErrorCode error = U_ZERO_ERROR;
-    const UScriptCode script = uscript_getScript(c, &error);
-    if (script == USCRIPT_HAN || script == USCRIPT_HIRAGANA || script == USCRIPT_KATAKANA) {
-      ++count;
-      word = false;
-    } else if (u_isalnum(c)) {
-      count += !word;
-      word = true;
-    } else
-      word = false;
-  }
-  return count;
-}
-
 std::string LanguageName(const std::string& locale) {
   if (locale == "zh-CN") return "中文(中国)";
   if (locale == "en-US") return "英语(美国)";
@@ -286,10 +329,10 @@ std::string PixelText(float px) {
 struct RibbonGroup {
   int tab;
   const char* label;
-  std::vector<const char*> properties;
+  Vector<const char*> properties;
 };
-const std::vector<RibbonGroup>& RibbonGroups() {
-  static const std::vector<RibbonGroup> groups = {
+const Vector<RibbonGroup>& RibbonGroups() {
+  static const Vector<RibbonGroup> groups = {
       {1, "宽度与间距", {"font-stretch", "letter-spacing", "word-spacing", "font-kerning", "font-size-adjust", "font-optical-sizing"}},
       {1, "字形变体", {"font-variant-caps", "font-variant-ligatures", "font-variant-numeric", "font-variant-east-asian", "font-variant-position", "font-variant-emoji"}},
       {1, "OpenType", {"font-feature-settings", "font-variation-settings", "font-palette"}},
@@ -307,9 +350,9 @@ const std::vector<RibbonGroup>& RibbonGroups() {
   return groups;
 }
 constexpr const char* kSectionNames[] = {"常用文字", "字体与 OpenType", "段落与方向", "装饰与效果"};
-const std::array<std::vector<size_t>, 4>& SectionSpecs() {
+const std::array<Vector<size_t>, 4>& SectionSpecs() {
   static const auto sections = [] {
-    std::array<std::vector<size_t>, 4> result;
+    std::array<Vector<size_t>, 4> result;
     const auto catalog = PropertyCatalog();
     for (size_t i = 0; i < catalog.size(); ++i) result[catalog[i].tab].push_back(i);
     return result;
@@ -441,35 +484,37 @@ public:
   bool popup_input_selected = false;
   bool fonts_loaded = false;
   size_t installed_font_count = 0;
-  std::vector<FontChoice> font_choices;
-  std::vector<size_t> filtered_fonts;
-  std::unordered_map<std::string, std::string> font_names;
+  Vector<FontChoice> font_choices;
+  Vector<size_t> filtered_fonts;
+  HashMap<String, std::string> font_names;
   Pending pending = Pending::None;
   std::string pending_path;
   bool confirm = false;
   bool path_dialog = false, path_save = false;
   std::u16string path_input;
   bool path_select_all = false;
-  std::vector<Button> buttons;
+  Vector<Button> buttons;
   struct TextBox {
     std::unique_ptr<InlineFormattingContext> context;
     float width = 0;
   };
-  std::unordered_map<std::string, TextBox> labels, previews;
+  HashMap<String, TextBox> labels, previews;
   Bitmap bitmap;
-  Bitmap scene_bitmap; // Opaque retained scene, excluding caret and popups.
-  std::unique_ptr<RasterCanvas> scene_canvas;
-  std::array<std::vector<Button>, kLayerCount> scene_buttons;
-  std::vector<Button> dialog_buttons;
-  std::vector<IntRect> upload_damage;
+  SavedPixels caret_background, overlay_background;
+  RasterCanvas::ScratchBuffer raster_scratch;
+  bool overlay_needs_repaint = false;
+  std::array<Vector<Button>, kLayerCount> scene_buttons;
+  Vector<Button> dialog_buttons;
+  Vector<IntRect> upload_damage;
   // Effective value and "mixed" flag of every catalogue property, recomputed
   // only when the document, selection or typing style changes.
   struct Formats {
     uint64_t revision = ~uint64_t{0};
     Document::Selection selection{~0u, ~0u};
     uint32_t typing = ~0u;
-    std::vector<std::string> values;
-    std::vector<char> mixed;
+    Vector<std::string> values;
+    Vector<bool> mixed;
+    uint64_t version = 0; // Changes when any value or "mixed" flag does.
   };
   mutable Formats formats;
   struct WordCount {
@@ -481,8 +526,7 @@ public:
   struct FrameState {
     uint64_t revision = 0;
     Document::Selection selection;
-    std::vector<std::string> values;
-    std::vector<char> mixed;
+    uint64_t formats = 0;
     int tab = 0, backstage_page = 0;
     bool backstage = false, pane = false, ruler = false, marks = false, painter = false;
     std::array<bool, 4> expanded{};
@@ -494,9 +538,20 @@ public:
   };
   FrameState frame;
   bool frame_valid = false;
+  bool present_full = true; // Native exposure needs pixels even without scene damage.
+  Rect paint_clip{}; // The area being repainted, in logical pixels.
+  bool focused = true;
   float desired_x = -1;
 #ifdef _WIN32
   WNDPROC previous_proc = nullptr;
+  WindowPresenter presenter;
+  std::optional<WindowPresenter::Scroll> present_scroll;
+  struct PresentationMeasurement {
+    double raster_seconds = 0, present_seconds = 0;
+    uint64_t gdi_calls = 0;
+  };
+  PresentationMeasurement* measurement = nullptr; // Only enabled by --present-scenario.
+  float preview_scale = 1;
 #endif
 
   Editor() {
@@ -529,6 +584,32 @@ public:
   }
   float Hair() const {
     return std::max(1.0f, std::floor(scale)) / scale; // One device pixel line.
+  }
+  float AlignToPixels(float offset, float maximum) const {
+    return std::clamp(std::round(offset * scale) / scale, 0.0f, std::floor(maximum * scale) / scale);
+  }
+  // Includes the partial device pixel shared with the page.
+  Rect ScrollbarRect() const {
+    return {ContentWidth() - kScrollbar - 1 / scale, BodyTop(), kScrollbar + 1 / scale, ViewportHeight()};
+  }
+  // The caret blinks only where it can show: as a caret, in a focused window.
+  bool CaretBlinks() const {
+    return focused && !backstage && !Modal() && document.GetSelection().Empty();
+  }
+  // Seconds until the caret blinks or a ScreenTip comes due; negative when
+  // only an event can change the window.
+  double WaitTime() const {
+    const double now = glfwGetTime();
+    double wake = -1;
+    if (CaretBlinks()) wake = last_input + (std::floor((now - last_input) * 2) + 1) / 2;
+    const Button* hover = Hovered();
+    if (hover && !hover->hint.empty() && !dragging && !zoom_drag && now < hover_since + 0.5)
+      wake = wake < 0 ? hover_since + 0.5 : std::min(wake, hover_since + 0.5);
+    return wake < 0 ? -1 : std::max(0.0, wake - now);
+  }
+  // Nothing is hot outside the window. A drag keeps following the pointer.
+  void Leave() {
+    if (!dragging && !scrollbar_drag && !zoom_drag && !popup_scrollbar_drag) Motion(-1, -1);
   }
   bool Modal() const {
     return popup >= 0 || confirm || path_dialog;
@@ -597,7 +678,7 @@ public:
     formats.typing = document.TypingStyle();
     // The first entry is the reference style; the rest only decide "mixed".
     const auto& tree = document.Tree();
-    std::vector<uint32_t> characters{document.TypingStyle()}, paragraphs;
+    Vector<uint32_t, 16> characters{document.TypingStyle()}, paragraphs;
     const uint32_t first = tree.LineBreaksBefore(selection.Start());
     const uint32_t last = selection.Empty() ? first : tree.LineBreaksBefore(selection.End() - 1);
     for (uint32_t i = first; i <= last; ++i) paragraphs.push_back(document.Paragraphs()[i]);
@@ -608,15 +689,25 @@ public:
       ids->erase(std::unique(ids->begin() + 1, ids->end()), ids->end());
     }
     const auto catalog = PropertyCatalog();
-    formats.values.resize(catalog.size());
-    formats.mixed.assign(catalog.size(), 0);
-    for (size_t i = 0; i < catalog.size(); ++i) {
+    bool changed = formats.values.size() != catalog.size();
+    formats.values.resize(static_cast<wtf_size_t>(catalog.size()));
+    formats.mixed.resize(static_cast<wtf_size_t>(catalog.size()));
+    for (wtf_size_t i = 0; i < catalog.size(); ++i) {
       const auto& ids = catalog[i].paragraph ? paragraphs : characters;
       const std::string fallback = Default(catalog[i].name);
-      formats.values[i] = PropertyValue(document.GetStyle(ids.front()).properties, catalog[i].name, fallback);
-      for (size_t j = 1; j < ids.size() && !formats.mixed[i]; ++j)
-        formats.mixed[i] = PropertyValue(document.GetStyle(ids[j]).properties, catalog[i].name, fallback) != formats.values[i];
+      std::string value = PropertyValue(document.GetStyle(ids.front()).properties, catalog[i].name, fallback);
+      bool mixed = false;
+      for (wtf_size_t j = 1; j < ids.size() && !mixed; ++j)
+        mixed = PropertyValue(document.GetStyle(ids[j]).properties, catalog[i].name, fallback) != value;
+      if (value != formats.values[i] || mixed != formats.mixed[i]) {
+        formats.values[i] = std::move(value);
+        formats.mixed[i] = mixed;
+        changed = true;
+      }
     }
+    // Moving the caret through uniformly formatted text changes nothing here,
+    // so nothing that displays formats is repainted.
+    if (changed) ++formats.version;
   }
   const std::string& Value(size_t index) const {
     RefreshFormats();
@@ -627,7 +718,7 @@ public:
   }
   bool Mixed(size_t index) const {
     RefreshFormats();
-    return formats.mixed[index] != 0;
+    return formats.mixed[index];
   }
   bool Is(std::string_view name, std::string_view value) const {
     const size_t index = IndexOf(name);
@@ -642,16 +733,13 @@ public:
   void RefreshWords() {
     const auto selection = document.GetSelection();
     if (words.revision != document.Revision()) {
-      words.total = CountWords(view.Text());
+      words.total = view.Words();
       words.revision = document.Revision();
       words.selection = {~0u, ~0u};
     }
     if (words.selection != selection) {
       words.selection = selection;
-      const auto& text = view.Text();
-      const uint32_t end = std::min<uint32_t>(selection.End(), static_cast<uint32_t>(text.size()));
-      const uint32_t start = std::min(selection.Start(), end);
-      words.selected = selection.Empty() ? 0 : CountWords(std::u16string_view(text).substr(start, end - start));
+      words.selected = view.Words(selection.Start(), selection.End());
     }
   }
 
@@ -843,12 +931,13 @@ public:
   // Cached single-line layouts. Font previews have their own, smaller cache
   // so that scrolling a long font list never evicts the UI labels.
   TextBox& Text(std::string_view text, const TextStyle& style) {
-    std::string key(text);
-    key += '\x1f' + std::to_string(style.size) + '|' + std::to_string(style.color) + '|' + std::to_string(style.weight) +
-           (style.italic ? "|i|" : "|n|");
-    key += style.family;
+    std::string utf8(text);
+    utf8 += '\x1f' + std::to_string(style.size) + '|' + std::to_string(style.color) + '|' + std::to_string(style.weight) +
+            (style.italic ? "|i|" : "|n|");
+    utf8 += style.family;
+    const String key = String::FromUTF8WithLatin1Fallback(utf8); // Never null, as HashMap keys must be.
     auto& cache = style.family.empty() ? labels : previews;
-    if (auto found = cache.find(key); found != cache.end()) return found->second;
+    if (auto found = cache.find(key); found != cache.end()) return found->value;
     if (cache.size() > (style.family.empty() ? 1024u : 384u)) cache.clear();
     auto context = std::make_unique<InlineFormattingContext>(Settings(), nullptr);
     auto declaration = DefaultParagraphStyle();
@@ -878,7 +967,7 @@ public:
     float right = 0;
     for (const auto& rect : context->ObjectRects(node)) right = std::max(right, rect.Right().ToFloat());
     const float measured = right / scale;
-    return cache.emplace(std::move(key), TextBox{std::move(context), measured}).first->second;
+    return cache.insert(key, TextBox{std::move(context), measured}).stored_value->value;
   }
   float LabelWidth(std::string_view text, const TextStyle& style) {
     return text.empty() ? 0 : Text(text, style).width;
@@ -1146,7 +1235,7 @@ public:
     return !Modal() && rect.Contains(mouse_x, mouse_y);
   }
   void Hit(Rect rect, std::function<void()> action, std::string hint = {}) {
-    if (action || !hint.empty()) buttons.push_back({rect, std::move(action), std::move(hint)});
+    if (action || !hint.empty()) buttons.push_back(Button{rect, std::move(action), std::move(hint)});
   }
   void Face(RasterCanvas& raster, Rect rect, bool checked, bool enabled, bool dark = false) {
     const bool hot = enabled && Hot(rect);
@@ -1209,7 +1298,8 @@ public:
     Hit(rect, std::move(action), std::move(hint));
   }
   const std::string& DisplayFontName(const std::string& value) {
-    if (auto found = font_names.find(value); found != font_names.end()) return found->second;
+    const String key = String::FromUTF8WithLatin1Fallback(value);
+    if (auto found = font_names.find(key); found != font_names.end()) return found->value;
     LoadFontChoices();
     const auto name = FontNameLabel(value), folded = FoldFontName(name);
     std::string display = name;
@@ -1218,7 +1308,7 @@ public:
         display = choice.name;
         break;
       }
-    return font_names.emplace(value, std::move(display)).first->second;
+    return font_names.insert(key, std::move(display)).stored_value->value;
   }
   void PropertyCombo(RasterCanvas& raster, const PropertySpec& spec, Rect rect) {
     const size_t index = static_cast<size_t>(&spec - PropertyCatalog().data());
@@ -1276,7 +1366,7 @@ public:
     installed_font_count = font_choices.size();
     for (const auto& generic : FindProperty("font-family")->choices) {
       const auto folded = FoldFontName(generic);
-      font_choices.push_back({generic, generic, folded, folded, {folded}});
+      font_choices.push_back(FontChoice{generic, generic, folded, folded, {folded}});
     }
     fonts_loaded = true;
   }
@@ -1344,7 +1434,7 @@ public:
   }
   void FilterFonts() {
     const auto query = FoldFontName(EncodeUTF8(popup_input));
-    filtered_fonts.clear();
+    filtered_fonts.Shrink(0);
     for (size_t i = 0; i < font_choices.size(); ++i)
       if (query.empty() || font_choices[i].search.find(query) != std::string::npos) filtered_fonts.push_back(i);
     popup_scroll = 0;
@@ -1585,7 +1675,7 @@ public:
     for (const auto& group : RibbonGroups()) {
       if (group.tab != tab) continue;
       const size_t count = group.properties.size(), columns = (count + 2) / 3;
-      std::vector<float> label_width(columns, 0);
+      Vector<float, 4> label_width(static_cast<wtf_size_t>(columns), 0);
       for (size_t i = 0; i < count; ++i)
         label_width[i / 3] = std::max(label_width[i / 3], LabelWidth(FindProperty(group.properties[i])->label, caption));
       float full = 10;
@@ -1684,7 +1774,9 @@ public:
       Fill(raster, {corner & 1 ? cx : cx - mark, cy, mark, Hair()}, 0xffb8b8b8);
       Fill(raster, {cx, corner & 2 ? cy : cy - mark, Hair(), mark}, 0xffb8b8b8);
     }
-    view.Paint(raster, paper.x * scale, paper.y * scale, top * scale, bottom * scale, document.GetSelection(), marks_visible);
+    // Only paragraphs meeting the repainted area are painted.
+    const float clip_top = std::max(top, paint_clip.y), clip_bottom = std::min(bottom, paint_clip.y + paint_clip.height);
+    view.Paint(raster, paper.x * scale, paper.y * scale, clip_top * scale, clip_bottom * scale, document.GetSelection(), marks_visible);
     raster.Restore();
     const float track = bottom - top, maximum = MaxScroll();
     Fill(raster, {scrollbar, top, kScrollbar, track}, 0xfff0f0f0);
@@ -1773,19 +1865,19 @@ public:
     item(selection.Empty() ? std::to_string(words.total) + " 个字" : std::to_string(words.selected) + "/" + std::to_string(words.total) + " 个字");
     item(LanguageName(Value("-webkit-locale")));
     item(status, std::max(0.0f, width - 290 - x));
-    const auto small = [&](Rect rect, std::string_view text, float size, std::function<void()> action, std::string hint) {
+    const auto small_button = [&](Rect rect, std::string_view text, float size, std::function<void()> action, std::string hint) {
       Face(raster, rect, false, true, true);
       CenterLabel(raster, text, rect, {size, kWhite});
       Hit(rect, std::move(action), std::move(hint));
     };
-    small({width - 242, y + 3, 22, 20}, "−", 15, [this] { Zoom(zoom - 0.1f); }, "缩小");
+    small_button({width - 242, y + 3, 22, 20}, "−", 15, [this] { Zoom(zoom - 0.1f); }, "缩小");
     const float track = width - 216;
     Fill(raster, {track, y + 12, 118, 2}, 0xff8fb0e3);
     Fill(raster, {track + 118 / 3.0f, y + 8, 1, 10}, 0xffc9d9f2); // 100%
     Fill(raster, {track + (zoom - 0.5f) / 1.5f * 118 - 3, y + 6, 6, 14}, kWhite, 1);
     Hit({track - 4, y, 126, kStatusHeight}, [this] { zoom_drag = true; ZoomFromSlider(); }, "缩放\n50% — 200%");
-    small({width - 94, y + 3, 22, 20}, "+", 15, [this] { Zoom(zoom + 0.1f); }, "放大");
-    small({width - 68, y + 2, 58, 22}, std::to_string(static_cast<int>(std::round(zoom * 100))) + "%", 12, [this] { Zoom(1); }, "缩放到 100%");
+    small_button({width - 94, y + 3, 22, 20}, "+", 15, [this] { Zoom(zoom + 0.1f); }, "放大");
+    small_button({width - 68, y + 2, 58, 22}, std::to_string(static_cast<int>(std::round(zoom * 100))) + "%", 12, [this] { Zoom(1); }, "缩放到 100%");
   }
 
   void Backstage(RasterCanvas& raster) {
@@ -1838,7 +1930,7 @@ public:
       const std::pair<const char*, std::string> rows[] = {
           {"段落", std::to_string(document.Paragraphs().size())},
           {"字数", std::to_string(words.total)},
-          {"字符 (UTF-16)", std::to_string(view.Text().size())},
+          {"字符 (UTF-16)", std::to_string(document.Tree().Length())},
           {"片段节点", std::to_string(stats.live_nodes)},
           {"空闲节点", std::to_string(stats.free_nodes)},
           {"缓冲区单元", std::to_string(stats.buffer_units)},
@@ -1949,7 +2041,7 @@ public:
   }
   void Dialog(RasterCanvas& raster) {
     if (!confirm && !path_dialog) return;
-    buttons.clear();
+    buttons.Shrink(0);
     Fill(raster, {0, 0, width, height}, 0x55000000);
     const float w = 470, h = path_dialog ? 196.0f : 176.0f, x = (width - w) / 2, y = (height - h) / 2;
     Fill(raster, {x - 1, y - 1, w + 2, h + 2}, kBlue);
@@ -1961,7 +2053,7 @@ public:
       Outline(raster, rect, primary ? kBlue : 0xffadadad);
       if (primary) Outline(raster, {rect.x + 1, rect.y + 1, rect.width - 2, rect.height - 2}, kBlue);
       CenterLabel(raster, label, rect, {12, kInk});
-      buttons.push_back({rect, std::move(action), {}});
+      buttons.push_back(Button{rect, std::move(action), {}});
     };
     if (path_dialog) {
       Label(raster, path_save ? "保存为 JSON 文档" : "打开 JSON 文档", x + 16, y + 38, {16, kInk, 600}, w - 32);
@@ -1993,24 +2085,80 @@ public:
                              std::clamp(static_cast<int>(std::ceil((rect.x + rect.width) * scale)), 0, bitmap.GetPixmap().Width()),
                              std::clamp(static_cast<int>(std::ceil((rect.y + rect.height) * scale)), 0, bitmap.GetPixmap().Height()));
   }
-  static Pixmap Region(const Pixmap& pixels, IntRect area) {
-    return {pixels.GetColorType(), area.Width(), area.Height(), pixels.WritableAddr8(area.left, area.top), pixels.RowBytes()};
-  }
   void Damage(Rect rect) {
     if (rect.Empty()) return;
-    IntRect area = Pixels(rect);
+    UploadDamage(Pixels(rect));
+  }
+  void UploadDamage(IntRect area) {
     if (area.IsEmpty()) return;
-    for (size_t i = 0; i < upload_damage.size();) {
+    for (wtf_size_t i = 0; i < upload_damage.size();) {
       const auto& other = upload_damage[i];
-      if (area.left < other.right && other.left < area.right && area.top < other.bottom && other.top < area.bottom) {
-        area = IntRect::MakeLTRB(std::min(area.left, other.left), std::min(area.top, other.top),
-                                 std::max(area.right, other.right), std::max(area.bottom, other.bottom));
-        upload_damage.erase(upload_damage.begin() + i);
+      const IntRect merged = IntRect::MakeLTRB(std::min(area.left, other.left), std::min(area.top, other.top),
+                                               std::max(area.right, other.right), std::max(area.bottom, other.bottom));
+      const auto pixels = [](IntRect rect) { return static_cast<double>(rect.Width()) * rect.Height(); };
+      // Overlapping thin edges form an L, not a filled bounding rectangle.
+      // Merging them unconditionally turns a scroll strip into a page upload.
+      if (pixels(merged) <= 1.25 * (pixels(area) + pixels(other))) {
+        area = merged;
+        upload_damage.EraseAt(i);
         i = 0;
       } else
         ++i;
     }
+    if (upload_damage.size() == kMaxDamageRects) {
+      for (const auto& other : upload_damage)
+        area = IntRect::MakeLTRB(std::min(area.left, other.left), std::min(area.top, other.top),
+                                 std::max(area.right, other.right), std::max(area.bottom, other.bottom));
+      upload_damage.Shrink(0);
+    }
     upload_damage.push_back(area);
+  }
+  // Scrolling moves the retained page pixels. Only the exposed edges, the
+  // edge pixels shared with neighboring layers and the scrollbar repaint.
+  // Render() keeps both offsets on device pixels, so moved pixels are what a
+  // repaint would produce. Returns false when nothing could be kept.
+  bool ScrollPage(float old_scroll, float old_pan, DamageList& repaint) {
+    const Rect content{0, BodyTop(), ContentWidth() - kScrollbar, ViewportHeight()};
+    const Pixmap& pixels = bitmap.GetPixmap();
+    const IntRect area = IntRect::MakeLTRB(static_cast<int>(std::ceil(content.x * scale)), static_cast<int>(std::ceil(content.y * scale)),
+                                           std::min(static_cast<int>(std::floor((content.x + content.width) * scale)), pixels.Width()),
+                                           std::min(static_cast<int>(std::floor((content.y + content.height) * scale)), pixels.Height()));
+    const int dx = static_cast<int>(std::lround((old_pan - pan) * scale));
+    const int dy = static_cast<int>(std::lround((old_scroll - scroll) * scale));
+    if (area.IsEmpty() || std::abs(dx) >= area.Width() || std::abs(dy) >= area.Height()) return false;
+    ShiftPixels(pixels, area, dx, dy);
+    const auto logical = [&](int left, int top, int right, int bottom) {
+      return Rect{left / scale, top / scale, (right - left) / scale, (bottom - top) / scale};
+    };
+    if (dy > 0) AddDamage(repaint, logical(area.left, area.top, area.right, area.top + dy));
+    if (dy < 0) AddDamage(repaint, logical(area.left, area.bottom + dy, area.right, area.bottom));
+    if (dx > 0) AddDamage(repaint, logical(area.left, area.top, area.left + dx, area.bottom));
+    if (dx < 0) AddDamage(repaint, logical(area.right + dx, area.top, area.right, area.bottom));
+    AddDamage(repaint, {content.x, content.y, content.width, 1 / scale});
+    AddDamage(repaint, {content.x, content.y + content.height - 1 / scale, content.width, 1 / scale});
+    AddDamage(repaint, ScrollbarRect());
+#ifdef _WIN32
+    if (presenter.IsComposed() && !present_full) {
+      present_scroll = WindowPresenter::Scroll{area, dx, dy};
+      // The CPU image had its transient backgrounds restored before scrolling.
+      // The retained GPU image still contains the old caret/popup. Repair their
+      // translated destinations from the final CPU image to avoid ghost pixels.
+      for (const Rect overlay : {frame.caret, frame.overlay}) {
+        const IntRect old = Pixels(overlay);
+        const IntRect source = IntRect::MakeLTRB(std::max(area.left, old.left), std::max(area.top, old.top),
+                                                 std::min(area.right, old.right), std::min(area.bottom, old.bottom));
+        if (!source.IsEmpty()) {
+          // An unchanged overlay is repainted at its original position too;
+          // the scroll may have replaced it with pixels from outside it.
+          UploadDamage(source);
+          UploadDamage(IntRect::MakeLTRB(std::max(area.left, source.left + dx), std::max(area.top, source.top + dy),
+                                          std::min(area.right, source.right + dx), std::min(area.bottom, source.bottom + dy)));
+        }
+      }
+    } else
+#endif
+      Damage(content); // GDI/OpenGL receive the moved CPU pixels as before.
+    return true;
   }
   Rect CaretBounds() {
     if (backstage || !caret_on || !document.GetSelection().Empty() || Modal()) return {};
@@ -2096,6 +2244,13 @@ public:
     }
   }
   void Render(int pixel_width, int pixel_height, float device_scale) {
+#ifdef _WIN32
+    const double raster_start = measurement ? glfwGetTime() : 0;
+    // If a second render supersedes an unsubmitted image, scrolling can no
+    // longer refer to the GPU's previous frame. Recover with a full upload.
+    if (!upload_damage.empty() || present_scroll) present_full = true;
+    present_scroll.reset();
+#endif
     if (device_scale != scale) {
       labels.clear();
       previews.clear();
@@ -2105,20 +2260,30 @@ public:
     height = pixel_height / scale;
     if (popup >= 0) popup_scroll = std::clamp(popup_scroll, 0.0f, PopupMaxScroll());
     if (bitmap.GetPixmap().Width() != pixel_width || bitmap.GetPixmap().Height() != pixel_height) {
-      scene_canvas.reset();
+      overlay_background = {};
+      caret_background = {};
+      overlay_needs_repaint = false;
+      bitmap = Bitmap();
       bitmap = Bitmap(ColorType::kN32, pixel_width, pixel_height);
-      scene_bitmap = Bitmap(ColorType::kN32, pixel_width, pixel_height);
-      scene_canvas = std::make_unique<RasterCanvas>(scene_bitmap.GetPixmap(), SurfaceProps(), kCanvas);
       frame_valid = false;
+      present_full = true;
+    } else {
+      overlay_background.Restore(bitmap.GetPixmap());
+      caret_background.Restore(bitmap.GetPixmap());
+      // A large modal backdrop is cheaper to repaint than to retain as a
+      // second full-window bitmap. Ordinary popups still restore locally.
+      if (overlay_needs_repaint) frame_valid = false;
     }
     Layout();
+    // Offsets on whole device pixels let scrolling move retained pixels.
+    scroll = AlignToPixels(scroll, MaxScroll());
+    pan = AlignToPixels(pan, MaxPan());
     RefreshFormats();
-    upload_damage.clear();
+    upload_damage.Shrink(0); // Shrink(0) keeps the buffer; clear() would release it.
     FrameState next;
     next.revision = document.Revision();
     next.selection = document.GetSelection();
-    next.values = formats.values;
-    next.mixed = formats.mixed;
+    next.formats = formats.version;
     next.tab = tab;
     next.backstage = backstage;
     next.backstage_page = backstage_page;
@@ -2145,53 +2310,67 @@ public:
     // caret through uniformly formatted text repaints nothing but the caret.
     const bool all = !frame_valid || frame.scale != scale || frame.backstage != backstage;
     const bool revised = frame.revision != next.revision;
-    const bool formatted = frame.values != next.values || frame.mixed != next.mixed;
+    const bool formatted = frame.formats != next.formats;
     const bool moved = frame.selection != next.selection;
     const bool emptiness = frame.selection.Empty() != next.selection.Empty();
     const bool highlighted = moved && (!frame.selection.Empty() || !next.selection.Empty());
-    const bool view_changed = frame.zoom != zoom || frame.scroll != scroll || frame.pan != pan;
     std::array<bool, kLayerCount> need{};
     need[kChrome] = formatted || emptiness || frame.tab != tab || frame.backstage_page != backstage_page || frame.pane != pane_visible ||
                     frame.ruler != ruler_visible || frame.marks != marks_visible || frame.painter != next.painter ||
                     frame.path != path || frame.modified != next.modified || frame.undo != next.undo || frame.redo != next.redo ||
                     frame.font_color != font_color || frame.zoom != zoom || (backstage && revised);
     need[kRuler] = formatted || frame.zoom != zoom || frame.pan != pan;
-    need[kPage] = revised || highlighted || view_changed || frame.marks != marks_visible;
     need[kPane] = formatted || emptiness || (highlighted && !next.selection.Empty()) || frame.expanded != pane_expanded ||
                   frame.pane_scroll != pane_scroll;
     need[kStatus] = revised || moved || formatted || frame.zoom != zoom || frame.status != status;
-    std::array<Rect, kLayerCount> repaint{};
+    // The view tracks the page's own damage: changed paragraphs, the page end
+    // and the highlight. Typing repaints the paragraphs it changes, not the page.
+    view.InvalidateSelection(next.selection);
+    const auto page = view.TakeDamage();
+    need[kPage] = page.full || frame.zoom != zoom || frame.marks != marks_visible;
+    std::array<DamageList, kLayerCount> repaint;
     for (int i = 0; i < kLayerCount; ++i) {
       if (next.layers[i].Empty())
         scene_buttons[i].clear();
       else if (all || need[i] || next.layers[i] != frame.layers[i])
-        repaint[i] = next.layers[i];
+        AddDamage(repaint[i], next.layers[i]);
     }
-    if (frame.hover != next.hover) {
+    if (repaint[kPage].empty() && !next.layers[kPage].Empty()) {
+      if ((frame.scroll != scroll || frame.pan != pan) && !ScrollPage(frame.scroll, frame.pan, repaint[kPage]))
+        AddDamage(repaint[kPage], next.layers[kPage]);
+      const float paper_y = PageY();
+      for (const auto& rows : page.rows)
+        AddDamage(repaint[kPage], Intersect({0, paper_y + rows.top / scale, ContentWidth() - kScrollbar, (rows.bottom - rows.top) / scale},
+                                            next.layers[kPage]));
+      // The scrollbar thumb follows the offset and the page length.
+      if (revised || frame.scroll != scroll) AddDamage(repaint[kPage], ScrollbarRect());
+    }
+    // Hovering repaints the old and the new control, not the area between them.
+    if (frame.hover != next.hover)
       for (Rect hover : {frame.hover, next.hover})
-        for (int i = 0; i < kLayerCount; ++i)
-          if (!hover.Empty() && !next.layers[i].Empty()) repaint[i] = Union(repaint[i], Intersect(hover, next.layers[i]));
-    }
+        for (int i = 0; i < kLayerCount; ++i) AddDamage(repaint[i], Intersect(hover, next.layers[i]));
+    // Retain a bounded float scratch buffer, not a float copy of the entire
+    // window. Each damaged region is cleared and painted in device-space tiles.
     for (int i = 0; i < kLayerCount; ++i) {
-      const IntRect area = Pixels(repaint[i]);
-      if (repaint[i].Empty() || area.IsEmpty()) continue;
-      buttons.clear();
-      // Retain float storage: allocating/widening the framebuffer for
-      // every interaction otherwise dominates high-DPI rendering.
-      auto& raster = *scene_canvas;
-      raster.Save();
-      raster.ClipRect(ScalarRect::MakeLTRB(static_cast<float>(area.left), static_cast<float>(area.top),
-                                           static_cast<float>(area.right), static_cast<float>(area.bottom)),
-                      false);
-      raster.Clear(kCanvas);
-      PaintLayer(raster, i);
-      raster.Restore();
-      raster.Flush(area);
-      scene_buttons[i] = std::move(buttons);
-      Damage(repaint[i]);
+      bool painted = false;
+      for (const Rect rect : repaint[i]) {
+        const IntRect area = Pixels(rect);
+        if (area.IsEmpty()) continue;
+        // Keep the same paragraph set across tiles, including effect sources
+        // outside a tile. Raster/filter clipping selects the output pixels.
+        paint_clip = {area.left / scale, area.top / scale, area.Width() / scale, area.Height() / scale};
+        example::PaintTiles(bitmap.GetPixmap(), area, raster_scratch, kCanvas, [&](RasterCanvas& raster, IntRect) {
+          // Each pass registers all controls; keep only the last pass's list.
+          buttons.Shrink(0);
+          PaintLayer(raster, i);
+        });
+        Damage(rect);
+        painted = true;
+      }
+      if (painted) scene_buttons[i].swap(buttons);
     }
-    buttons.clear();
-    for (const auto& group : scene_buttons) buttons.insert(buttons.end(), group.begin(), group.end());
+    buttons.Shrink(0);
+    for (const auto& group : scene_buttons) buttons.AppendVector(group);
     next.hover = {};
     if (const auto* hover = Hovered()) next.hover = hover->rect;
     next.pane_scroll = pane_scroll; // The pane clamps it to its content.
@@ -2204,40 +2383,24 @@ public:
       Damage(frame.overlay);
       Damage(next.overlay);
     }
-    const auto affected = [&](Rect rect) {
-      if (rect.Empty()) return false;
-      const auto other = Pixels(rect);
-      return std::any_of(upload_damage.begin(), upload_damage.end(), [&](const IntRect& area) {
-        return area.left < other.right && other.left < area.right && area.top < other.bottom && other.top < area.bottom;
-      });
-    };
-    // Paint translucent overlays once, with a stable device-space origin.
-    // Splitting a rounded path across damage rectangles changes its floating
-    // point flattening and can also composite shared edge pixels twice.
-    const bool paint_overlay = affected(next.overlay);
-    if (paint_overlay) Damage(next.overlay);
-    const bool paint_caret = affected(next.caret);
-    if (paint_caret) Damage(next.caret);
-    for (const IntRect area : upload_damage) {
-      const auto& src = scene_bitmap.GetPixmap();
-      const auto& dst = bitmap.GetPixmap();
-      for (int y = area.top; y < area.bottom; ++y)
-        std::memcpy(dst.WritableAddr8(area.left, y), src.WritableAddr8(area.left, y), static_cast<size_t>(area.Width()) * 4);
-    }
-    if (paint_caret) {
-      const auto caret_area = Pixels(next.caret);
-      const auto& dst = bitmap.GetPixmap();
-      RasterCanvas raster(Region(dst, caret_area), SurfaceProps(), std::nullopt, caret_area.left, caret_area.top);
-      Fill(raster, next.caret, 0xff000000);
-    }
-    if (paint_overlay) {
-      const auto overlay_area = Pixels(next.overlay);
-      const auto& dst = bitmap.GetPixmap();
-      RasterCanvas raster(Region(dst, overlay_area), SurfaceProps(), std::nullopt, overlay_area.left, overlay_area.top);
-      if (!Modal()) Tooltip(raster, next.overlay, next.overlay_key);
+    const auto& dst = bitmap.GetPixmap();
+    const auto caret_area = Pixels(next.caret), overlay_area = Pixels(next.overlay);
+    caret_background.Capture(dst, caret_area);
+    example::PaintTiles(dst, caret_area, raster_scratch, std::nullopt,
+                          [&](RasterCanvas& raster, IntRect) { Fill(raster, next.caret, 0xff000000); });
+    constexpr size_t kMaxOverlayPixels = 512 * 1024; // At most 2 MiB of saved BGRA background.
+    overlay_needs_repaint = !overlay_area.IsEmpty() &&
+                            static_cast<size_t>(overlay_area.Width()) * overlay_area.Height() > kMaxOverlayPixels;
+    overlay_background.Capture(dst, overlay_needs_repaint ? IntRect{} : overlay_area);
+    if (!overlay_area.IsEmpty()) {
       const auto scene = buttons;
-      Popup(raster);
-      Dialog(raster);
+      // Disjoint tiles cover each translucent pixel exactly once and retain
+      // the global origin used by path subdivision and glyph positioning.
+      example::PaintTiles(dst, overlay_area, raster_scratch, std::nullopt, [&](RasterCanvas& raster, IntRect) {
+        if (!Modal()) Tooltip(raster, next.overlay, next.overlay_key);
+        Popup(raster);
+        Dialog(raster);
+      });
       if (confirm || path_dialog)
         dialog_buttons = buttons;
       else
@@ -2246,6 +2409,9 @@ public:
     if (confirm || path_dialog) buttons = dialog_buttons;
     frame = std::move(next);
     frame_valid = true;
+#ifdef _WIN32
+    if (measurement) measurement->raster_seconds += glfwGetTime() - raster_start;
+#endif
   }
   // True when a tooltip has become due (or expired) since the last frame.
   bool OverlayChanged() {
@@ -2856,9 +3022,17 @@ Editor& Get(GLFWwindow* window) {
   return *static_cast<Editor*>(glfwGetWindowUserPointer(window));
 }
 #ifdef _WIN32
-LRESULT CALLBACK ImeWindowProc(HWND handle, UINT message, WPARAM wparam, LPARAM lparam) {
+void PaintWindow(Editor& editor, HWND window);
+
+LRESULT CALLBACK EditorWindowProc(HWND handle, UINT message, WPARAM wparam, LPARAM lparam) {
   auto* editor = reinterpret_cast<Editor*>(GetPropW(handle, L"bkfont.RichTextEditor"));
   if (!editor) return DefWindowProcW(handle, message, wparam, lparam);
+  if (message == WM_PAINT) {
+    // Interactive sizing runs inside DefWindowProc's modal loop. The outer
+    // GLFW loop cannot render again until that loop returns.
+    PaintWindow(*editor, handle);
+    return 0;
+  }
   if (message == WM_IME_STARTCOMPOSITION) {
     editor->composing = true;
     editor->UpdateIme();
@@ -2892,7 +3066,197 @@ bool WriteBitmap(const Pixmap& pixels, const std::string& path) {
   return std::fclose(file) == 0 && written;
 }
 
-void Present(const Pixmap& pixels, GLuint texture, std::span<const IntRect> damage = {}, bool allocate = true) {
+#ifdef _WIN32
+// Fallback when hardware composition is unavailable or explicitly disabled.
+bool PresentGdi(const Pixmap& pixels, HDC dc, float preview_scale) {
+  BITMAPINFO info{};
+  info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+  info.bmiHeader.biWidth = pixels.Width();
+  info.bmiHeader.biHeight = -pixels.Height(); // Top-down N32 pixels.
+  info.bmiHeader.biPlanes = 1;
+  info.bmiHeader.biBitCount = 32;
+  info.bmiHeader.biCompression = BI_RGB;
+  // BeginPaint's clip is the union of OS exposure and application damage.
+  // Keep one source/destination origin even for disjoint dirty rectangles.
+  const int width = static_cast<int>(std::lround(pixels.Width() * preview_scale));
+  const int height = static_cast<int>(std::lround(pixels.Height() * preview_scale));
+  const int saved_dc = preview_scale != 1 ? SaveDC(dc) : 0;
+  if (preview_scale != 1) {
+    SetStretchBltMode(dc, HALFTONE);
+    SetBrushOrgEx(dc, 0, 0, nullptr);
+  }
+  const int copied = StretchDIBits(dc, (pixels.Width() - width) / 2, (pixels.Height() - height) / 2, width, height,
+                                    0, 0, pixels.Width(), pixels.Height(),
+                                    pixels.Addr(), &info, DIB_RGB_COLORS, SRCCOPY);
+  if (saved_dc) RestoreDC(dc, saved_dc);
+  return copied != 0 && copied != GDI_ERROR;
+}
+
+void InvalidateFrame(Editor& editor, HWND window) {
+  if (editor.present_full) {
+    InvalidateRect(window, nullptr, FALSE);
+  } else {
+    for (const auto& area : editor.upload_damage) {
+      const RECT rect{area.left, area.top, area.right, area.bottom};
+      InvalidateRect(window, &rect, FALSE);
+    }
+  }
+}
+
+void PaintWindow(Editor& editor, HWND window) {
+  RECT client{};
+  GetClientRect(window, &client);
+  const int width = client.right - client.left, height = client.bottom - client.top;
+  float sx, sy;
+  glfwGetWindowContentScale(editor.window, &sx, &sy);
+  const float scale = sx > 0 ? sx : 1;
+  const auto& pixels = editor.bitmap.GetPixmap();
+  const bool render = width > 0 && height > 0 &&
+                      (editor.dirty || !editor.frame_valid || pixels.Width() != width || pixels.Height() != height || editor.scale != scale);
+  if (render) {
+    editor.dirty = false;
+    editor.Render(width, height, scale);
+    // Rendering a resize changes layout outside the original OS update
+    // rectangle. Add that damage before BeginPaint obtains the update clip.
+    InvalidateFrame(editor, window);
+  }
+  // Exposure alone requires no upload: DWM retains the composition surface.
+  // Still check the device on every WM_PAINT, since driver resets use this
+  // message to request reconstruction from our retained CPU image.
+  const double present_start = editor.measurement ? glfwGetTime() : 0;
+  const bool composed = editor.presenter.Present(editor.bitmap.GetPixmap(), editor.upload_damage, editor.present_full,
+                                                  editor.present_scroll ? &*editor.present_scroll : nullptr, editor.preview_scale);
+  if (!composed && editor.presenter.TakeGdiRepaint()) InvalidateRect(window, nullptr, FALSE);
+  PAINTSTRUCT paint{};
+  const HDC dc = BeginPaint(window, &paint);
+  if (composed)
+    editor.present_full = false;
+  else if (dc && !editor.bitmap.IsEmpty() && !IsRectEmpty(&paint.rcPaint)) {
+    editor.present_full = !PresentGdi(editor.bitmap.GetPixmap(), dc, editor.preview_scale);
+    if (editor.measurement) {
+      ++editor.measurement->gdi_calls;
+    }
+  }
+  EndPaint(window, &paint);
+  if (editor.measurement) editor.measurement->present_seconds += glfwGetTime() - present_start;
+  editor.upload_damage.Shrink(0);
+  editor.present_scroll.reset();
+  if (render) editor.UpdateIme();
+}
+
+// Exercise the actual editor and WM_PAINT path at compositor cadence. CPU
+// submission time and paced frame time are reported separately: asynchronous
+// D3D submission is not a measurement of GPU completion or display FPS.
+int RunPresentationScenario(Editor& editor, HWND handle, std::string_view requested, int frames) {
+  const std::array<std::string_view, 5> scenarios{"expose", "caret", "scroll", "preview", "resize"};
+  int original_width, original_height;
+  glfwGetWindowSize(editor.window, &original_width, &original_height);
+  const auto flush = [&] {
+    if (!editor.presenter.IsComposed()) GdiFlush();
+    return SUCCEEDED(DwmFlush());
+  };
+  const auto paint = [&] {
+    if (editor.dirty) {
+      int width, height;
+      float sx, sy;
+      glfwGetFramebufferSize(editor.window, &width, &height);
+      glfwGetWindowContentScale(editor.window, &sx, &sy);
+      if (width <= 0 || height <= 0) return;
+      editor.dirty = false;
+      editor.Render(width, height, sx > 0 ? sx : 1);
+      // Match the normal event loop, including GDI's actual dirty-region clip.
+      InvalidateFrame(editor, handle);
+      UpdateWindow(handle);
+    }
+  };
+  for (const auto scenario : scenarios) {
+    if (requested != "all" && requested != scenario) continue;
+    glfwSetWindowSize(editor.window, original_width, original_height);
+    glfwPollEvents();
+    editor.scroll = editor.pan = 0;
+    editor.preview_scale = 1;
+    editor.focused = editor.caret_on = true;
+    editor.mouse_x = editor.mouse_y = -100;
+    editor.popup = -1;
+    editor.status = "呈现场景: " + std::string(scenario);
+    editor.dirty = true;
+    paint();
+    if (!flush()) return 1;
+    editor.presenter.ReportMemory();
+    const auto before = editor.presenter.GetStatistics();
+    Editor::PresentationMeasurement measurement;
+    editor.measurement = &measurement;
+    Vector<double> cpu_samples;
+    cpu_samples.reserve(frames);
+    double paced_seconds = 0;
+    int completed = 0;
+    for (int i = 0; i < frames && !glfwWindowShouldClose(editor.window); ++i) {
+      const double start = glfwGetTime();
+      if (scenario == "expose") {
+        // Unchanged content: GDI must service the paint clip; DComp retains it.
+        InvalidateRect(handle, nullptr, FALSE);
+        UpdateWindow(handle);
+      } else if (scenario == "caret") {
+        editor.caret_on = !editor.caret_on;
+        editor.dirty = true;
+      } else if (scenario == "scroll") {
+        const float distance = std::min(720.0f, editor.MaxScroll());
+        const float position = distance > 0 ? std::fmod((i + 1) * 8.0f, 2 * distance) : 0;
+        editor.scroll = std::min(position, 2 * distance - position);
+        editor.dirty = true;
+      } else if (scenario == "preview") {
+        // A smooth zoom preview of a retained scene. Both backends resample
+        // the same bitmap; DComp changes a transform without uploading it.
+        editor.preview_scale = 1 + 0.125f * (1 - std::cos((i + 1) * 0.05f));
+        InvalidateRect(handle, nullptr, FALSE);
+        UpdateWindow(handle);
+      } else {
+        const int phase = (i + 1) % 48;
+        const int inset = std::min(phase, 48 - phase);
+        glfwSetWindowSize(editor.window, original_width - inset * 8, original_height - inset * 4);
+        editor.dirty = true;
+      }
+      paint();
+      glfwPollEvents();
+      if (!editor.presenter.IsComposed()) GdiFlush();
+      cpu_samples.push_back((glfwGetTime() - start) * 1000);
+      if (!flush()) {
+        editor.measurement = nullptr;
+        return 1;
+      }
+      paced_seconds += glfwGetTime() - start;
+      ++completed;
+    }
+    editor.measurement = nullptr;
+    if (!completed) return 1;
+    std::sort(cpu_samples.begin(), cpu_samples.end());
+    const auto after = editor.presenter.GetStatistics();
+    const auto percentile = [&](int percent) { return cpu_samples[(cpu_samples.size() - 1) * percent / 100]; };
+    std::fprintf(stderr,
+        "scenario=%.*s backend=%s frames=%d cpu_p50=%.3f ms cpu_p95=%.3f ms raster_avg=%.3f ms present_api_avg=%.3f ms paced_avg=%.3f ms\n"
+        "  gpu_upload=%.3f MiB uploads=%llu surface_scrolls=%llu transforms=%llu commits=%llu retained_paints=%llu gdi_calls=%llu\n",
+        static_cast<int>(scenario.size()), scenario.data(), editor.presenter.IsComposed() ? "directcomposition" : "gdi", completed,
+        percentile(50), percentile(95), measurement.raster_seconds * 1000 / completed,
+        measurement.present_seconds * 1000 / completed, paced_seconds * 1000 / completed,
+        (after.upload_bytes - before.upload_bytes) / 1048576.0,
+        static_cast<unsigned long long>(after.uploads - before.uploads),
+        static_cast<unsigned long long>(after.scrolls - before.scrolls),
+        static_cast<unsigned long long>(after.transforms - before.transforms),
+        static_cast<unsigned long long>(after.commits - before.commits),
+        static_cast<unsigned long long>(after.retained - before.retained),
+        static_cast<unsigned long long>(measurement.gdi_calls));
+    PROCESS_MEMORY_COUNTERS_EX memory{};
+    memory.cb = sizeof memory;
+    if (K32GetProcessMemoryInfo(GetCurrentProcess(), reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&memory), sizeof memory))
+      std::fprintf(stderr, "  private=%.2f MiB peak_commit=%.2f MiB working_set=%.2f MiB peak_working_set=%.2f MiB\n",
+          memory.PrivateUsage / 1048576.0, memory.PeakPagefileUsage / 1048576.0,
+          memory.WorkingSetSize / 1048576.0, memory.PeakWorkingSetSize / 1048576.0);
+    editor.presenter.ReportMemory();
+  }
+  return 0;
+}
+#else
+void Present(const Pixmap& pixels, GLuint texture, std::span<const IntRect> damage, bool allocate) {
   glViewport(0, 0, pixels.Width(), pixels.Height());
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, texture);
@@ -2924,6 +3288,7 @@ void Present(const Pixmap& pixels, GLuint texture, std::span<const IntRect> dama
   glVertex2f(1, 1);
   glEnd();
 }
+#endif
 
 } // namespace
 } // namespace rich_text
@@ -2933,11 +3298,24 @@ int RunEditor(int argc, char** argv) {
   std::string file, snapshot, sample_path, popup_property;
   int selected_tab = 0;
   bool backstage = false, marks = false;
+  bool profile_memory = false;
+#ifdef _WIN32
+  bool force_gdi = false;
+  std::string present_scenario;
+  int scenario_frames = 180;
+#endif
   float snapshot_scale = 1;
   const auto usage = [] {
     std::puts("bkfont_rich_text_example [--file document.json] [--snapshot view.bmp]\n"
               "  [--tab 0|1|2|3|4] [--backstage] [--popup css-property] [--marks]\n"
               "  [--scale 1|1.5|2] [--write-sample sample.json]\n"
+              "  [--profile-memory] Report Windows startup memory and exit after presenting.\n"
+#ifdef _WIN32
+              "  [--gdi] Use GDI instead of DirectComposition (for comparison).\n"
+              "  [--present-scenario expose|caret|scroll|preview|resize|all] Run a paced scenario and exit.\n"
+              "    preview: animate zoom of cached pixels; scroll/caret/resize use normal editor rendering.\n"
+              "  [--frames 1..3600] Frames per scenario (default 180); compare with --gdi.\n"
+#endif
               "Ctrl+N/O/S, Ctrl+Shift+S, Ctrl+Z/Y, Ctrl+A/C/X/V, Ctrl+B/I/U, Ctrl+L/E/R/J.\n"
               "Ctrl+Shift+C/V: copy/paste formatting. Ctrl+Shift+</>: font size.\n"
               "Ctrl+wheel: zoom. Shift+wheel: pan. 格式 pane: CSS properties.");
@@ -2956,7 +3334,28 @@ int RunEditor(int argc, char** argv) {
         usage();
         return 2;
       }
-    } else if (arg == "--backstage")
+    } else if (arg == "--profile-memory")
+      profile_memory = true;
+#ifdef _WIN32
+    else if (arg == "--gdi")
+      force_gdi = true;
+    else if (arg == "--present-scenario" && i + 1 < argc) {
+      present_scenario = argv[++i];
+      if (present_scenario != "all" && present_scenario != "expose" && present_scenario != "caret" &&
+          present_scenario != "scroll" && present_scenario != "preview" && present_scenario != "resize") {
+        usage();
+        return 2;
+      }
+    } else if (arg == "--frames" && i + 1 < argc) {
+      const std::string_view value = argv[++i];
+      const auto parsed = std::from_chars(value.data(), value.data() + value.size(), scenario_frames);
+      if (parsed.ec != std::errc{} || parsed.ptr != value.data() + value.size() || scenario_frames < 1 || scenario_frames > 3600) {
+        usage();
+        return 2;
+      }
+    }
+#endif
+    else if (arg == "--backstage")
       backstage = true;
     else if (arg == "--marks")
       marks = true;
@@ -2987,7 +3386,26 @@ int RunEditor(int argc, char** argv) {
       return 2;
     }
   }
+#ifdef _WIN32
+  if (!present_scenario.empty() && (!snapshot.empty() || !sample_path.empty())) {
+    usage();
+    return 2;
+  }
+#endif
+  const auto memory = [&](const char* stage) {
+#ifdef _WIN32
+    if (!profile_memory) return;
+    PROCESS_MEMORY_COUNTERS_EX usage{};
+    usage.cb = sizeof usage;
+    if (K32GetProcessMemoryInfo(GetCurrentProcess(), reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&usage), sizeof usage))
+      std::fprintf(stderr, "memory %-16s private=%.2f MiB peak_commit=%.2f MiB working_set=%.2f MiB peak_working_set=%.2f MiB\n", stage,
+                      usage.PrivateUsage / 1048576.0, usage.PeakPagefileUsage / 1048576.0,
+                      usage.WorkingSetSize / 1048576.0, usage.PeakWorkingSetSize / 1048576.0);
+#endif
+  };
+  memory("startup");
   bkfont::InitializeFonts();
+  memory("fonts");
   Editor editor;
   editor.tab = selected_tab;
   editor.backstage = backstage;
@@ -3008,6 +3426,16 @@ int RunEditor(int argc, char** argv) {
     }
     return 0;
   }
+  memory("document");
+  const auto rendered_memory = [&] {
+    memory("rendered");
+    if (!profile_memory) return;
+    const auto bytes = [](const Bitmap& bitmap) { return bitmap.GetPixmap().RowBytes() * bitmap.GetPixmap().Height(); };
+    std::fprintf(stderr, "buffers %dx%d framebuffer=%.2f MiB saved_overlays=%.2f MiB float_scratch=%.2f MiB\n",
+                    editor.bitmap.GetPixmap().Width(), editor.bitmap.GetPixmap().Height(), bytes(editor.bitmap) / 1048576.0,
+                    (bytes(editor.caret_background.bitmap) + bytes(editor.overlay_background.bitmap)) / 1048576.0,
+                    editor.raster_scratch.CapacityBytes() / 1048576.0);
+  };
   if (!snapshot.empty()) {
     const int pixel_width = static_cast<int>(1440 * snapshot_scale), pixel_height = static_cast<int>(980 * snapshot_scale);
     if (!popup_property.empty()) {
@@ -3016,12 +3444,18 @@ int RunEditor(int argc, char** argv) {
       editor.OpenPopup(IndexOf(popup_property), {150, 79, 150, 25});
     }
     editor.Render(pixel_width, pixel_height, snapshot_scale);
+    rendered_memory();
     return WriteBitmap(editor.bitmap.GetPixmap(), snapshot) ? 0 : 1;
   }
   glfwSetErrorCallback([](int code, const char* error) { std::fprintf(stderr, "GLFW %d: %s\n", code, error); });
   if (!glfwInit()) return 1;
+  memory("glfw");
+#ifdef _WIN32
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+#else
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+#endif
   glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
   editor.window = glfwCreateWindow(1440, 980, "bkfont 文档", nullptr, nullptr);
   if (!editor.window) {
@@ -3029,9 +3463,12 @@ int RunEditor(int argc, char** argv) {
     return 1;
   }
   GLFWwindow* window = editor.window;
+  memory("window");
   glfwSetWindowSizeLimits(window, 1120, 760, GLFW_DONT_CARE, GLFW_DONT_CARE);
+#ifndef _WIN32
   glfwMakeContextCurrent(window);
   glfwSwapInterval(1);
+#endif
   glfwSetWindowUserPointer(window, &editor);
   glfwSetKeyCallback(window, [](GLFWwindow* w, int key, int, int action, int modifiers) {
     if (action == GLFW_PRESS || action == GLFW_REPEAT) Get(w).Key(key, modifiers);
@@ -3054,26 +3491,52 @@ int RunEditor(int argc, char** argv) {
   glfwSetDropCallback(window, [](GLFWwindow* w, int count, const char** paths) { if (count) Get(w).Request(Editor::Pending::Open, paths[0]); });
   glfwSetFramebufferSizeCallback(window, [](GLFWwindow* w, int, int) { Get(w).dirty = true; });
   glfwSetWindowContentScaleCallback(window, [](GLFWwindow* w, float, float) { Get(w).dirty = true; });
-  glfwSetWindowRefreshCallback(window, [](GLFWwindow* w) { Get(w).dirty = true; });
-  glfwSetWindowFocusCallback(window, [](GLFWwindow* w, int focused) {
-    if (!focused) Get(w).dragging = Get(w).scrollbar_drag = Get(w).popup_scrollbar_drag = Get(w).zoom_drag = false;
+  glfwSetWindowRefreshCallback(window, [](GLFWwindow* w) {
     Get(w).dirty = true;
+    Get(w).present_full = true;
+  });
+  glfwSetWindowFocusCallback(window, [](GLFWwindow* w, int focused) {
+    auto& editor = Get(w);
+    if (!focused) editor.dragging = editor.scrollbar_drag = editor.popup_scrollbar_drag = editor.zoom_drag = false;
+    // Like Word, an inactive window shows no caret; it reappears on return.
+    editor.focused = editor.caret_on = focused != 0;
+    editor.last_input = glfwGetTime();
+    editor.dirty = true;
+  });
+  glfwSetCursorEnterCallback(window, [](GLFWwindow* w, int entered) {
+    if (!entered) Get(w).Leave();
   });
   editor.Layout();
+  memory("layout");
 #ifdef _WIN32
   const HWND handle = glfwGetWin32Window(window);
+  editor.presenter.Initialize(handle, force_gdi);
+  memory("presenter");
   SetPropW(handle, L"bkfont.RichTextEditor", &editor);
-  editor.previous_proc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(handle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(ImeWindowProc)));
+  editor.previous_proc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(handle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(EditorWindowProc)));
+  if (!present_scenario.empty()) {
+    const int result = RunPresentationScenario(editor, handle, present_scenario, scenario_frames);
+    SetWindowLongPtrW(handle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(editor.previous_proc));
+    RemovePropW(handle, L"bkfont.RichTextEditor");
+    editor.presenter.Shutdown();
+    glfwDestroyWindow(window);
+    glfwTerminate();
+    return result;
+  }
 #endif
+#ifndef _WIN32
   GLuint texture;
   glGenTextures(1, &texture);
   int texture_width = 0, texture_height = 0;
+#endif
   std::string last_title;
   while (!glfwWindowShouldClose(window)) {
-    const bool blink = static_cast<int>((glfwGetTime() - editor.last_input) * 2) % 2 == 0;
-    if (editor.caret_on != blink && editor.document.GetSelection().Empty()) {
-      editor.caret_on = blink;
-      editor.dirty = true;
+    if (editor.CaretBlinks()) {
+      const bool blink = static_cast<int>((glfwGetTime() - editor.last_input) * 2) % 2 == 0;
+      if (editor.caret_on != blink) {
+        editor.caret_on = blink;
+        editor.dirty = true;
+      }
     }
     if (!editor.dirty && editor.OverlayChanged()) editor.dirty = true; // ScreenTip delay.
     if (editor.dirty) {
@@ -3084,25 +3547,47 @@ int RunEditor(int argc, char** argv) {
       glfwGetWindowContentScale(window, &sx, &sy);
       if (pixel_width > 0 && pixel_height > 0) {
         editor.Render(pixel_width, pixel_height, sx > 0 ? sx : 1);
+        rendered_memory();
+#ifdef _WIN32
+        InvalidateFrame(editor, handle);
+        UpdateWindow(handle);
+#else
         Present(editor.bitmap.GetPixmap(), texture, editor.upload_damage, texture_width != pixel_width || texture_height != pixel_height);
         texture_width = pixel_width;
         texture_height = pixel_height;
         glfwSwapBuffers(window);
+#endif
+        memory("presented");
+#ifdef _WIN32
+        if (profile_memory) editor.presenter.ReportMemory();
+#endif
+        if (profile_memory) glfwSetWindowShouldClose(window, GLFW_TRUE);
         editor.UpdateIme();
-        const std::string title = (editor.document.Modified() ? "* " : "") + editor.DocumentName() + " - bkfont 文档";
-        if (title != last_title) {
-          glfwSetWindowTitle(window, title.c_str());
-          last_title = title;
-        }
       }
     }
-    glfwWaitEventsTimeout(0.1);
+    // Native WM_PAINT may have consumed dirty while GLFW was dispatching
+    // messages, so title changes must not depend on rendering in this loop.
+    const std::string title = (editor.document.Modified() ? "* " : "") + editor.DocumentName() + " - bkfont 文档";
+    if (title != last_title) {
+      glfwSetWindowTitle(window, title.c_str());
+      last_title = title;
+    }
+    if (glfwWindowShouldClose(window)) break;
+    // Sleep until an event, the next caret blink or a ScreenTip, instead of
+    // waking at a fixed rate.
+    if (const double wait = editor.WaitTime(); wait >= 0)
+      glfwWaitEventsTimeout(wait);
+    else
+      glfwWaitEvents();
   }
 #ifdef _WIN32
   SetWindowLongPtrW(handle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(editor.previous_proc));
   RemovePropW(handle, L"bkfont.RichTextEditor");
+  editor.presenter.Shutdown();
 #endif
+#ifndef _WIN32
   glDeleteTextures(1, &texture);
+#endif
   glfwDestroyWindow(window);
   glfwTerminate();
   return 0;
@@ -3110,11 +3595,11 @@ int RunEditor(int argc, char** argv) {
 
 #ifdef _WIN32
 int wmain(int argc, wchar_t** wide_argv) {
-  std::vector<std::string> arguments;
-  arguments.reserve(argc);
+  bkfont::Vector<std::string> arguments;
+  arguments.reserve(static_cast<bkfont::wtf_size_t>(argc));
   for (int i = 0; i < argc; ++i)
     arguments.push_back(rich_text::EncodeUTF8(std::u16string_view(reinterpret_cast<const char16_t*>(wide_argv[i]))));
-  std::vector<char*> argv;
+  bkfont::Vector<char*> argv;
   for (auto& argument : arguments) argv.push_back(argument.data());
   return RunEditor(argc, argv.data());
 }

@@ -5,7 +5,8 @@
 #include <span>
 #include <string>
 #include <string_view>
-#include <vector>
+
+#include "base/vector.h"
 
 namespace rich_text {
 
@@ -32,10 +33,13 @@ public:
   Offset Length() const;
   Offset LineBreaks() const;
   Offset LineBreaksBefore(Offset) const;
+  // The offset after the `line`-th line break, 0 for line 0 and Length()
+  // past the last one. O(log n) through the per-node break counts.
+  Offset LineStart(Offset line) const;
   uint32_t StyleAt(Offset) const;
   std::u16string_view View(const Piece&) const;
   std::u16string Text() const;
-  std::vector<Piece> Slice(Offset start, Offset length) const;
+  bkfont::Vector<Piece> Slice(Offset start, Offset length) const;
   // These descriptors remain valid across node recycling and buffer reallocation;
   // undo records own descriptors, never node indices or character pointers.
   Piece Append(std::u16string_view, uint32_t style);
@@ -81,8 +85,8 @@ private:
 
   std::u16string buffers_[2];
   // Sorted offsets avoid rescanning a long piece each time it is split.
-  std::vector<Offset> line_starts_[2];
-  std::vector<Node> nodes_; // Index 0 is the immutable black NIL sentinel.
+  bkfont::Vector<Offset> line_starts_[2];
+  bkfont::Vector<Node> nodes_; // Index 0 is the immutable black NIL sentinel.
   Index root_ = 0;
   Index free_head_ = 0;
   size_t live_nodes_ = 0;

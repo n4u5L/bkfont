@@ -97,14 +97,40 @@ PieceTree::Offset PieceTree::LineBreaksBefore(Offset offset) const {
   return result;
 }
 
+PieceTree::Offset PieceTree::LineStart(Offset line) const {
+  if (!line) return 0;
+  Offset offset = 0;
+  Index node = root_;
+  while (node) {
+    const Node& n = nodes_[node];
+    const Node& left = nodes_[n.left];
+    if (line <= left.breaks) {
+      node = n.left;
+      continue;
+    }
+    line -= left.breaks;
+    offset += left.units;
+    if (line <= n.piece_breaks) {
+      // The piece holds the break; its buffer's sorted break offsets find it.
+      const auto& lines = line_starts_[n.piece.buffer];
+      const auto first = std::lower_bound(lines.begin(), lines.end(), n.piece.start);
+      return offset + (first[line - 1] - n.piece.start) + 1;
+    }
+    line -= n.piece_breaks;
+    offset += n.piece.length;
+    node = n.right;
+  }
+  return Length();
+}
+
 uint32_t PieceTree::StyleAt(Offset offset) const {
   if (!Length()) return 0;
   return nodes_[Locate(std::min(offset, Length() - 1)).node].piece.style;
 }
 
-std::vector<PieceTree::Piece> PieceTree::Slice(Offset start, Offset length) const {
+bkfont::Vector<PieceTree::Piece> PieceTree::Slice(Offset start, Offset length) const {
   assert(start <= Length() && length <= Length() - start);
-  std::vector<Piece> result;
+  bkfont::Vector<Piece> result;
   Location location = Locate(start);
   while (length && location.node) {
     Piece piece = nodes_[location.node].piece;
@@ -414,7 +440,7 @@ PieceTree::Statistics PieceTree::Stats() const {
 bool PieceTree::Validate() const {
   if (nodes_.empty() || root_ >= nodes_.size() || nodes_[0].red || nodes_[0].live ||
       nodes_[0].units || nodes_[0].breaks || nodes_[root_].parent || nodes_[root_].red) return false;
-  std::vector<bool> visited(nodes_.size());
+  bkfont::Vector<bool> visited(nodes_.size());
   size_t live = 0, free = 0;
   const std::function<int(Index, Index)> visit = [&](Index index, Index parent) -> int {
     if (!index) return 1;

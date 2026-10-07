@@ -4,7 +4,8 @@
 #include <string>
 #include <string_view>
 #include <utility>
-#include <vector>
+
+#include "base/vector.h"
 
 namespace rich_text {
 
@@ -25,8 +26,8 @@ struct Json {
   double number = 0;
   bool boolean = false;
   std::string string;
-  std::vector<Json> array;
-  std::vector<std::pair<std::string, Json>> object;
+  bkfont::Vector<Json> array;
+  bkfont::Vector<std::pair<std::string, Json>> object;
   const Json* Find(std::string_view name) const;
 };
 
