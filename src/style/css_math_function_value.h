@@ -9,7 +9,6 @@
 // with percentages.
 #pragma once
 
-#include <memory>
 #include <optional>
 #include <utility>
 
@@ -38,10 +37,9 @@ public:
   static std::optional<Category> CategoryOf(const Vector<Term>& terms);
 
   // The parser records the range the target property permits; computed
-  // values are clamped to it. StyleDeclaration replaces the range with the
-  // property's own when a value is set.
-  static std::shared_ptr<const CSSMathFunctionValue> Create(Vector<Term> terms, ValueRange range = ValueRange::kAll) {
-    return std::make_shared<const CSSMathFunctionValue>(std::move(terms), range);
+  // values are clamped to it. The properties' Make() functions pass it.
+  static scoped_refptr<const CSSMathFunctionValue> Create(Vector<Term> terms, ValueRange range = ValueRange::kAll) {
+    return base::AdoptRef(new CSSMathFunctionValue(std::move(terms), range));
   }
 
   CSSMathFunctionValue(Vector<Term> terms, ValueRange range)

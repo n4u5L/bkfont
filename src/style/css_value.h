@@ -3,18 +3,27 @@
 // Use of this source code is governed by a BSD-style license in LICENSE.
 //
 // Subset of the class types used by the ported longhands. Values are
-// immutable and shared through std::shared_ptr<const CSSValue> instead of
-// Oilpan; subclasses are created by their Create() functions.
+// immutable and shared through scoped_refptr<const CSSValue>, an intrusive
+// reference count in place of Oilpan; subclasses are created by their
+// Create() functions.
 #pragma once
 
 #include <cstdint>
-#include <memory>
 
 #include "base/casting.h"
+#include "base/memory/scoped_refptr.h"
+#include "base/ref_counted.h"
 
 namespace bkfont {
 
-class CSSValue {
+class CSSValue;
+
+// Deletes a CSSValue whose last reference is released.
+struct CSSValueTraits {
+  static void Destruct(const CSSValue*);
+};
+
+class CSSValue : public RefCounted<CSSValue, CSSValueTraits> {
 public:
   bool IsNumericLiteralValue() const { return class_type_ == kNumericLiteralClass; }
   bool IsMathFunctionValue() const { return class_type_ == kMathFunctionClass; }
@@ -75,6 +84,8 @@ protected:
   enum ValueListSeparator { kSpaceSeparator, kCommaSeparator, kSlashSeparator };
 
   explicit CSSValue(ClassType class_type) : class_type_(class_type) {}
+  // There is no virtual destructor: Destroy() deletes a value as its class.
+  ~CSSValue() = default;
   ClassType GetClassType() const { return class_type_; }
 
   // CSSValueList and CSSValuePair data, kept here as upstream does to share
@@ -82,6 +93,11 @@ protected:
   uint8_t value_list_separator_ = kSpaceSeparator;
 
 private:
+  friend struct CSSValueTraits;
+  // FinalizeGarbageCollectedObject(): the subclass destructor, chosen by the
+  // class type.
+  void Destroy() const;
+
   const ClassType class_type_;
 };
 

@@ -3,8 +3,6 @@
 // Use of this source code is governed by a BSD-style license in LICENSE.
 #pragma once
 
-#include <memory>
-
 #include "base/text/wtf_string.h"
 #include "paint/color.h"
 #include "style/css_value.h"
@@ -15,8 +13,8 @@ namespace cssvalue {
 // Represents the non-keyword subset of <color>.
 class CSSColor : public CSSValue {
 public:
-  static std::shared_ptr<const CSSColor> Create(const Color& color) {
-    return std::make_shared<const CSSColor>(color);
+  static scoped_refptr<const CSSColor> Create(const Color& color) {
+    return base::AdoptRef(new CSSColor(color));
   }
 
   CSSColor(Color color)

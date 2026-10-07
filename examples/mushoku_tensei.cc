@@ -19,12 +19,17 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <fstream>
+#include <iterator>
 #include <initializer_list>
 #include <memory>
 #include <span>
 #include <utility>
 #include <vector>
 
+#include "base/hash_map.h"
+#include "font/custom_font_data.h"
+#include "font/simple_font_data.h"
 #include "fonts.h"
 #include "inline_layout.h"
 #include "paint/path.h"
@@ -39,6 +44,8 @@ using namespace bkfont;
 using P = CSSPropertyID;
 using V = CSSValueID;
 using Unit = CSSPrimitiveValue::UnitType;
+namespace L = css_longhand;
+namespace S = css_shorthand;
 
 constexpr int kWindowWidth = 1040;
 constexpr int kWindowHeight = 820;
@@ -65,98 +72,142 @@ StyleColorValue Rgb(uint32_t rgb, int alpha = 255) {
   return StyleColorValue(Color::FromRGBA((rgb >> 16) & 0xff, (rgb >> 8) & 0xff, rgb & 0xff, alpha));
 }
 
+// The page's downloaded fonts: family names mapped to font files, as
+// @font-face rules with a single binary source would give them, in place of
+// CSSFontSelector and its FontFaceCache. Other families, generic families and
+// character fallback go to the system font cache as without a selector.
+class FileFontSelector final : public FontSelector {
+public:
+  // Loads `path` like a web font (FontCustomPlatformData::Create(): OTS
+  // sanitizing, WOFF/WOFF2 decoding) as `family`. Reports and returns false
+  // when the file is missing or rejected.
+  bool AddFontFile(const AtomicString& family, const char* path) {
+    std::ifstream file(path, std::ios::binary);
+    if (!file) {
+      std::fprintf(stderr, "font file not found: %s\n", path);
+      return false;
+    }
+    const std::vector<uint8_t> data((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    String message;
+    std::shared_ptr<FontCustomPlatformData> face = FontCustomPlatformData::Create(data, message);
+    if (!face) {
+      std::fprintf(stderr, "font file rejected: %s (%s)\n", path, message.Utf8().c_str());
+      return false;
+    }
+    faces_.Set(family, std::move(face));
+    return true;
+  }
+
+  std::shared_ptr<const FontData> GetFontData(const FontDescription& description, const FontFamily& family) override {
+    if (family.FamilyIsGeneric()) return nullptr;
+    const auto face = faces_.find(family.FamilyName());
+    if (face == faces_.end()) return nullptr;
+    // A face with the default descriptors: normal width, slope and weight.
+    const FontSelectionCapabilities capabilities{FontSelectionRange(kNormalWidthValue),
+                                                 FontSelectionRange(kNormalSlopeValue),
+                                                 FontSelectionRange(kNormalWeightValue)};
+    // CSSSegmentedFontFace::GetFontData(): bold and italic requests the face
+    // cannot meet are synthesized.
+    FontDescription requested(description);
+    const FontSelectionRequest request = description.GetFontSelectionRequest();
+    requested.SetSyntheticBold(capabilities.weight.maximum < kBoldThreshold && request.weight >= kBoldThreshold &&
+                               description.SyntheticBoldAllowed());
+    requested.SetSyntheticItalic(capabilities.slope.maximum < kItalicSlopeValue && request.slope >= kItalicSlopeValue &&
+                                 description.SyntheticItalicAllowed());
+    // BinaryDataFontFaceSource::CreateFontData().
+    return std::make_shared<SimpleFontData>(
+        face->value->GetFontPlatformData(
+            requested.EffectiveFontSize(), requested.AdjustedSpecifiedSize(),
+            requested.IsSyntheticBold() && requested.SyntheticBoldAllowed(),
+            requested.IsSyntheticItalic() && requested.SyntheticItalicAllowed(), request, capabilities,
+            requested.FontOpticalSizing(), requested.TextRendering(), requested.ResolveFontFeatures(),
+            requested.Orientation(), requested.VariationSettings(), requested.GetFontPalette()),
+        std::make_shared<CustomFontData>());
+  }
+  bool IsPlatformFamilyMatchAvailable(const FontDescription& description, const FontFamily& family) override {
+    return FontCache::Get().IsPlatformFamilyMatchAvailable(description, family.FamilyName());
+  }
+  // The faces never change, so there is nothing to report or invalidate.
+  void WillUseFontData(const FontDescription&, const FontFamily&, const String&) override {}
+  void WillUseRange(const FontDescription&, const AtomicString&, const FontDataForRangeSet&) override {}
+  unsigned Version() const override {
+    return 0;
+  }
+  void ReportSuccessfulFontFamilyMatch(const AtomicString&) override {}
+  void ReportFailedFontFamilyMatch(const AtomicString&) override {}
+  void ReportSuccessfulLocalFontMatch(const AtomicString&) override {}
+  void ReportFailedLocalFontMatch(const AtomicString&) override {}
+  void ReportNotDefGlyph() const override {}
+  void ReportEmojiSegmentGlyphCoverage(unsigned, unsigned) override {}
+  void RegisterForInvalidationCallbacks(FontSelectorClient*) override {}
+  void UnregisterForInvalidationCallbacks(FontSelectorClient*) override {}
+  ExecutionContext* GetExecutionContext() const override {
+    return nullptr;
+  }
+  FontFaceCache* GetFontFaceCache() override {
+    return nullptr;
+  }
+  void FontCacheInvalidated() override {}
+
+private:
+  HashMap<AtomicString, std::shared_ptr<FontCustomPlatformData>> faces_;
+};
+
 // Chains typed StyleDeclaration setters. A rejected value is reported and
 // skipped, as a parser would drop an invalid declaration.
 class Css {
 public:
-  Css& Keyword(P property, V value) {
-    return Check(declaration_.SetKeyword(property, value), property);
-  }
-  Css& Keywords(P property, std::initializer_list<V> values) {
-    return Check(declaration_.SetKeywordList(property, std::span<const V>(values.begin(), values.size())), property);
-  }
-  Css& Number(P property, double value) {
-    return Check(declaration_.SetNumber(property, value), property);
-  }
-  Css& Length(P property, CSSLength value) {
-    return Check(declaration_.SetLength(property, value), property);
-  }
-  Css& Text(P property, const char* utf8) {
-    return Check(declaration_.SetString(property, String::FromUTF8(utf8)), property);
-  }
-  Css& Value(P property, std::shared_ptr<const CSSValue> value) {
-    return Check(declaration_.Set(property, std::move(value)), property);
+  // Builds the property's value with its Make() (style/css_properties.h).
+  template <typename Property>
+  Css& Set(const typename Property::Input& input) {
+    return Check(declaration_.Set<Property>(input), Property::kId);
   }
   Css& FontFamily(std::initializer_list<const char*> names, V generic) {
-    std::vector<CSSFontFamilyName> families;
-    for (const char* name : names) families.push_back({CSSValueID::kInvalid, AtomicString(String::FromUTF8(name))});
-    families.push_back({generic, AtomicString()});
-    return Check(declaration_.SetFontFamily(families), P::kFontFamily);
+    Vector<CSSFontFamilyName> families;
+    for (const char* name : names) families.push_back(CSSFontFamilyName{CSSValueID::kInvalid, AtomicString(String::FromUTF8(name))});
+    families.push_back(CSSFontFamilyName{generic, AtomicString()});
+    return Set<L::FontFamily>(families);
   }
   Css& TextColor(StyleColorValue color) {
-    return Check(declaration_.SetColor(color), P::kColor);
+    return Set<L::Color>(color);
   }
   Css& FillColor(StyleColorValue color) {
-    return Check(declaration_.SetTextFillColor(color), P::kWebkitTextFillColor);
+    return Set<L::WebkitTextFillColor>(color);
   }
   Css& StrokeColor(StyleColorValue color) {
-    return Check(declaration_.SetTextStrokeColor(color), P::kWebkitTextStrokeColor);
+    return Set<L::WebkitTextStrokeColor>(color);
   }
   Css& DecorationColor(StyleColorValue color) {
-    return Check(declaration_.SetTextDecorationColor(color), P::kTextDecorationColor);
+    return Set<L::TextDecorationColor>(color);
   }
   Css& EmphasisColor(StyleColorValue color) {
-    return Check(declaration_.SetTextEmphasisColor(color), P::kTextEmphasisColor);
-  }
-  Css& DecorationLine(TextDecorationLine line) {
-    return Check(declaration_.SetTextDecorationLine(line), P::kTextDecorationLine);
+    return Set<L::TextEmphasisColor>(color);
   }
   Css& LineHeight(double number) {
-    return Check(declaration_.SetLineHeight(CSSLineHeight::Number(number)), P::kLineHeight);
+    return Set<L::LineHeight>(CSSNumber{number});
   }
-  Css& LetterSpacing(CSSLength value) {
-    return Check(declaration_.SetLetterSpacing(value), P::kLetterSpacing);
-  }
-  Css& WordSpacing(CSSLength value) {
-    return Check(declaration_.SetWordSpacing(value), P::kWordSpacing);
-  }
-  Css& TabSize(double spaces) {
-    return Check(declaration_.SetTabSize(spaces), P::kTabSize);
-  }
-  Css& WhiteSpace(EWhiteSpace value) {
-    return Check(declaration_.SetWhiteSpace(value), P::kWhiteSpace);
-  }
-  Css& TextWrapMode(bkfont::TextWrapMode value) {
-    return Check(declaration_.SetTextWrapMode(value), P::kTextWrapMode);
-  }
-  Css& Oblique(double degrees) {
-    return Check(declaration_.SetFontStyleOblique({degrees, Unit::kDegrees}), P::kFontStyle);
-  }
-  Css& Shadow(std::initializer_list<CSSTextShadow> shadows) {
-    return Check(declaration_.SetTextShadow(std::span<const CSSTextShadow>(shadows.begin(), shadows.size())),
-                 P::kTextShadow);
+  Css& Shadow(std::initializer_list<L::TextShadow::Shadow> shadows) {
+    return Set<L::TextShadow>(Vector<L::TextShadow::Shadow>(shadows));
   }
   Css& Features(std::initializer_list<std::pair<const char*, int>> tags) {
-    std::vector<std::pair<AtomicString, int>> features;
-    for (const auto& [tag, value] : tags) features.emplace_back(AtomicString(tag), value);
-    return Check(declaration_.SetFontFeatureSettings(features), P::kFontFeatureSettings);
+    Vector<L::FontFeatureSettings::Feature> features;
+    for (const auto& [tag, value] : tags) features.push_back(L::FontFeatureSettings::Feature{AtomicString(tag), CSSInteger{value}});
+    return Set<L::FontFeatureSettings>(features);
   }
   Css& Variations(std::initializer_list<std::pair<const char*, double>> axes) {
-    std::vector<std::pair<AtomicString, double>> variations;
-    for (const auto& [tag, value] : axes) variations.emplace_back(AtomicString(tag), value);
-    return Check(declaration_.SetFontVariationSettings(variations), P::kFontVariationSettings);
+    Vector<L::FontVariationSettings::Axis> variations;
+    for (const auto& [tag, value] : axes) variations.push_back(L::FontVariationSettings::Axis{AtomicString(tag), CSSNumber{value}});
+    return Set<L::FontVariationSettings>(variations);
   }
   Css& Locale(const char* tag) {
-    return Check(declaration_.SetLocale(String(tag)), P::kWebkitLocale);
+    return Set<L::WebkitLocale>(String(tag));
   }
-  // The `font` shorthand from some of its longhands; the others reset.
+  // The `font` shorthand with only its required components; the others reset.
   Css& Font(CSSLength size, const char* family, V generic) {
-    const StyleDeclaration::Entry longhands[] = {
-        {P::kFontSize, CSSNumericLiteralValue::Create(size.value, size.unit)},
-        {P::kFontFamily, CSSValueList::CreateCommaSeparated(
-                             {CSSFontFamilyValue::Create(AtomicString(family)), CSSIdentifierValue::Create(generic)})},
-    };
-    return Check(declaration_.SetShorthand(P::kFont, longhands), P::kFont);
+    return Set<S::Font>({
+        .size = size,
+        .family = {{CSSValueID::kInvalid, AtomicString(family)}, {generic, AtomicString()}},
+    });
   }
   Css& Merge(const Css& other) {
     declaration_.Merge(other.declaration_);
@@ -200,29 +251,29 @@ struct Card {
 void InstallRules(InlineFormattingContext& context) {
   auto& sheet = context.StyleSheet();
   (void)sheet.SetRule(AtomicString("label"), Css()
-                                                 .Number(P::kFontWeight, 700)
-                                                 .Keyword(P::kTextTransform, V::kUppercase)
-                                                 .LetterSpacing(Em(0.08))
+                                                 .Set<L::FontWeight>(CSSNumber{700})
+                                                 .Set<L::TextTransform>(V::kUppercase)
+                                                 .Set<L::LetterSpacing>(Em(0.08))
                                                  .Declaration());
   (void)sheet.SetRule(AtomicString("caption"), Css()
                                                    .Font(Px(12), "Cascadia Mono", V::kMonospace)
                                                    .TextColor(Rgb(0x6b7280))
-                                                   .Keyword(P::kFontVariantLigatures, V::kNone)
+                                                   .Set<L::FontVariantLigatures>(V::kNone)
                                                    .Declaration());
   (void)sheet.SetRule(AtomicString("title"),
-                      Css().Number(P::kFontWeight, 700).Length(P::kFontSize, Em(1.35)).TextColor(Rgb(0x1f2937)).Declaration());
-  (void)sheet.SetRule(AtomicString("name"), Css().Number(P::kFontWeight, 600).TextColor(Rgb(0x9a3412)).Declaration());
+                      Css().Set<L::FontWeight>(CSSNumber{700}).Set<L::FontSize>(Em(1.35)).TextColor(Rgb(0x1f2937)).Declaration());
+  (void)sheet.SetRule(AtomicString("name"), Css().Set<L::FontWeight>(CSSNumber{600}).TextColor(Rgb(0x9a3412)).Declaration());
 }
 
-std::unique_ptr<InlineFormattingContext> NewContext(const Css& root) {
-  auto context = std::make_unique<InlineFormattingContext>(Settings(), nullptr);
+std::unique_ptr<InlineFormattingContext> NewContext(const Css& root, std::shared_ptr<FontSelector> fonts = nullptr) {
+  auto context = std::make_unique<InlineFormattingContext>(Settings(), std::move(fonts));
   InstallRules(*context);
   context->SetInlineStyle(context->RootObject(), root.Declaration());
   return context;
 }
 
-InlineFormattingContext& AddBlock(Card& card, const Css& root) {
-  card.blocks.push_back(Block{NewContext(root)});
+InlineFormattingContext& AddBlock(Card& card, const Css& root, std::shared_ptr<FontSelector> fonts = nullptr) {
+  card.blocks.push_back(Block{NewContext(root, std::move(fonts))});
   return *card.blocks.back().context;
 }
 
@@ -252,9 +303,9 @@ Card NewCard(ColorARGB accent, const char* label, const char* caption) {
   Card card{accent};
   card.header.context = NewContext(Css()
                                        .FontFamily({"Segoe UI Variable Text", "Segoe UI"}, V::kSansSerif)
-                                       .Length(P::kFontSize, Px(13))
+                                       .Set<L::FontSize>(Px(13))
                                        .LineHeight(1.5)
-                                       .Keyword(P::kFontOpticalSizing, V::kAuto)
+                                       .Set<L::FontOpticalSizing>(V::kAuto)
                                        .TextColor(Rgb(0x374151)));
   auto& header = *card.header.context;
   const auto& root = header.RootObject();
@@ -273,21 +324,21 @@ Card ChineseCard() {
                       "text-spacing-trim · line-break: strict");
   const Css base = Css()
                        .FontFamily({"Microsoft YaHei", "Noto Sans CJK SC", "PingFang SC"}, V::kSansSerif)
-                       .Length(P::kFontSize, Px(17))
+                       .Set<L::FontSize>(Px(17))
                        .LineHeight(1.75)
                        .Locale("zh-Hans")
                        .TextColor(Rgb(0x1f2937))
-                       .Keyword(P::kLineBreak, V::kStrict)
-                       .Keyword(P::kTextAutospace, V::kNormal)
-                       .Keyword(P::kTextSpacingTrim, V::kTrimStart);
+                       .Set<L::LineBreak>(V::kStrict)
+                       .Set<L::TextAutospace>(V::kNormal)
+                       .Set<L::TextSpacingTrim>(V::kTrimStart);
 
-  auto& title = AddBlock(card, Css().Merge(base).Keyword(P::kTextWrapStyle, V::kBalance));
-  Span(title, title.RootObject(), "无职转生～到了异世界就拿出真本事～", Css().LetterSpacing(Em(0.06)), {"title"});
+  auto& title = AddBlock(card, Css().Merge(base).Set<L::TextWrapStyle>(V::kBalance));
+  Span(title, title.RootObject(), "无职转生～到了异世界就拿出真本事～", Css().Set<L::LetterSpacing>(Em(0.06)), {"title"});
 
-  const Css paragraph = Css().Merge(base).Keyword(P::kTextAlign, V::kJustify).Length(P::kTextIndent, Em(2));
+  const Css paragraph = Css().Merge(base).Set<L::TextAlign>(V::kJustify).Set<L::TextIndent>(Em(2));
   const Css dots = Css()
-                       .Keywords(P::kTextEmphasisStyle, {V::kFilled, V::kDot})
-                       .Keywords(P::kTextEmphasisPosition, {V::kUnder, V::kRight})
+                       .Set<L::TextEmphasisStyle>(L::TextEmphasisStyle::FillAndShape{V::kFilled, V::kDot})
+                       .Set<L::TextEmphasisPosition>({V::kUnder, V::kRight})
                        .EmphasisColor(Rgb(0xb91c1c));
   auto& p1 = AddBlock(card, paragraph);
   const auto& r1 = p1.RootObject();
@@ -303,13 +354,13 @@ Card ChineseCard() {
   Text(p2, r2, "学习魔术，与青梅竹马希露菲一同长大；转移事件又将他与大小姐艾莉丝抛到魔大陆的尽头。他在心中立誓：");
   Span(p2, r2, "「这一次，我要认真地活下去。」",
        Css()
-           .DecorationLine(TextDecorationLine::kUnderline)
-           .Keyword(P::kTextDecorationStyle, V::kWavy)
+           .Set<L::TextDecorationLine>(Vector<V>{V::kUnderline})
+           .Set<L::TextDecorationStyle>(V::kWavy)
            .DecorationColor(Rgb(0xdc2626))
-           .Length(P::kTextDecorationThickness, Px(1.5))
-           .Keywords(P::kTextUnderlinePosition, {V::kUnder})
-           .Keyword(P::kTextDecorationSkipInk, V::kAuto)
-           .Number(P::kFontWeight, 700));
+           .Set<L::TextDecorationThickness>(Px(1.5))
+           .Set<L::TextUnderlinePosition>(L::TextUnderlinePosition::Parts{.position = V::kUnder})
+           .Set<L::TextDecorationSkipInk>(V::kAuto)
+           .Set<L::FontWeight>(CSSNumber{700}));
   return card;
 }
 
@@ -321,19 +372,19 @@ Card JapaneseCard() {
                       "white-space: pre-line · -webkit-font-smoothing");
   card.vertical = true;
   auto& block = AddBlock(card, Css()
-                                   .Keyword(P::kWritingMode, V::kVerticalRl)
-                                   .Keyword(P::kTextOrientation, V::kMixed)
+                                   .Set<L::WritingMode>(V::kVerticalRl)
+                                   .Set<L::TextOrientation>(V::kMixed)
                                    .FontFamily({"Yu Mincho", "游明朝", "Noto Serif CJK JP", "MS Mincho"}, V::kSerif)
-                                   .Length(P::kFontSize, Px(19))
+                                   .Set<L::FontSize>(Px(19))
                                    .LineHeight(1.85)
                                    .Locale("ja")
                                    .TextColor(Rgb(0x111827))
-                                   .Keyword(P::kLineBreak, V::kStrict)
-                                   .Keywords(P::kFontVariantEastAsian, {V::kJis04})
-                                   .Keyword(P::kWebkitFontSmoothing, V::kAntialiased)
-                                   .WhiteSpace(EWhiteSpace::kPreLine));
+                                   .Set<L::LineBreak>(V::kStrict)
+                                   .Set<L::FontVariantEastAsian>(Vector<V>{V::kJis04})
+                                   .Set<L::WebkitFontSmoothing>(V::kAntialiased)
+                                   .Set<S::WhiteSpace>(V::kPreLine));
   const auto& root = block.RootObject();
-  const Css combine = Css().Keyword(P::kTextCombineUpright, V::kAll);
+  const Css combine = Css().Set<L::TextCombineUpright>(V::kAll);
   Span(block, root, "無職転生　〜異世界行ったら本気だす〜",
        Css().Features({{"vpal", 1}}).TextColor(Rgb(0x5b21b6)), {"title"});
   Text(block, root, "\n");
@@ -343,7 +394,7 @@ Card JapaneseCard() {
   Span(block, root, "ルーデウス・グレイラット", {"name"});
   Text(block, root, "として生まれ変わり、前世の記憶を抱えたまま、今度こそ");
   Span(block, root, "本気",
-       Css().Keyword(P::kTextEmphasisStyle, V::kSesame).EmphasisColor(Rgb(0xdb2777)));
+       Css().Set<L::TextEmphasisStyle>(V::kSesame).EmphasisColor(Rgb(0xdb2777)));
   Text(block, root, "で生きると誓う。\n家庭教師ロキシーに魔術を学び、幼なじみのシルフィと育ち、"
                     "転移事件で魔大陸へ飛ばされたエリスと共に、");
   Span(block, root, "3", combine);
@@ -358,13 +409,13 @@ Card KoreanCard() {
                       "font-style: oblique 12deg · font-weight: 300 · text-shadow");
   const Css base = Css()
                        .FontFamily({"Malgun Gothic", "맑은 고딕", "Noto Sans CJK KR"}, V::kSansSerif)
-                       .Length(P::kFontSize, Px(17))
+                       .Set<L::FontSize>(Px(17))
                        .LineHeight(1.7)
                        .Locale("ko")
                        .TextColor(Rgb(0x1e293b))
-                       .Keyword(P::kWordBreak, V::kKeepAll)
-                       .Keyword(P::kTextWrapStyle, V::kBalance)
-                       .Keyword(P::kTextAlign, V::kCenter);
+                       .Set<L::WordBreak>(V::kKeepAll)
+                       .Set<L::TextWrapStyle>(V::kBalance)
+                       .Set<L::TextAlign>(V::kCenter);
   auto& title = AddBlock(card, base);
   Span(title, title.RootObject(), "무직전생 ~이세계에 갔으면 최선을 다한다~",
        Css().Shadow({{Px(1), Px(2), Px(3), Rgb(0x0369a1, 90)}}), {"title"});
@@ -376,7 +427,7 @@ Card KoreanCard() {
   Span(p, root, "루데우스 그레이랫", {"name"});
   Text(p, root, "이라는 이름의 아기로 다시 태어난다. ");
   Span(p, root, "전생의 기억을 간직한 채, 이번 인생만큼은 후회 없이 진심으로 살아가겠다고 다짐한다.",
-       Css().Oblique(12).Number(P::kFontWeight, 300));
+       Css().Set<L::FontStyle>(CSSFontStyleOblique{CSSLength{12, Unit::kDegrees}}).Set<L::FontWeight>(CSSNumber{300}));
   return card;
 }
 
@@ -390,37 +441,37 @@ Card EnglishCard() {
                       "overflow-wrap: anywhere · text-wrap-style: pretty · visibility: hidden");
   const Css base = Css()
                        .FontFamily({"Georgia", "Times New Roman"}, V::kSerif)
-                       .Length(P::kFontSize, Px(17))
+                       .Set<L::FontSize>(Px(17))
                        .LineHeight(1.6)
                        .Locale("en")
                        .TextColor(Rgb(0x1c1917))
-                       .Keyword(P::kFontKerning, V::kNormal)
-                       .Keyword(P::kTextRendering, V::kOptimizelegibility)
-                       .Keywords(P::kFontVariantLigatures, {V::kCommonLigatures, V::kDiscretionaryLigatures})
-                       .Keywords(P::kFontVariantNumeric, {V::kOldstyleNums, V::kProportionalNums});
+                       .Set<L::FontKerning>(V::kNormal)
+                       .Set<L::TextRendering>(V::kOptimizelegibility)
+                       .Set<L::FontVariantLigatures>(Vector<V>{V::kCommonLigatures, V::kDiscretionaryLigatures})
+                       .Set<L::FontVariantNumeric>(Vector<V>{V::kOldstyleNums, V::kProportionalNums});
 
   auto& title = AddBlock(card, base);
   const auto& title_root = title.RootObject();
   Span(title, title_root, "Mushoku Tensei",
-       Css().Keyword(P::kTextTransform, V::kUppercase).LetterSpacing(Em(0.12)).TextColor(Rgb(0x14532d)), {"title"});
+       Css().Set<L::TextTransform>(V::kUppercase).Set<L::LetterSpacing>(Em(0.12)).TextColor(Rgb(0x14532d)), {"title"});
   Text(title, title_root, "  ");
   Span(title, title_root, "Jobless Reincarnation",
-       Css().Keyword(P::kFontStyle, V::kItalic).Length(P::kFontSize, Px(21)).TextColor(Rgb(0x57534e)));
+       Css().Set<L::FontStyle>(V::kItalic).Set<L::FontSize>(Px(21)).TextColor(Rgb(0x57534e)));
 
   const Css paragraph = Css()
                             .Merge(base)
-                            .Keyword(P::kTextAlign, V::kJustify)
-                            .Keyword(P::kTextAlignLast, V::kLeft)
-                            .Keyword(P::kHyphens, V::kManual)
-                            .Text(P::kHyphenateCharacter, "‐")
-                            .WordSpacing(Px(1))
-                            .Keyword(P::kTextWrapStyle, V::kPretty)
-                            .Keyword(P::kOverflowWrap, V::kAnywhere);
+                            .Set<L::TextAlign>(V::kJustify)
+                            .Set<L::TextAlignLast>(V::kLeft)
+                            .Set<L::Hyphens>(V::kManual)
+                            .Set<L::HyphenateCharacter>(String::FromUTF8("‐"))
+                            .Set<L::WordSpacing>(Px(1))
+                            .Set<L::TextWrapStyle>(V::kPretty)
+                            .Set<L::OverflowWrap>(V::kAnywhere);
   auto& p1 = AddBlock(card, paragraph);
   const auto& r1 = p1.RootObject();
   Text(p1, r1, "A thirty-four-year-old shut-in, thrown out of his family’s house, dies pushing a group of "
                "students out of the path of a speeding truck. He wakes as a baby in a world of swords and sorcery: ");
-  Span(p1, r1, "Rudeus Greyrat", Css().Keyword(P::kFontVariantCaps, V::kSmallCaps).LetterSpacing(Em(0.03)),
+  Span(p1, r1, "Rudeus Greyrat", Css().Set<L::FontVariantCaps>(V::kSmallCaps).Set<L::LetterSpacing>(Em(0.03)),
        {"name"});
   Text(p1, r1, ", son of a swordsman and a healer. Determined not to waste his second life, he masters magic "
                "under the e­nig­mat­ic tutor ");
@@ -428,44 +479,44 @@ Card EnglishCard() {
        Css()
            .FillColor(Rgb(0xffffff, 0))
            .StrokeColor(Rgb(0x1d4ed8))
-           .Length(P::kWebkitTextStrokeWidth, Px(0.8))
-           .Number(P::kFontWeight, 700));
+           .Set<L::WebkitTextStrokeWidth>(Px(0.8))
+           .Set<L::FontWeight>(CSSNumber{700}));
   Text(p1, r1, ", grows up beside his childhood friend Sylphiette, and is flung across the world with the fiery "
                "noble ");
   Span(p1, r1, "Eris Boreas Greyrat",
        Css().TextColor(Rgb(0xb91c1c)).Shadow({{Px(0), Px(0), Px(6), Rgb(0xf97316, 160)}, {Px(1), Px(1), {}, {}}}));
   Text(p1, r1, " by the Teleport Incident");
-  Span(p1, r1, "1", Css().Keyword(P::kVerticalAlign, V::kSuper).Length(P::kFontSize, Percent(70)));
+  Span(p1, r1, "1", Css().Set<L::VerticalAlign>(V::kSuper).Set<L::FontSize>(Percent(70)));
   Text(p1, r1, ". Its first official, fluent translation sold dis­pro­por­tion­ate­ly well. Source: ");
   Span(p1, r1, "https://ncode.syosetu.com/n9669bk/", Css().FontFamily({"Cascadia Mono", "Consolas"}, V::kMonospace)
-                                                        .Length(P::kFontSize, Px(14))
+                                                        .Set<L::FontSize>(Px(14))
                                                         .TextColor(Rgb(0x2563eb))
-                                                        .DecorationLine(TextDecorationLine::kUnderline)
-                                                        .Length(P::kTextUnderlineOffset, Px(3)));
+                                                        .Set<L::TextDecorationLine>(Vector<V>{V::kUnderline})
+                                                        .Set<L::TextUnderlineOffset>(Px(3)));
 
-  auto& p2 = AddBlock(card, Css().Merge(base).Keyword(P::kTextAlign, V::kCenter));
+  auto& p2 = AddBlock(card, Css().Merge(base).Set<L::TextAlign>(V::kCenter));
   const auto& r2 = p2.RootObject();
   Span(p2, r2, "“This time, I’ll live my life to the fullest.”",
        Css()
-           .Keyword(P::kFontStyle, V::kItalic)
-           .Length(P::kFontSize, Px(20))
-           .DecorationLine(TextDecorationLine::kUnderline | TextDecorationLine::kOverline)
-           .Keyword(P::kTextDecorationStyle, V::kDouble)
+           .Set<L::FontStyle>(V::kItalic)
+           .Set<L::FontSize>(Px(20))
+           .Set<L::TextDecorationLine>(Vector<V>{V::kUnderline, V::kOverline})
+           .Set<L::TextDecorationStyle>(V::kDouble)
            .DecorationColor(Rgb(0x16a34a)));
   Text(p2, r2, "  ");
   Span(p2, r2, "Light novel vol. 1–26 · 2014–2022",
        Css()
            .FontFamily({"Bahnschrift"}, V::kSansSerif)
-           .Length(P::kFontStretch, Percent(75))
+           .Set<L::FontStretch>(Percent(75))
            .Variations({{"wght", 600}})
-           .Keywords(P::kFontVariantNumeric, {V::kLiningNums, V::kTabularNums})
-           .Length(P::kFontSize, Px(15))
+           .Set<L::FontVariantNumeric>(Vector<V>{V::kLiningNums, V::kTabularNums})
+           .Set<L::FontSize>(Px(15))
            .TextColor(Rgb(0x4d7c0f)));
 
-  auto& note = AddBlock(card, Css().Merge(base).Length(P::kFontSize, Px(13)).TextColor(Rgb(0x78716c)));
+  auto& note = AddBlock(card, Css().Merge(base).Set<L::FontSize>(Px(13)).TextColor(Rgb(0x78716c)));
   const auto& r3 = note.RootObject();
   Text(note, r3, "1. Spoiler: ");
-  Span(note, r3, "Fittoa becomes a grassland", Css().Keyword(P::kVisibility, V::kHidden));
+  Span(note, r3, "Fittoa becomes a grassland", Css().Set<L::Visibility>(V::kHidden));
   Text(note, r3, " — hidden with visibility: hidden, which still takes up space.");
   return card;
 }
@@ -477,23 +528,23 @@ Card ThaiCard() {
                       "text-decoration-line: line-through · text-decoration-color · line-height: 1.9");
   const Css base = Css()
                        .FontFamily({"Leelawadee UI", "Tahoma", "Noto Sans Thai"}, V::kSansSerif)
-                       .Length(P::kFontSize, Px(18))
+                       .Set<L::FontSize>(Px(18))
                        .LineHeight(1.9)
                        .Locale("th")
                        .TextColor(Rgb(0x292524));
   auto& title = AddBlock(card, base);
   Span(title, title.RootObject(), "เกิดชาตินี้พี่ต้องเทพ", Css().TextColor(Rgb(0x854d0e)), {"title"});
 
-  auto& p = AddBlock(card, Css().Merge(base).Keyword(P::kTextAlign, V::kJustify));
+  auto& p = AddBlock(card, Css().Merge(base).Set<L::TextAlign>(V::kJustify));
   const auto& root = p.RootObject();
   Text(p, root, "ชายวัยสามสิบสี่ปีผู้เก็บตัวอยู่แต่ในห้องถูกครอบครัวไล่ออกจากบ้าน "
                 "และเสียชีวิตขณะช่วยนักเรียนให้พ้นจากรถบรรทุก เขาลืมตาขึ้นอีกครั้งในฐานะทารกชื่อ ");
   Span(p, root, "รูเดียส เกรย์แรต", {"name"});
   Text(p, root, " ในโลกแห่งดาบและเวทมนตร์ จาก");
   Span(p, root, "คนตกงาน", Css()
-                               .DecorationLine(TextDecorationLine::kLineThrough)
+                               .Set<L::TextDecorationLine>(Vector<V>{V::kLineThrough})
                                .DecorationColor(Rgb(0xdc2626))
-                               .Length(P::kTextDecorationThickness, Px(2))
+                               .Set<L::TextDecorationThickness>(Px(2))
                                .TextColor(Rgb(0x78716c)));
   Text(p, root, " สู่จอมเวทผู้ยิ่งใหญ่ ด้วยความทรงจำจากชาติก่อน "
                 "เขาตั้งปณิธานว่าชาตินี้จะใช้ชีวิตอย่างจริงจังโดยไม่ต้องเสียใจภายหลัง");
@@ -506,32 +557,32 @@ Card ArabicCard() {
                       "direction: rtl · unicode-bidi: isolate · text-align: start · "
                       "text-decoration-style: dotted · text-underline-offset · font-size-adjust");
   const Css base = Css()
-                       .Keyword(P::kDirection, V::kRtl)
+                       .Set<L::Direction>(V::kRtl)
                        .FontFamily({"Segoe UI", "Arial", "Noto Naskh Arabic"}, V::kSansSerif)
-                       .Length(P::kFontSize, Px(19))
+                       .Set<L::FontSize>(Px(19))
                        .LineHeight(1.85)
                        .Locale("ar")
                        .TextColor(Rgb(0x1f2937));
   auto& title = AddBlock(card, base);
   Span(title, title.RootObject(), "مشوكو تنساي: تناسخ العاطل عن العمل", Css().TextColor(Rgb(0x115e59)), {"title"});
 
-  const Css ltr = Css().Keyword(P::kDirection, V::kLtr).Keyword(P::kUnicodeBidi, V::kIsolate);
+  const Css ltr = Css().Set<L::Direction>(V::kLtr).Set<L::UnicodeBidi>(V::kIsolate);
   auto& p = AddBlock(card, base);
   const auto& root = p.RootObject();
   Text(p, root, "رجلٌ عاطلٌ عن العمل في الرابعة والثلاثين (");
-  Span(p, root, "34", Css().Merge(ltr).Number(P::kFontSizeAdjust, 0.55));
+  Span(p, root, "34", Css().Merge(ltr).Set<L::FontSizeAdjust>(CSSNumber{0.55}));
   Text(p, root, ") طردته عائلته من البيت، فلقي حتفه وهو ينقذ طلابًا من شاحنة مسرعة. "
                 "ثم فتح عينيه رضيعًا في عالمٍ من السيوف والسحر باسم ");
   Span(p, root, "روديوس غريرات", {"name"});
   Text(p, root, " (");
-  Span(p, root, "Rudeus Greyrat", Css().Merge(ltr).Keyword(P::kFontStyle, V::kItalic));
+  Span(p, root, "Rudeus Greyrat", Css().Merge(ltr).Set<L::FontStyle>(V::kItalic));
   Text(p, root, "). وبذكريات حياته السابقة تعلّم السحر على يد معلّمته روكسي، ");
   Span(p, root, "وأقسم أن يعيش هذه المرة بجدّيةٍ ومن دون ندم.",
        Css()
-           .DecorationLine(TextDecorationLine::kUnderline)
-           .Keyword(P::kTextDecorationStyle, V::kDotted)
+           .Set<L::TextDecorationLine>(Vector<V>{V::kUnderline})
+           .Set<L::TextDecorationStyle>(V::kDotted)
            .DecorationColor(Rgb(0x0f766e))
-           .Length(P::kTextUnderlineOffset, Px(5)));
+           .Set<L::TextUnderlineOffset>(Px(5)));
   return card;
 }
 
@@ -541,13 +592,13 @@ Card MoreScriptsCard() {
   Card card = NewCard(0xff9333ea, "Русский · हिन्दी · Tiếng Việt · עברית",
                       "font-synthesis · font-variant-caps: all-small-caps · text-transform: capitalize · "
                       "font-variant-position: super · unicode-bidi: plaintext · letter-spacing");
-  const Css base = Css().Length(P::kFontSize, Px(17)).LineHeight(1.65).TextColor(Rgb(0x1f2937));
+  const Css base = Css().Set<L::FontSize>(Px(17)).LineHeight(1.65).TextColor(Rgb(0x1f2937));
 
   auto& ru = AddBlock(card, Css().Merge(base).FontFamily({"Segoe UI"}, V::kSansSerif).Locale("ru"));
-  Span(ru, ru.RootObject(), "реинкарнация безработного", Css().Keyword(P::kTextTransform, V::kCapitalize), {"name"});
+  Span(ru, ru.RootObject(), "реинкарнация безработного", Css().Set<L::TextTransform>(V::kCapitalize), {"name"});
   Text(ru, ru.RootObject(), ": тридцатичетырёхлетний затворник перерождается в мире меча и магии под именем ");
   Span(ru, ru.RootObject(), "Рудеус Грейрат",
-       Css().Keyword(P::kFontVariantCaps, V::kAllSmallCaps).Keyword(P::kFontSynthesisSmallCaps, V::kAuto));
+       Css().Set<L::FontVariantCaps>(V::kAllSmallCaps).Set<L::FontSynthesisSmallCaps>(V::kAuto));
   Text(ru, ru.RootObject(), ".");
 
   auto& hi = AddBlock(card, Css().Merge(base).FontFamily({"Nirmala UI", "Noto Sans Devanagari"}, V::kSansSerif)
@@ -558,17 +609,17 @@ Card MoreScriptsCard() {
 
   auto& vi = AddBlock(card, Css().Merge(base).FontFamily({"Segoe UI", "Arial"}, V::kSansSerif).Locale("vi"));
   Text(vi, vi.RootObject(), "Thất nghiệp chuyển sinh");
-  Span(vi, vi.RootObject(), "WN", Css().Keyword(P::kFontVariantPosition, V::kSuper).Keyword(P::kFontSynthesisWeight,
-                                                                                               V::kNone));
+  Span(vi, vi.RootObject(), "WN",
+       Css().Set<L::FontVariantPosition>(V::kSuper).Set<L::FontSynthesisWeight>(V::kNone));
   Text(vi, vi.RootObject(), ": một gã thất nghiệp ba mươi tư tuổi được tái sinh thành ");
-  Span(vi, vi.RootObject(), "Rudeus Greyrat", Css().LetterSpacing(Px(1.5)), {"name"});
+  Span(vi, vi.RootObject(), "Rudeus Greyrat", Css().Set<L::LetterSpacing>(Px(1.5)), {"name"});
   Text(vi, vi.RootObject(), " trong thế giới của kiếm và phép thuật.");
 
   auto& he = AddBlock(card, Css()
                                 .Merge(base)
                                 .FontFamily({"Segoe UI", "Arial"}, V::kSansSerif)
                                 .Locale("he")
-                                .Keyword(P::kUnicodeBidi, V::kPlaintext));
+                                .Set<L::UnicodeBidi>(V::kPlaintext));
   Text(he, he.RootObject(), "גלגול נשמות של מובטל: גבר מובטל בן 34 נולד מחדש בעולם של חרבות וקסמים בתור ");
   Span(he, he.RootObject(), "רודאוס גרייראט", {"name"});
   Text(he, he.RootObject(), " (Rudeus Greyrat).");
@@ -582,26 +633,99 @@ Card TimelineCard() {
                       "font-palette: normal · font-variant-numeric: tabular-nums · font-variant-alternates");
   auto& block = AddBlock(card, Css()
                                    .FontFamily({"Cascadia Mono", "Consolas"}, V::kMonospace)
-                                   .Length(P::kFontSize, Px(14))
+                                   .Set<L::FontSize>(Px(14))
                                    .LineHeight(1.7)
                                    .TextColor(Rgb(0x334155))
-                                   .WhiteSpace(EWhiteSpace::kPre)
-                                   .TabSize(6)
-                                   .TextWrapMode(bkfont::TextWrapMode::kNowrap)
-                                   .Keywords(P::kFontVariantNumeric, {V::kTabularNums, V::kSlashedZero})
-                                   .Keywords(P::kFontVariantAlternates, {V::kHistoricalForms}));
+                                   .Set<S::WhiteSpace>(V::kPre)
+                                   .Set<L::TabSize>(CSSNumber{6})
+                                   .Set<L::TextWrapMode>(V::kNowrap)
+                                   .Set<L::FontVariantNumeric>(Vector<V>{V::kTabularNums, V::kSlashedZero})
+                                   .Set<L::FontVariantAlternates>(L::FontVariantAlternates::Alternates{.historical_forms = true}));
   const auto& root = block.RootObject();
-  Span(block, root, "Age\tArc\n", Css().Number(P::kFontWeight, 700));
+  Span(block, root, "Age\tArc\n", Css().Set<L::FontWeight>(CSSNumber{700}));
   Text(block, root, "0\tInfancy · 幼年期 · 유년기\n"
                     "7\tChildhood · 少年期 · พบกับรอกซี่\n"
                     "10\tTeleport Incident · 転移事件 · حادثة الانتقال\n"
                     "15\tYouth · 青少年期 · Юность\n");
   Span(block, root, "⚔︎ ✨ \U0001F4D6 \U0001F9D9‍♀️ \U0001F3E0",
-       Css().Keyword(P::kFontVariantEmoji, V::kEmoji).Keyword(P::kFontPalette, V::kNormal));
+       Css().Set<L::FontVariantEmoji>(V::kEmoji).Set<L::FontPalette>(V::kNormal));
   return card;
 }
 
+// Ancient Egyptian hieroglyphs in a downloaded font (Noto Sans Egyptian
+// Hieroglyphs, fetched by CMake), loaded through a FontSelector as an
+// @font-face rule would load it. The names are spelled with uniliteral signs
+// and a determinative; the cartouche frames the hero's name like a royal one.
+Card EgyptianCard(const std::shared_ptr<FontSelector>& fonts) {
+  Card card = NewCard(0xffb45309, "Ancient Egyptian · 古埃及文 · egy",
+                      "FontSelector + FontCustomPlatformData (@font-face) · Noto Sans Egyptian Hieroglyphs, "
+                      "downloaded by CMake · cartouche · letter-spacing · font-style: italic");
+  // The downloaded font first; Segoe UI Historic also has the hieroglyphs on
+  // Windows, the others take the Latin transliteration and the Chinese.
+  const Css base = Css()
+                       .FontFamily({"Noto Sans Egyptian Hieroglyphs", "Segoe UI Historic", "Segoe UI", "Microsoft YaHei"},
+                                   V::kSansSerif)
+                       .Locale("egy")
+                       .Set<L::TextAlign>(V::kCenter)
+                       .TextColor(Rgb(0x1f2937));
+
+  auto& title = AddBlock(card, Css().Merge(base).Set<L::FontSize>(Px(44)).LineHeight(1.4).TextColor(Rgb(0x92400e)),
+                         fonts);
+  Text(title, title.RootObject(), "\U00013379\U0001308B\U00013171\U000130A7\U000131CC\U000132F4\U0001337A");
+  Span(title, title.RootObject(), "  \U000132F9\U00013351\U000132F4", Css().TextColor(Rgb(0xb45309)));
+
+  // Each name: the hieroglyphs, the transliteration and the Chinese name;
+  // two names a line, the line break kept by white-space-collapse.
+  auto& names = AddBlock(
+      card, Css().Merge(base).Set<L::FontSize>(Px(18)).LineHeight(2).Set<L::WhiteSpaceCollapse>(V::kPreserveBreaks),
+      fonts);
+  const auto& root = names.RootObject();
+  const struct {
+    const char* glyphs;
+    const char* transliteration;
+    const char* name;
+  } kNames[] = {
+      // r w d y s + man
+      {"\U0001308B\U00013171\U000130A7\U000131CC\U000132F4\U00013000", "rwdys", "鲁迪乌斯"},
+      // r k s y + woman
+      {"\U0001308B\U000133A1\U000132F4\U000131CC\U00013050", "rksy", "洛琪希"},
+      // i r y s + woman
+      {"\U000131CB\U0001308B\U000131CC\U000132F4\U00013050", "irys", "艾莉丝"},
+      // s r f t + woman
+      {"\U000132F4\U0001308B\U00013191\U000133CF\U00013050", "srft", "希露菲"},
+  };
+  for (const auto& entry : kNames) {
+    if (&entry != kNames) Text(names, root, (&entry - kNames) % 2 ? " · " : "\n");
+    Span(names, root, entry.glyphs, Css().Set<L::FontSize>(Px(28)).Set<L::LetterSpacing>(Px(2)).TextColor(Rgb(0x92400e)));
+    Text(names, root, " ");
+    Span(names, root, entry.transliteration, Css().Set<L::FontStyle>(V::kItalic).TextColor(Rgb(0x6b7280)));
+    Text(names, root, " ");
+    Span(names, root, entry.name, {"name"});
+  }
+
+  auto& note = AddBlock(card, Css().Merge(base).Set<L::FontSize>(Px(14)).LineHeight(1.8).TextColor(Rgb(0x78716c)),
+                        fonts);
+  // ankh wedja seneb: "life, prosperity, health".
+  Span(note, note.RootObject(), "\U000132F9\U00013351\U000132F4", Css().Set<L::FontSize>(Px(20)).TextColor(Rgb(0xb45309)));
+  Text(note, note.RootObject(), " ");
+  Span(note, note.RootObject(), "ꜥnḫ wḏꜣ snb", Css().Set<L::FontStyle>(V::kItalic));
+  Text(note, note.RootObject(), " — 愿他生命、昌盛、健康：王名之后的祝词，此处献给王名圈中的鲁迪乌斯。");
+  return card;
+}
+
+// The selector with the downloaded fonts; empty when they are missing, so
+// the hieroglyphs fall back to the system fonts.
+std::shared_ptr<FontSelector> LoadExampleFonts() {
+  auto fonts = std::make_shared<FileFontSelector>();
+#ifdef BKFONT_EXAMPLE_FONT_DIR
+  (void)fonts->AddFontFile(AtomicString("Noto Sans Egyptian Hieroglyphs"),
+                           BKFONT_EXAMPLE_FONT_DIR "/NotoSansEgyptianHieroglyphs-Regular.ttf");
+#endif
+  return fonts;
+}
+
 struct Page {
+  std::shared_ptr<FontSelector> fonts = LoadExampleFonts();
   std::vector<Card> cards;
   float scale = 0;
   int width = 0;
@@ -619,6 +743,7 @@ struct Page {
     cards.push_back(ThaiCard());
     cards.push_back(ArabicCard());
     cards.push_back(MoreScriptsCard());
+    cards.push_back(EgyptianCard(fonts));
     cards.push_back(TimelineCard());
   }
 };

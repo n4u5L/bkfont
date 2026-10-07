@@ -4,7 +4,6 @@
 // Use of this source code is governed by a BSD-style license in LICENSE.
 #pragma once
 
-#include <memory>
 #include <utility>
 
 #include "base/memory/values_equivalent.h"
@@ -16,17 +15,17 @@ namespace bkfont {
 
 class CSSValueList : public CSSValue {
 public:
-  using Values = Vector<std::shared_ptr<const CSSValue>>;
+  using Values = Vector<scoped_refptr<const CSSValue>>;
   using const_iterator = Values::const_iterator;
 
-  static std::shared_ptr<const CSSValueList> CreateCommaSeparated(Values values) {
-    return std::make_shared<const CSSValueList>(kCommaSeparator, std::move(values));
+  static scoped_refptr<const CSSValueList> CreateCommaSeparated(Values values) {
+    return base::AdoptRef(new CSSValueList(kCommaSeparator, std::move(values)));
   }
-  static std::shared_ptr<const CSSValueList> CreateSpaceSeparated(Values values) {
-    return std::make_shared<const CSSValueList>(kSpaceSeparator, std::move(values));
+  static scoped_refptr<const CSSValueList> CreateSpaceSeparated(Values values) {
+    return base::AdoptRef(new CSSValueList(kSpaceSeparator, std::move(values)));
   }
-  static std::shared_ptr<const CSSValueList> CreateSlashSeparated(Values values) {
-    return std::make_shared<const CSSValueList>(kSlashSeparator, std::move(values));
+  static scoped_refptr<const CSSValueList> CreateSlashSeparated(Values values) {
+    return base::AdoptRef(new CSSValueList(kSlashSeparator, std::move(values)));
   }
 
   CSSValueList(ValueListSeparator separator, Values values)
@@ -72,8 +71,8 @@ struct DowncastTraits<CSSValueList> {
 // A comma-separated function value, such as stylistic(alias).
 class CSSFunctionValue : public CSSValueList {
 public:
-  static std::shared_ptr<const CSSFunctionValue> Create(CSSValueID id, Values values) {
-    return std::make_shared<const CSSFunctionValue>(id, std::move(values));
+  static scoped_refptr<const CSSFunctionValue> Create(CSSValueID id, Values values) {
+    return base::AdoptRef(new CSSFunctionValue(id, std::move(values)));
   }
   CSSFunctionValue(CSSValueID id, Values values)
       : CSSValueList(kFunctionClass, kCommaSeparator, std::move(values)), value_id_(id) {}

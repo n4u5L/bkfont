@@ -6,8 +6,6 @@
 // subset: no system colors, color-mix() or unresolved color functions.
 #pragma once
 
-#include <memory>
-
 #include "paint/color.h"
 #include "paint/color4f.h"
 #include "style/css_color.h"
@@ -40,7 +38,7 @@ public:
   Color4f Resolve(Color4f current) const {
     return current_color_ ? current : ToColor4f(color_);
   }
-  std::shared_ptr<const CSSValue> ToCSSValue() const {
+  scoped_refptr<const CSSValue> ToCSSValue() const {
     if (current_color_) return CSSIdentifierValue::Create(CSSValueID::kCurrentcolor);
     return cssvalue::CSSColor::Create(color_);
   }

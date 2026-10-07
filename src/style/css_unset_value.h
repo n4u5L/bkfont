@@ -3,8 +3,6 @@
 // Use of this source code is governed by a BSD-style license in LICENSE.
 #pragma once
 
-#include <memory>
-
 #include "style/css_value.h"
 
 namespace bkfont {
@@ -13,8 +11,8 @@ namespace cssvalue {
 class CSSUnsetValue : public CSSValue {
 public:
   // CssValuePool's shared instance.
-  static std::shared_ptr<const CSSUnsetValue> Create() {
-    static const auto value = std::make_shared<const CSSUnsetValue>();
+  static scoped_refptr<const CSSUnsetValue> Create() {
+    static const auto value = base::AdoptRef(new CSSUnsetValue());
     return value;
   }
 

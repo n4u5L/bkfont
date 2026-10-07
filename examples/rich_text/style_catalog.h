@@ -17,6 +17,10 @@ struct PropertySpec {
   bool paragraph;
   int tab;                          // Home, typography, paragraph, effects.
   std::vector<std::string> choices; // CSS text, validated by the real style system.
+  // Reads CSS text into the property's typed input and sets it on the
+  // declaration (StyleDeclaration::Set<Property>()). CSS-wide keywords are
+  // handled by BuildDeclaration().
+  bool (*apply)(bkfont::StyleDeclaration&, std::string_view) = nullptr;
 };
 std::span<const PropertySpec> PropertyCatalog();
 const PropertySpec* FindProperty(std::string_view);

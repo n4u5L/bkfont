@@ -3,8 +3,6 @@
 // Use of this source code is governed by a BSD-style license in LICENSE.
 #pragma once
 
-#include <memory>
-
 #include "style/css_value.h"
 #include "style/css_value_keywords.h"
 
@@ -16,8 +14,8 @@ T CssValueIDToPlatformEnum(CSSValueID);
 
 class CSSIdentifierValue : public CSSValue {
 public:
-  static std::shared_ptr<const CSSIdentifierValue> Create(CSSValueID value_id) {
-    return std::make_shared<const CSSIdentifierValue>(value_id);
+  static scoped_refptr<const CSSIdentifierValue> Create(CSSValueID value_id) {
+    return base::AdoptRef(new CSSIdentifierValue(value_id));
   }
 
   explicit CSSIdentifierValue(CSSValueID value_id) : CSSValue(kIdentifierClass), value_id_(value_id) {}

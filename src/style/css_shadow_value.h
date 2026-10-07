@@ -3,7 +3,6 @@
 // Use of this source code is governed by a BSD-style license in LICENSE.
 #pragma once
 
-#include <memory>
 #include <utility>
 
 #include "base/memory/values_equivalent.h"
@@ -16,18 +15,18 @@ namespace bkfont {
 // null when omitted.
 class CSSShadowValue : public CSSValue {
 public:
-  static std::shared_ptr<const CSSShadowValue> Create(std::shared_ptr<const CSSPrimitiveValue> x,
-                                                      std::shared_ptr<const CSSPrimitiveValue> y,
-                                                      std::shared_ptr<const CSSPrimitiveValue> blur,
-                                                      std::shared_ptr<const CSSPrimitiveValue> spread,
-                                                      std::shared_ptr<const CSSIdentifierValue> style,
-                                                      std::shared_ptr<const CSSValue> color) {
-    return std::make_shared<const CSSShadowValue>(std::move(x), std::move(y), std::move(blur), std::move(spread),
-                                                  std::move(style), std::move(color));
+  static scoped_refptr<const CSSShadowValue> Create(scoped_refptr<const CSSPrimitiveValue> x,
+                                                      scoped_refptr<const CSSPrimitiveValue> y,
+                                                      scoped_refptr<const CSSPrimitiveValue> blur,
+                                                      scoped_refptr<const CSSPrimitiveValue> spread,
+                                                      scoped_refptr<const CSSIdentifierValue> style,
+                                                      scoped_refptr<const CSSValue> color) {
+    return base::AdoptRef(new CSSShadowValue(std::move(x), std::move(y), std::move(blur), std::move(spread),
+                                             std::move(style), std::move(color)));
   }
-  CSSShadowValue(std::shared_ptr<const CSSPrimitiveValue> x, std::shared_ptr<const CSSPrimitiveValue> y,
-                 std::shared_ptr<const CSSPrimitiveValue> blur, std::shared_ptr<const CSSPrimitiveValue> spread,
-                 std::shared_ptr<const CSSIdentifierValue> style, std::shared_ptr<const CSSValue> color)
+  CSSShadowValue(scoped_refptr<const CSSPrimitiveValue> x, scoped_refptr<const CSSPrimitiveValue> y,
+                 scoped_refptr<const CSSPrimitiveValue> blur, scoped_refptr<const CSSPrimitiveValue> spread,
+                 scoped_refptr<const CSSIdentifierValue> style, scoped_refptr<const CSSValue> color)
       : CSSValue(kShadowClass), x(std::move(x)), y(std::move(y)), blur(std::move(blur)), spread(std::move(spread)),
         style(std::move(style)), color(std::move(color)) {}
 
@@ -37,12 +36,12 @@ public:
            base::ValuesEquivalent(spread, o.spread) && base::ValuesEquivalent(style, o.style);
   }
 
-  std::shared_ptr<const CSSPrimitiveValue> x;
-  std::shared_ptr<const CSSPrimitiveValue> y;
-  std::shared_ptr<const CSSPrimitiveValue> blur;
-  std::shared_ptr<const CSSPrimitiveValue> spread;
-  std::shared_ptr<const CSSIdentifierValue> style;
-  std::shared_ptr<const CSSValue> color;
+  scoped_refptr<const CSSPrimitiveValue> x;
+  scoped_refptr<const CSSPrimitiveValue> y;
+  scoped_refptr<const CSSPrimitiveValue> blur;
+  scoped_refptr<const CSSPrimitiveValue> spread;
+  scoped_refptr<const CSSIdentifierValue> style;
+  scoped_refptr<const CSSValue> color;
 };
 
 template <>

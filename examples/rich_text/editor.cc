@@ -852,12 +852,13 @@ public:
     if (cache.size() > (style.family.empty() ? 1024u : 384u)) cache.clear();
     auto context = std::make_unique<InlineFormattingContext>(Settings(), nullptr);
     auto declaration = DefaultParagraphStyle();
-    (void)declaration.SetLength(CSSPropertyID::kFontSize, {style.size, CSSPrimitiveValue::UnitType::kPixels});
-    (void)declaration.SetNumber(CSSPropertyID::kFontWeight, style.weight);
+    (void)declaration.Set<css_longhand::FontSize>(CSSLength{style.size, CSSPrimitiveValue::UnitType::kPixels});
+    (void)declaration.Set<css_longhand::FontWeight>(CSSNumber{static_cast<double>(style.weight)});
     const ColorARGB color = style.color;
-    (void)declaration.SetColor(StyleColorValue(Color::FromRGBA((color >> 16) & 255, (color >> 8) & 255, color & 255, color >> 24)));
-    (void)declaration.SetLineHeight(CSSLineHeight::Number(1.25));
-    (void)declaration.SetKeyword(CSSPropertyID::kTextWrapMode, CSSValueID::kNowrap);
+    (void)declaration.Set<css_longhand::Color>(
+        StyleColorValue(Color::FromRGBA((color >> 16) & 255, (color >> 8) & 255, color & 255, color >> 24)));
+    (void)declaration.Set<css_longhand::LineHeight>(CSSNumber{1.25});
+    (void)declaration.Set<css_longhand::TextWrapMode>(CSSValueID::kNowrap);
     if (style.italic || !style.family.empty()) {
       Properties extra;
       if (!style.family.empty()) extra.emplace_back("font-family", std::string(style.family));

@@ -4,7 +4,6 @@
 #pragma once
 
 #include <cassert>
-#include <memory>
 #include <utility>
 
 #include "base/memory/values_equivalent.h"
@@ -16,13 +15,13 @@ class CSSValuePair : public CSSValue {
 public:
   enum IdenticalValuesPolicy { kDropIdenticalValues, kKeepIdenticalValues };
 
-  static std::shared_ptr<const CSSValuePair> Create(std::shared_ptr<const CSSValue> first,
-                                                    std::shared_ptr<const CSSValue> second,
+  static scoped_refptr<const CSSValuePair> Create(scoped_refptr<const CSSValue> first,
+                                                    scoped_refptr<const CSSValue> second,
                                                     IdenticalValuesPolicy policy) {
-    return std::make_shared<const CSSValuePair>(std::move(first), std::move(second), policy);
+    return base::AdoptRef(new CSSValuePair(std::move(first), std::move(second), policy));
   }
 
-  CSSValuePair(std::shared_ptr<const CSSValue> first, std::shared_ptr<const CSSValue> second,
+  CSSValuePair(scoped_refptr<const CSSValue> first, scoped_refptr<const CSSValue> second,
                IdenticalValuesPolicy identical_values_policy)
       : CSSValue(kValuePairClass), first_(std::move(first)), second_(std::move(second)),
         identical_values_policy_(identical_values_policy) {
@@ -40,8 +39,8 @@ public:
   }
 
 private:
-  std::shared_ptr<const CSSValue> first_;
-  std::shared_ptr<const CSSValue> second_;
+  scoped_refptr<const CSSValue> first_;
+  scoped_refptr<const CSSValue> second_;
   IdenticalValuesPolicy identical_values_policy_;
 };
 

@@ -27,6 +27,35 @@ inline bool CompareCSSValues(const CSSValue& first, const CSSValue& second) {
 
 } // namespace
 
+void CSSValueTraits::Destruct(const CSSValue* value) {
+  value->Destroy();
+}
+
+void CSSValue::Destroy() const {
+  switch (GetClassType()) {
+    case kAlternateClass: delete static_cast<const cssvalue::CSSAlternateValue*>(this); return;
+    case kColorClass: delete static_cast<const cssvalue::CSSColor*>(this); return;
+    case kCustomIdentClass: delete static_cast<const CSSCustomIdentValue*>(this); return;
+    case kFontFamilyClass: delete static_cast<const CSSFontFamilyValue*>(this); return;
+    case kFontFeatureClass: delete static_cast<const cssvalue::CSSFontFeatureValue*>(this); return;
+    case kFontStyleRangeClass: delete static_cast<const cssvalue::CSSFontStyleRangeValue*>(this); return;
+    case kFontVariationClass: delete static_cast<const cssvalue::CSSFontVariationValue*>(this); return;
+    case kFunctionClass: delete static_cast<const CSSFunctionValue*>(this); return;
+    case kIdentifierClass: delete static_cast<const CSSIdentifierValue*>(this); return;
+    case kInheritedClass: delete static_cast<const CSSInheritedValue*>(this); return;
+    case kInitialClass: delete static_cast<const CSSInitialValue*>(this); return;
+    case kMathFunctionClass: delete static_cast<const CSSMathFunctionValue*>(this); return;
+    case kNumericLiteralClass: delete static_cast<const CSSNumericLiteralValue*>(this); return;
+    case kPaletteMixClass: delete static_cast<const cssvalue::CSSPaletteMixValue*>(this); return;
+    case kShadowClass: delete static_cast<const CSSShadowValue*>(this); return;
+    case kStringClass: delete static_cast<const CSSStringValue*>(this); return;
+    case kUnsetClass: delete static_cast<const cssvalue::CSSUnsetValue*>(this); return;
+    case kValueListClass: delete static_cast<const CSSValueList*>(this); return;
+    case kValuePairClass: delete static_cast<const CSSValuePair*>(this); return;
+  }
+  NOTREACHED();
+}
+
 bool CSSValue::operator==(const CSSValue& other) const {
   if (class_type_ == other.class_type_) {
     switch (GetClassType()) {

@@ -21,6 +21,35 @@ find_package(OpenGL REQUIRED)
 add_executable(bkfont_mushoku_tensei_example mushoku_tensei.cc)
 target_link_libraries(bkfont_mushoku_tensei_example PRIVATE bkfont::bkfont glfw OpenGL::GL)
 
+# Noto Sans Egyptian Hieroglyphs (SIL Open Font License 1.1) for the Ancient
+# Egyptian card, which loads it from file as @font-face would. Downloaded at
+# configure time from a pinned google/fonts revision; without it the card
+# falls back to the system fonts.
+set(BKFONT_EXAMPLE_FONT_DIR "${CMAKE_CURRENT_BINARY_DIR}/fonts")
+set(BKFONT_NOTO_EGYPTIAN_URL
+  "https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/notosansegyptianhieroglyphs")
+function(bkfont_download_example_font name sha256)
+  set(path "${BKFONT_EXAMPLE_FONT_DIR}/${name}")
+  if(EXISTS "${path}")
+    file(SHA256 "${path}" actual)
+    if(actual STREQUAL sha256)
+      return()
+    endif()
+  endif()
+  file(DOWNLOAD "${BKFONT_NOTO_EGYPTIAN_URL}/${name}" "${path}"
+    EXPECTED_HASH SHA256=${sha256} TLS_VERIFY ON STATUS status)
+  list(GET status 0 code)
+  if(NOT code EQUAL 0)
+    file(REMOVE "${path}")
+    message(WARNING "Could not download ${name} (${status}); the Ancient Egyptian card uses system fonts.")
+  endif()
+endfunction()
+bkfont_download_example_font(NotoSansEgyptianHieroglyphs-Regular.ttf
+  b792accc6207ca9caa59fc67f53926b6985a99d255dd432d7c68b68a6dfd62f8)
+bkfont_download_example_font(OFL.txt dc8114a49f5bb53bad3d99ee52cbb245e98076438d59428a258720258494de68)
+target_compile_definitions(bkfont_mushoku_tensei_example PRIVATE
+  BKFONT_EXAMPLE_FONT_DIR="${BKFONT_EXAMPLE_FONT_DIR}")
+
 # Editable Word-style document, using the same bkfont layout/paint pipeline.
 add_library(bkfont_rich_text_model STATIC
   rich_text/piece_tree.cc

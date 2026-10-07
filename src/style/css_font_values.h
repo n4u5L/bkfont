@@ -8,7 +8,6 @@
 #pragma once
 
 #include <cassert>
-#include <memory>
 #include <utility>
 
 #include "base/memory/values_equivalent.h"
@@ -27,11 +26,11 @@ namespace cssvalue {
 // One <feature-tag-value> of font-feature-settings.
 class CSSFontFeatureValue : public CSSValue {
 public:
-  static std::shared_ptr<const CSSFontFeatureValue> Create(const AtomicString& tag,
-                                                           std::shared_ptr<const CSSPrimitiveValue> value) {
-    return std::make_shared<const CSSFontFeatureValue>(tag, std::move(value));
+  static scoped_refptr<const CSSFontFeatureValue> Create(const AtomicString& tag,
+                                                           scoped_refptr<const CSSPrimitiveValue> value) {
+    return base::AdoptRef(new CSSFontFeatureValue(tag, std::move(value)));
   }
-  CSSFontFeatureValue(const AtomicString& tag, std::shared_ptr<const CSSPrimitiveValue> value)
+  CSSFontFeatureValue(const AtomicString& tag, scoped_refptr<const CSSPrimitiveValue> value)
       : CSSValue(kFontFeatureClass), tag_(tag), value_(std::move(value)) {}
 
   const AtomicString& Tag() const { return tag_; }
@@ -44,17 +43,17 @@ public:
 
 private:
   AtomicString tag_;
-  std::shared_ptr<const CSSPrimitiveValue> value_;
+  scoped_refptr<const CSSPrimitiveValue> value_;
 };
 
 // One axis of font-variation-settings.
 class CSSFontVariationValue : public CSSValue {
 public:
-  static std::shared_ptr<const CSSFontVariationValue> Create(const AtomicString& tag,
-                                                             std::shared_ptr<const CSSPrimitiveValue> value) {
-    return std::make_shared<const CSSFontVariationValue>(tag, std::move(value));
+  static scoped_refptr<const CSSFontVariationValue> Create(const AtomicString& tag,
+                                                             scoped_refptr<const CSSPrimitiveValue> value) {
+    return base::AdoptRef(new CSSFontVariationValue(tag, std::move(value)));
   }
-  CSSFontVariationValue(const AtomicString& tag, std::shared_ptr<const CSSPrimitiveValue> value)
+  CSSFontVariationValue(const AtomicString& tag, scoped_refptr<const CSSPrimitiveValue> value)
       : CSSValue(kFontVariationClass), tag_(tag), value_(std::move(value)) {}
 
   const AtomicString& Tag() const { return tag_; }
@@ -66,19 +65,19 @@ public:
 
 private:
   AtomicString tag_;
-  std::shared_ptr<const CSSPrimitiveValue> value_;
+  scoped_refptr<const CSSPrimitiveValue> value_;
 };
 
 // font-style: oblique with an optional angle (a list of at most one).
 class CSSFontStyleRangeValue final : public CSSValue {
 public:
-  static std::shared_ptr<const CSSFontStyleRangeValue> Create(
-      std::shared_ptr<const CSSIdentifierValue> font_style_value,
-      std::shared_ptr<const CSSValueList> oblique_values = nullptr) {
-    return std::make_shared<const CSSFontStyleRangeValue>(std::move(font_style_value), std::move(oblique_values));
+  static scoped_refptr<const CSSFontStyleRangeValue> Create(
+      scoped_refptr<const CSSIdentifierValue> font_style_value,
+      scoped_refptr<const CSSValueList> oblique_values = nullptr) {
+    return base::AdoptRef(new CSSFontStyleRangeValue(std::move(font_style_value), std::move(oblique_values)));
   }
-  CSSFontStyleRangeValue(std::shared_ptr<const CSSIdentifierValue> font_style_value,
-                         std::shared_ptr<const CSSValueList> oblique_values)
+  CSSFontStyleRangeValue(scoped_refptr<const CSSIdentifierValue> font_style_value,
+                         scoped_refptr<const CSSValueList> oblique_values)
       : CSSValue(kFontStyleRangeClass), font_style_value_(std::move(font_style_value)),
         oblique_values_(std::move(oblique_values)) {
     assert(font_style_value_);
@@ -93,19 +92,19 @@ public:
   }
 
 private:
-  std::shared_ptr<const CSSIdentifierValue> font_style_value_;
-  std::shared_ptr<const CSSValueList> oblique_values_;
+  scoped_refptr<const CSSIdentifierValue> font_style_value_;
+  scoped_refptr<const CSSValueList> oblique_values_;
 };
 
 // A functional font-variant-alternates value: the function and its list of
 // <custom-ident> aliases.
 class CSSAlternateValue : public CSSValue {
 public:
-  static std::shared_ptr<const CSSAlternateValue> Create(std::shared_ptr<const CSSFunctionValue> function,
-                                                         std::shared_ptr<const CSSValueList> alias_list) {
-    return std::make_shared<const CSSAlternateValue>(std::move(function), std::move(alias_list));
+  static scoped_refptr<const CSSAlternateValue> Create(scoped_refptr<const CSSFunctionValue> function,
+                                                         scoped_refptr<const CSSValueList> alias_list) {
+    return base::AdoptRef(new CSSAlternateValue(std::move(function), std::move(alias_list)));
   }
-  CSSAlternateValue(std::shared_ptr<const CSSFunctionValue> function, std::shared_ptr<const CSSValueList> alias_list)
+  CSSAlternateValue(scoped_refptr<const CSSFunctionValue> function, scoped_refptr<const CSSValueList> alias_list)
       : CSSValue(kAlternateClass), function_(std::move(function)), aliases_(std::move(alias_list)) {}
 
   const CSSFunctionValue& Function() const { return *function_; }
@@ -116,25 +115,24 @@ public:
   }
 
 private:
-  std::shared_ptr<const CSSFunctionValue> function_;
-  std::shared_ptr<const CSSValueList> aliases_;
+  scoped_refptr<const CSSFunctionValue> function_;
+  scoped_refptr<const CSSValueList> aliases_;
 };
 
 // palette-mix().
 class CSSPaletteMixValue : public CSSValue {
 public:
-  static std::shared_ptr<const CSSPaletteMixValue> Create(std::shared_ptr<const CSSValue> palette1,
-                                                          std::shared_ptr<const CSSValue> palette2,
-                                                          std::shared_ptr<const CSSPrimitiveValue> p1,
-                                                          std::shared_ptr<const CSSPrimitiveValue> p2,
+  static scoped_refptr<const CSSPaletteMixValue> Create(scoped_refptr<const CSSValue> palette1,
+                                                          scoped_refptr<const CSSValue> palette2,
+                                                          scoped_refptr<const CSSPrimitiveValue> p1,
+                                                          scoped_refptr<const CSSPrimitiveValue> p2,
                                                           Color::ColorSpace color_interpolation_space,
                                                           Color::HueInterpolationMethod hue_interpolation_method) {
-    return std::make_shared<const CSSPaletteMixValue>(std::move(palette1), std::move(palette2), std::move(p1),
-                                                      std::move(p2), color_interpolation_space,
-                                                      hue_interpolation_method);
+    return base::AdoptRef(new CSSPaletteMixValue(std::move(palette1), std::move(palette2), std::move(p1), std::move(p2),
+                                                 color_interpolation_space, hue_interpolation_method));
   }
-  CSSPaletteMixValue(std::shared_ptr<const CSSValue> palette1, std::shared_ptr<const CSSValue> palette2,
-                     std::shared_ptr<const CSSPrimitiveValue> p1, std::shared_ptr<const CSSPrimitiveValue> p2,
+  CSSPaletteMixValue(scoped_refptr<const CSSValue> palette1, scoped_refptr<const CSSValue> palette2,
+                     scoped_refptr<const CSSPrimitiveValue> p1, scoped_refptr<const CSSPrimitiveValue> p2,
                      Color::ColorSpace color_interpolation_space, Color::HueInterpolationMethod hue_interpolation_method)
       : CSSValue(kPaletteMixClass), palette1_(std::move(palette1)), palette2_(std::move(palette2)),
         percentage1_(std::move(p1)), percentage2_(std::move(p2)),
@@ -156,10 +154,10 @@ public:
   }
 
 private:
-  std::shared_ptr<const CSSValue> palette1_;
-  std::shared_ptr<const CSSValue> palette2_;
-  std::shared_ptr<const CSSPrimitiveValue> percentage1_;
-  std::shared_ptr<const CSSPrimitiveValue> percentage2_;
+  scoped_refptr<const CSSValue> palette1_;
+  scoped_refptr<const CSSValue> palette2_;
+  scoped_refptr<const CSSPrimitiveValue> percentage1_;
+  scoped_refptr<const CSSPrimitiveValue> percentage2_;
   Color::ColorSpace color_interpolation_space_;
   Color::HueInterpolationMethod hue_interpolation_method_;
 };

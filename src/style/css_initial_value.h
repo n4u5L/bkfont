@@ -3,8 +3,6 @@
 // Use of this source code is governed by a BSD-style license in LICENSE.
 #pragma once
 
-#include <memory>
-
 #include "style/css_value.h"
 
 namespace bkfont {
@@ -12,8 +10,8 @@ namespace bkfont {
 class CSSInitialValue : public CSSValue {
 public:
   // CssValuePool's shared instance.
-  static std::shared_ptr<const CSSInitialValue> Create() {
-    static const auto value = std::make_shared<const CSSInitialValue>();
+  static scoped_refptr<const CSSInitialValue> Create() {
+    static const auto value = base::AdoptRef(new CSSInitialValue());
     return value;
   }
 

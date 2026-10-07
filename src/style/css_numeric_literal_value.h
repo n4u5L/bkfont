@@ -3,8 +3,6 @@
 // Use of this source code is governed by a BSD-style license in LICENSE.
 #pragma once
 
-#include <memory>
-
 #include "style/css_primitive_value.h"
 
 namespace bkfont {
@@ -13,8 +11,8 @@ namespace bkfont {
 // unit.
 class CSSNumericLiteralValue : public CSSPrimitiveValue {
 public:
-  static std::shared_ptr<const CSSNumericLiteralValue> Create(double num, UnitType type) {
-    return std::make_shared<const CSSNumericLiteralValue>(num, type);
+  static scoped_refptr<const CSSNumericLiteralValue> Create(double num, UnitType type) {
+    return base::AdoptRef(new CSSNumericLiteralValue(num, type));
   }
 
   CSSNumericLiteralValue(double num, UnitType type) : CSSPrimitiveValue(kNumericLiteralClass), num_(num), type_(type) {}

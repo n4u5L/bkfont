@@ -200,7 +200,7 @@ target_sources(bkfont PRIVATE
   src/style/css_font_values.h
   src/style/css_shadow_value.h
   src/style/css_property_names.h src/style/css_property_names.cc
-  src/style/css_property_validation.h src/style/css_property_validation.cc
+  src/style/css_properties.h src/style/css_properties.cc
   src/style/css_value_id_mappings.h
   src/style/css_value_id_mappings_generated.h
   src/style/computed_style_constants.h

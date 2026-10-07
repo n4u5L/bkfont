@@ -5,8 +5,6 @@
 // Use of this source code is governed by a BSD-style license in LICENSE.
 #pragma once
 
-#include <memory>
-
 #include "base/text/atomic_string.h"
 #include "base/text/wtf_string.h"
 #include "style/css_value.h"
@@ -16,8 +14,8 @@ namespace bkfont {
 // A <string>.
 class CSSStringValue : public CSSValue {
 public:
-  static std::shared_ptr<const CSSStringValue> Create(const String& str) {
-    return std::make_shared<const CSSStringValue>(str);
+  static scoped_refptr<const CSSStringValue> Create(const String& str) {
+    return base::AdoptRef(new CSSStringValue(str));
   }
   explicit CSSStringValue(const String& str) : CSSValue(kStringClass), string_(str) {}
 
@@ -37,8 +35,8 @@ struct DowncastTraits<CSSStringValue> {
 // A <custom-ident> (or <dashed-ident>). There are no tree scopes.
 class CSSCustomIdentValue : public CSSValue {
 public:
-  static std::shared_ptr<const CSSCustomIdentValue> Create(const AtomicString& str) {
-    return std::make_shared<const CSSCustomIdentValue>(str);
+  static scoped_refptr<const CSSCustomIdentValue> Create(const AtomicString& str) {
+    return base::AdoptRef(new CSSCustomIdentValue(str));
   }
   explicit CSSCustomIdentValue(const AtomicString& str) : CSSValue(kCustomIdentClass), string_(str) {}
 
@@ -58,8 +56,8 @@ struct DowncastTraits<CSSCustomIdentValue> {
 // A non-generic <family-name>, from a string or a sequence of identifiers.
 class CSSFontFamilyValue : public CSSValue {
 public:
-  static std::shared_ptr<const CSSFontFamilyValue> Create(const AtomicString& family_name) {
-    return std::make_shared<const CSSFontFamilyValue>(family_name);
+  static scoped_refptr<const CSSFontFamilyValue> Create(const AtomicString& family_name) {
+    return base::AdoptRef(new CSSFontFamilyValue(family_name));
   }
   explicit CSSFontFamilyValue(const AtomicString& str) : CSSValue(kFontFamilyClass), string_(str) {}
 
