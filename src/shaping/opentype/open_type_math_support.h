@@ -11,7 +11,7 @@
 #include "platform_export.h"
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 class HarfBuzzFace;
 
@@ -116,4 +116,4 @@ public:
       float* italic_correction = nullptr);
 };
 
-} // namespace bkfont
+} // namespace bkit

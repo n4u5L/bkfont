@@ -15,7 +15,7 @@
 #include "runtime_enabled_features.h"
 #include "text/character.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -75,4 +75,4 @@ bool SymbolsIterator::Consume(unsigned* symbols_limit,
   return true;
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -17,7 +17,7 @@
 #include "platform/platform_font.h"
 #include "shaping/opentype/open_type_vertical_data.h"
 
-namespace bkfont {
+namespace bkit {
 
 inline constexpr unsigned kInvalidFallbackMetricsValue = static_cast<unsigned>(-1);
 
@@ -100,4 +100,4 @@ public:
   std::unique_ptr<const UnicodeRangeSet> range_set_;
 };
 
-} // namespace bkfont
+} // namespace bkit

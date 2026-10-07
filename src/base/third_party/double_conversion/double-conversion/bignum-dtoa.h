@@ -30,7 +30,7 @@
 
 #include "utils.h"
 
-namespace bkfont::double_conversion {
+namespace bkit::double_conversion {
 
 enum BignumDtoaMode {
   // Return the shortest correct representation.
@@ -79,4 +79,4 @@ enum BignumDtoaMode {
 void BignumDtoa(double v, BignumDtoaMode mode, int requested_digits,
                 Vector<char> buffer, int* length, int* point);
 
-} // namespace bkfont::double_conversion
+} // namespace bkit::double_conversion

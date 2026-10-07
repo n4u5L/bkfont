@@ -36,7 +36,7 @@
 
 #include "font_cache.h"
 
-namespace bkfont {
+namespace bkit {
 
 GenericFontFamilySettings::GenericFontFamilySettings(
     const GenericFontFamilySettings& other)
@@ -254,4 +254,4 @@ void GenericFontFamilySettings::Reset() {
   first_available_font_for_families_.clear();
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -5,7 +5,7 @@
 
 #include "paint/raster_canvas.h"
 
-namespace bkfont::example {
+namespace bkit::example {
 
 // Keep float drawing storage bounded independently of window size and DPI.
 // Every tile uses global device coordinates: clipping must not translate
@@ -28,4 +28,4 @@ void PaintTiles(const Pixmap& pixels, IntRect area, RasterCanvas::ScratchBuffer&
   }
 }
 
-} // namespace bkfont::example
+} // namespace bkit::example

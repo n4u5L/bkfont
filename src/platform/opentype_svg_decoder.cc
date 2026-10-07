@@ -2,7 +2,7 @@
 
 #include "opentype_svg_decoder.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -20,4 +20,4 @@ OpenTypeSVGDecoderFactory GetOpenTypeSVGDecoderFactory() {
   return g_svg_decoder_factory;
 }
 
-} // namespace bkfont
+} // namespace bkit

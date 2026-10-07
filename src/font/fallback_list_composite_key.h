@@ -12,7 +12,7 @@
 
 #include <memory>
 #include "base/hash_map.h"
-namespace bkfont {
+namespace bkit {
 
 class FontDescription;
 
@@ -99,4 +99,4 @@ struct FallbackListCompositeKeyTraits
   static constexpr bool kSafeToCompareToEmptyOrDeleted = false;
 };
 
-} // namespace bkfont
+} // namespace bkit

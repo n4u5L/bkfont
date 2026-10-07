@@ -12,7 +12,7 @@
 #include "text/writing_mode.h"
 #include "affine_transform.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Type-safe geometry for line-relative coordinate spaces.
 //
@@ -152,4 +152,4 @@ struct LineRelativeRect {
   void Unite(const LineRelativeRect&);
 };
 
-} // namespace bkfont
+} // namespace bkit

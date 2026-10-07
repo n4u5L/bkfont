@@ -36,7 +36,7 @@
 #include "base/text/character_names.h"
 #include "base/text/wtf_uchar.h"
 
-namespace bkfont {
+namespace bkit {
 
 struct ReturnBreakIteratorToPool {
   void operator()(void* ptr) const;
@@ -334,4 +334,4 @@ inline void LazyLineBreakIterator::SetStrictness(
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

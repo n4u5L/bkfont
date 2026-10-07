@@ -7,7 +7,7 @@
 
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 static const char* kUnknownEastAsianString = "Unknown";
 
@@ -51,4 +51,4 @@ String FontVariantEastAsian::ToString() const {
       Ruby() ? "true" : "false");
 }
 
-} // namespace bkfont
+} // namespace bkit

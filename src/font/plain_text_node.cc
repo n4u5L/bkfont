@@ -23,7 +23,7 @@
 #include "text/text_run.h"
 #include "base/text/string_buffer.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -405,4 +405,4 @@ CharacterRange PlainTextNode::ComputeCharacterRange(
                         context.max_y);
 }
 
-} // namespace bkfont
+} // namespace bkit

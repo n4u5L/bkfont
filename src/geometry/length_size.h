@@ -24,7 +24,7 @@
 #include "length.h"
 #include "base/allocator/allocator.h"
 
-namespace bkfont {
+namespace bkit {
 
 class LengthSize {
 
@@ -62,4 +62,4 @@ private:
   Length height_;
 };
 
-} // namespace bkfont
+} // namespace bkit

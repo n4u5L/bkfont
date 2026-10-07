@@ -15,7 +15,7 @@
 #include "layout/inline/fragment_item.h"
 #include "layout/inline/offset_mapping.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Subset of Blink's InlineItem: a range of the text content from one object,
 // with the collapsing state InlineItemsBuilder needs. Empty and collapsed-away
@@ -133,4 +133,4 @@ private:
   size_t reused_line_count_ = 0;
 };
 
-} // namespace bkfont
+} // namespace bkit

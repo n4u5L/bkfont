@@ -5,7 +5,7 @@
 
 #include "font_height.h"
 
-namespace bkfont {
+namespace bkit {
 
 void FontHeight::AddLeading(const FontHeight& start_and_end_leading) {
 
@@ -35,4 +35,4 @@ std::ostream& operator<<(std::ostream& stream, const FontHeight& metrics) {
                 << ", descent=" << metrics.descent;
 }
 
-} // namespace bkfont
+} // namespace bkit

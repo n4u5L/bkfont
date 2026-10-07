@@ -9,7 +9,7 @@
 #include "geometry/physical_size.h"
 #include "layout/layout_unit.h"
 
-namespace bkfont {
+namespace bkit {
 
 // PhysicalRect is the position and size of a rect (typically a fragment)
 // relative to its parent rect in the physical coordinate system.
@@ -153,4 +153,4 @@ inline Rect ToPixelSnappedRect(const PhysicalRect& r) {
   return {r.PixelSnappedOffset(), r.PixelSnappedSize()};
 }
 
-} // namespace bkfont
+} // namespace bkit

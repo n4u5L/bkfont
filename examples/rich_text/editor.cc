@@ -1,7 +1,7 @@
-// Word-style rich text example. Body and UI text are rendered by bkfont.
-// Build: cmake --build build --config Release --target bkfont_rich_text_example
-// Run:   bkfont_rich_text_example [--file document.json] [--snapshot view.bmp]
-//        bkfont_rich_text_example --write-sample sample.json
+// Word-style rich text example. Body and UI text are rendered by bkit.
+// Build: cmake --build build --config Release --target bkit_rich_text_example
+// Run:   bkit_rich_text_example [--file document.json] [--snapshot view.bmp]
+//        bkit_rich_text_example --write-sample sample.json
 // Ctrl+N/O/S, Ctrl+Shift+S, Ctrl+Z/Y, Ctrl+A/C/X/V, Ctrl+B/I/U, Ctrl+L/E/R/J,
 // Ctrl+Shift+</>, Ctrl+[/], Ctrl+Shift+= (superscript), Ctrl+Shift+C/V (copy
 // and paste formatting), Ctrl+Shift+8 (paragraph marks), Ctrl+D (格式 pane).
@@ -53,7 +53,7 @@
 namespace rich_text {
 namespace {
 
-using namespace bkfont;
+using namespace bkit;
 constexpr float kTitleHeight = 40, kTabBottom = 70, kRibbonBottom = 170, kRulerHeight = 26;
 constexpr float kStatusHeight = 26, kPaneWidth = 300, kScrollbar = 14, kPageMargin = 64, kBackstageSide = 220;
 // Word 2016 "colorful" palette: blue title/tab strip and status bar, a light
@@ -220,7 +220,7 @@ Vector<FontChoice> InstalledFonts() {
     result.push_back(std::move(choice));
   };
 #if defined(__linux__)
-  // The FCI manager intentionally does not enumerate. Reuse bkfont's locked
+  // The FCI manager intentionally does not enumerate. Reuse bkit's locked
   // Fontconfig configuration, without changing its upstream matching API.
   FontconfigLocker lock;
   FontconfigPattern pattern(FcPatternCreate());
@@ -1521,7 +1521,7 @@ public:
     quick(78, Icon::Undo, [this] { Undo(false); }, "撤销 (Ctrl+Z)", document.CanUndo());
     quick(110, Icon::Redo, [this] { Undo(true); }, "重做 (Ctrl+Y)", document.CanRedo());
     Fill(raster, {148, 12, Hair(), 16}, 0xff5b88d0);
-    const std::string title = DocumentName() + (document.Modified() ? " *" : "") + "  -  bkfont 文档";
+    const std::string title = DocumentName() + (document.Modified() ? " *" : "") + "  -  bkit 文档";
     const float w = LabelWidth(title, {12, kWhite});
     Label(raster, title, std::max(160.0f, (width - w) / 2), 12, {12, kWhite}, width - 320);
   }
@@ -2046,7 +2046,7 @@ public:
     const float w = 470, h = path_dialog ? 196.0f : 176.0f, x = (width - w) / 2, y = (height - h) / 2;
     Fill(raster, {x - 1, y - 1, w + 2, h + 2}, kBlue);
     Fill(raster, {x, y, w, h}, kWhite);
-    Label(raster, "bkfont 文档", x + 16, y + 10, {12, kMuted});
+    Label(raster, "bkit 文档", x + 16, y + 10, {12, kMuted});
     const auto button = [&](float bx, const char* label, std::function<void()> action, bool primary) {
       const Rect rect{bx, y + h - 46, 96, 30};
       Fill(raster, rect, rect.Contains(mouse_x, mouse_y) ? 0xffd5e4f7 : 0xffe9e9e9);
@@ -2487,7 +2487,7 @@ std::string Editor::ChoosePath(bool save) {
   OPENFILENAMEW dialog{};
   dialog.lStructSize = sizeof(dialog);
   dialog.hwndOwner = glfwGetWin32Window(window);
-  dialog.lpstrFilter = L"bkfont JSON document (*.json)\0*.json\0All files (*.*)\0*.*\0\0";
+  dialog.lpstrFilter = L"bkit JSON document (*.json)\0*.json\0All files (*.*)\0*.*\0\0";
   dialog.lpstrFile = filename;
   dialog.nMaxFile = static_cast<DWORD>(std::size(filename));
   dialog.lpstrDefExt = L"json";
@@ -3025,7 +3025,7 @@ Editor& Get(GLFWwindow* window) {
 void PaintWindow(Editor& editor, HWND window);
 
 LRESULT CALLBACK EditorWindowProc(HWND handle, UINT message, WPARAM wparam, LPARAM lparam) {
-  auto* editor = reinterpret_cast<Editor*>(GetPropW(handle, L"bkfont.RichTextEditor"));
+  auto* editor = reinterpret_cast<Editor*>(GetPropW(handle, L"bkit.RichTextEditor"));
   if (!editor) return DefWindowProcW(handle, message, wparam, lparam);
   if (message == WM_PAINT) {
     // Interactive sizing runs inside DefWindowProc's modal loop. The outer
@@ -3306,7 +3306,7 @@ int RunEditor(int argc, char** argv) {
 #endif
   float snapshot_scale = 1;
   const auto usage = [] {
-    std::puts("bkfont_rich_text_example [--file document.json] [--snapshot view.bmp]\n"
+    std::puts("bkit_rich_text_example [--file document.json] [--snapshot view.bmp]\n"
               "  [--tab 0|1|2|3|4] [--backstage] [--popup css-property] [--marks]\n"
               "  [--scale 1|1.5|2] [--write-sample sample.json]\n"
               "  [--profile-memory] Report Windows startup memory and exit after presenting.\n"
@@ -3404,7 +3404,7 @@ int RunEditor(int argc, char** argv) {
 #endif
   };
   memory("startup");
-  bkfont::InitializeFonts();
+  bkit::InitializeFonts();
   memory("fonts");
   Editor editor;
   editor.tab = selected_tab;
@@ -3457,7 +3457,7 @@ int RunEditor(int argc, char** argv) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 #endif
   glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
-  editor.window = glfwCreateWindow(1440, 980, "bkfont 文档", nullptr, nullptr);
+  editor.window = glfwCreateWindow(1440, 980, "bkit 文档", nullptr, nullptr);
   if (!editor.window) {
     glfwTerminate();
     return 1;
@@ -3512,12 +3512,12 @@ int RunEditor(int argc, char** argv) {
   const HWND handle = glfwGetWin32Window(window);
   editor.presenter.Initialize(handle, force_gdi);
   memory("presenter");
-  SetPropW(handle, L"bkfont.RichTextEditor", &editor);
+  SetPropW(handle, L"bkit.RichTextEditor", &editor);
   editor.previous_proc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(handle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(EditorWindowProc)));
   if (!present_scenario.empty()) {
     const int result = RunPresentationScenario(editor, handle, present_scenario, scenario_frames);
     SetWindowLongPtrW(handle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(editor.previous_proc));
-    RemovePropW(handle, L"bkfont.RichTextEditor");
+    RemovePropW(handle, L"bkit.RichTextEditor");
     editor.presenter.Shutdown();
     glfwDestroyWindow(window);
     glfwTerminate();
@@ -3567,7 +3567,7 @@ int RunEditor(int argc, char** argv) {
     }
     // Native WM_PAINT may have consumed dirty while GLFW was dispatching
     // messages, so title changes must not depend on rendering in this loop.
-    const std::string title = (editor.document.Modified() ? "* " : "") + editor.DocumentName() + " - bkfont 文档";
+    const std::string title = (editor.document.Modified() ? "* " : "") + editor.DocumentName() + " - bkit 文档";
     if (title != last_title) {
       glfwSetWindowTitle(window, title.c_str());
       last_title = title;
@@ -3582,7 +3582,7 @@ int RunEditor(int argc, char** argv) {
   }
 #ifdef _WIN32
   SetWindowLongPtrW(handle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(editor.previous_proc));
-  RemovePropW(handle, L"bkfont.RichTextEditor");
+  RemovePropW(handle, L"bkit.RichTextEditor");
   editor.presenter.Shutdown();
 #endif
 #ifndef _WIN32
@@ -3595,11 +3595,11 @@ int RunEditor(int argc, char** argv) {
 
 #ifdef _WIN32
 int wmain(int argc, wchar_t** wide_argv) {
-  bkfont::Vector<std::string> arguments;
-  arguments.reserve(static_cast<bkfont::wtf_size_t>(argc));
+  bkit::Vector<std::string> arguments;
+  arguments.reserve(static_cast<bkit::wtf_size_t>(argc));
   for (int i = 0; i < argc; ++i)
     arguments.push_back(rich_text::EncodeUTF8(std::u16string_view(reinterpret_cast<const char16_t*>(wide_argv[i]))));
-  bkfont::Vector<char*> argv;
+  bkit::Vector<char*> argv;
   for (auto& argument : arguments) argv.push_back(argument.data());
   return RunEditor(argc, argv.data());
 }

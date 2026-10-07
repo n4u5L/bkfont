@@ -12,7 +12,7 @@
 #include "font/font_description.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -53,7 +53,7 @@ void FontFeatureRange::FromFontDescription(
   }
 
   {
-    bool default_is_off = description.TextRendering() == bkfont::kOptimizeSpeed;
+    bool default_is_off = description.TextRendering() == bkit::kOptimizeSpeed;
     bool letter_spacing = description.LetterSpacing() != 0;
     constexpr auto normal = FontDescription::kNormalLigaturesState;
     constexpr auto enabled = FontDescription::kEnabledLigaturesState;
@@ -239,4 +239,4 @@ template void FontFeatureRange::FromFontDescription(
     const FontDescription&,
     FontFeatureRanges&);
 
-} // namespace bkfont
+} // namespace bkit

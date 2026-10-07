@@ -26,7 +26,7 @@
 
 #pragma once
 
-namespace bkfont {
+namespace bkit {
 
 enum class UnicodeBidi : unsigned {
   kNormal,
@@ -46,4 +46,4 @@ inline bool IsOverride(UnicodeBidi unicode_bidi) {
   return unicode_bidi == UnicodeBidi::kBidiOverride || unicode_bidi == UnicodeBidi::kIsolateOverride;
 }
 
-} // namespace bkfont
+} // namespace bkit

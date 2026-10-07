@@ -45,7 +45,7 @@ def main(chromium_root, output_dir):
         '',
         '#include <string_view>',
         '',
-        'namespace bkfont {',
+        'namespace bkit {',
         '',
         'enum class CSSValueID {',
         '  kInvalid = 0,',
@@ -66,7 +66,7 @@ def main(chromium_root, output_dir):
         '',
         'std::string_view GetCSSValueName(CSSValueID);',
         '',
-        '} // namespace bkfont',
+        '} // namespace bkit',
         '',
     ]
 
@@ -86,7 +86,7 @@ def main(chromium_root, output_dir):
         '',
         '#include <stdint.h>',
         '',
-        'namespace bkfont {',
+        'namespace bkit {',
         '',
         'static const char kValueListStringPool[] = {',
     ]
@@ -108,7 +108,7 @@ def main(chromium_root, output_dir):
         '  return std::string_view(kValueListStringPool + start, end - start);',
         '}',
         '',
-        '} // namespace bkfont',
+        '} // namespace bkit',
         '',
     ]
 

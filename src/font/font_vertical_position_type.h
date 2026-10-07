@@ -9,7 +9,7 @@
 #include <cmath>
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 enum class FontVerticalPositionType {
   // TextTop and TextBottom are the top/bottom of the content area.
@@ -31,4 +31,4 @@ inline bool IsLineOverSide(FontVerticalPositionType type) {
   return type == FontVerticalPositionType::TextTop || type == FontVerticalPositionType::TopOfEmHeight;
 }
 
-} // namespace bkfont
+} // namespace bkit

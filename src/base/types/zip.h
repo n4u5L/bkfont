@@ -12,7 +12,7 @@
 
 #include "base/compiler_specific.h"
 
-namespace bkfont::base {
+namespace bkit::base {
 
 namespace internal {
 
@@ -142,4 +142,4 @@ constexpr internal::Zipper<Ranges...> zip(Ranges&... ranges LIFETIME_BOUND) {
   return internal::Zipper<Ranges...>(ranges...);
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base

@@ -26,7 +26,7 @@
 #include <cstdint>
 #include <limits>
 
-namespace bkfont {
+namespace bkit {
 
 template <typename T>
 class scoped_refptr;
@@ -59,4 +59,4 @@ template <typename Value, typename Traits = HashTraits<Value>,
           typename Allocator = PartitionAllocator>
 class LinkedHashSet;
 
-} // namespace bkfont
+} // namespace bkit

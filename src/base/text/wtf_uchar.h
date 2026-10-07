@@ -22,9 +22,9 @@ typedef int32_t UChar32;
 
 ;
 
-namespace bkfont {
+namespace bkit {
 
 // Define platform neutral 8 bit character type (L is for Latin-1).
 typedef unsigned char LChar;
 
-} // namespace bkfont
+} // namespace bkit

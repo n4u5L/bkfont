@@ -38,7 +38,7 @@
 #include "base/allocator/allocator.h"
 #include "base/text/string_impl.h"
 
-namespace bkfont {
+namespace bkit {
 
 // StringBuffer is a thin wrapper of StringImpl::CreateUninitialized().
 // It is helpful if the length and Is8Bit flag are known when creating a string.
@@ -94,4 +94,4 @@ void StringBuffer<CharType>::Shrink(unsigned new_length) {
   data_ = data_->Substring(0, new_length);
 }
 
-} // namespace bkfont
+} // namespace bkit

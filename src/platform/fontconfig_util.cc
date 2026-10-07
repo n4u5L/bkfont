@@ -16,7 +16,7 @@
 #include "base/mutex.h"
 #include "stream.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -97,4 +97,4 @@ std::unique_ptr<StreamAsset> OpenFontconfigStream(const std::string& filename) {
   return MemoryStream::Make(std::move(data));
 }
 
-} // namespace bkfont
+} // namespace bkit

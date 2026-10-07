@@ -1,7 +1,7 @@
 // Adapted from core/css/resolver/style_resolver_state.cc.
 #include "style_resolver_state.h"
 
-namespace bkfont {
+namespace bkit {
 
 StyleResolverState::StyleResolverState(const StyleHostContext& host, const ComputedStyle* parent_style)
     : host_(host), initial_style_(host.InitialStyle()), parent_style_(parent_style),
@@ -67,4 +67,4 @@ void StyleResolverState::SetTextOrientation(ETextOrientation text_orientation) {
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

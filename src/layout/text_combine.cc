@@ -21,7 +21,7 @@
 #include "shaping/shape_result.h"
 #include "text/bidi_paragraph.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -278,4 +278,4 @@ bool TextCombine::UsingSyntheticOblique() const {
   return parent_font_.GetFontDescription().IsSyntheticOblique();
 }
 
-} // namespace bkfont
+} // namespace bkit

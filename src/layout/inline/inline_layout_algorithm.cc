@@ -21,7 +21,7 @@
 #include "shaping/shaping_line_breaker.h"
 #include "text/character.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 bool IsForcedBreak(UChar c) {
@@ -1519,4 +1519,4 @@ std::unique_ptr<FragmentItems> InlineLayoutAlgorithm::Layout() {
   return std::move(result_);
 }
 
-} // namespace bkfont
+} // namespace bkit

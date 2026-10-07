@@ -48,7 +48,7 @@
 #include "text/character.h"
 #include "text/layout_locale.h"
 
-namespace bkfont {
+namespace bkit {
 
 static const char kChineseSimplified[] = "zh-Hant";
 bool FontCache::antialiased_text_enabled_ = false;
@@ -451,4 +451,4 @@ bool FontCache::IsFamilyAvailable(const String& family) const {
   return font_manager_->MatchFamily(family)->Count() > 0;
 }
 
-} // namespace bkfont
+} // namespace bkit

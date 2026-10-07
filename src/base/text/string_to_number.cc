@@ -14,7 +14,7 @@
 #include "base/text/string_view.h"
 #include "base/text/unicode.h"
 
-namespace bkfont {
+namespace bkit {
 
 template <int base>
 bool IsCharacterAllowedInBase(UChar);
@@ -56,7 +56,7 @@ static inline IntegralType ToIntegralType(base::span<const CharType> chars,
   }
 
   if (options.AcceptWhitespace()) {
-    while (length && bkfont::unicode::IsSpaceOrNewline(data[index])) {
+    while (length && bkit::unicode::IsSpaceOrNewline(data[index])) {
       --length;
       ++index;
     }
@@ -124,7 +124,7 @@ static inline IntegralType ToIntegralType(base::span<const CharType> chars,
   }
 
   if (options.AcceptWhitespace()) {
-    while (length && bkfont::unicode::IsSpaceOrNewline(data[index])) {
+    while (length && bkit::unicode::IsSpaceOrNewline(data[index])) {
       --length;
       ++index;
     }
@@ -322,4 +322,4 @@ float CharactersToFloat(base::span<const UChar> data, size_t& parsed_length) {
       ToDoubleType<UChar, kAllowTrailingJunk>(data, nullptr, parsed_length));
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -30,7 +30,7 @@
 
 #include <cstddef>
 
-namespace bkfont {
+namespace bkit {
 
 // Random visual rendering model attributes. Not inherited.
 
@@ -91,4 +91,4 @@ enum class LineLogicalSide {
   kUnder,
 };
 
-} // namespace bkfont
+} // namespace bkit

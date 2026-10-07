@@ -12,7 +12,7 @@
 #include <limits>
 #include <numbers>
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -388,4 +388,4 @@ std::span<const float> BezierQuad::Intersect(double AX, double BX, double CX,
   return {intersection_storage, static_cast<std::size_t>(intersection_count)};
 }
 
-} // namespace bkfont
+} // namespace bkit

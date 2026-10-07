@@ -30,7 +30,7 @@
 
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 UnicodeRangeSet::UnicodeRangeSet(Vector<UnicodeRange>&& ranges)
     : ranges_(std::move(ranges)) {
@@ -95,4 +95,4 @@ bool UnicodeRangeSet::operator==(const UnicodeRangeSet& other) const {
   return equal;
 }
 
-} // namespace bkfont
+} // namespace bkit

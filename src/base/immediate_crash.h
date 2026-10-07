@@ -10,7 +10,7 @@
 #include <intrin.h>
 #endif
 
-namespace bkfont::base {
+namespace bkit::base {
 
 #if defined(_MSC_VER)
 [[noreturn]] __forceinline void ImmediateCrash() {
@@ -30,4 +30,4 @@ namespace bkfont::base {
 }
 #endif
 
-} // namespace bkfont::base
+} // namespace bkit::base

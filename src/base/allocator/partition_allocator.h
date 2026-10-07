@@ -12,7 +12,7 @@
 
 #include "base/allocator/allocator.h"
 
-namespace bkfont {
+namespace bkit {
 
 class PartitionAllocator {
 public:
@@ -96,7 +96,7 @@ private:
 template <>
 char* PartitionAllocator::AllocateVectorBacking<char>(std::size_t size);
 
-} // namespace bkfont
+} // namespace bkit
 
 #define USE_ALLOCATOR(ClassName, Allocator)                                     \
 public:                                                                         \
@@ -114,13 +114,13 @@ public:                                                                         
   void operator delete[](void* p) {                                             \
     Allocator::DeleteArray(p);                                                  \
   }                                                                             \
-  void* operator new(std::size_t, ::bkfont::base::NotNullTag, void* location) { \
+  void* operator new(std::size_t, ::bkit::base::NotNullTag, void* location) {   \
     return location;                                                            \
   }                                                                             \
   void* operator new(std::size_t, void* location) {                             \
     return location;                                                            \
   }                                                                             \
-  void operator delete(void*, ::bkfont::base::NotNullTag, void*) {              \
+  void operator delete(void*, ::bkit::base::NotNullTag, void*) {                \
   }                                                                             \
   void operator delete(void*, void*) {                                          \
   }                                                                             \

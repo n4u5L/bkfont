@@ -12,7 +12,7 @@
 #include "platform/data.h"
 #include "platform/dwrite_internal.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -187,4 +187,4 @@ std::shared_ptr<Typeface> FontUniqueNameLookupWin::InstantiateFromFileAndTtcInde
   return mgr->MakeFromData(std::move(data), static_cast<int>(ttc_index));
 }
 
-} // namespace bkfont
+} // namespace bkit

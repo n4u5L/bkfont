@@ -9,17 +9,17 @@
 
 #include "base/allocator/allocator.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Copyable and immutable object representing number parsing flags.
 class NumberParsingOptions final {
 
 public:
-  // 'Strict' behavior for bkfont::String.
+  // 'Strict' behavior for bkit::String.
   static constexpr NumberParsingOptions Strict() {
     return NumberParsingOptions().SetAcceptLeadingPlus().SetAcceptWhiteSpace();
   }
-  // Non-'Strict' behavior for bkfont::String.
+  // Non-'Strict' behavior for bkit::String.
   static constexpr NumberParsingOptions Loose() {
     return Strict().SetAcceptTrailingGarbage();
   }
@@ -81,4 +81,4 @@ private:
   unsigned accept_minus_zero_for_unsigned_ : 1;
 };
 
-} // namespace bkfont
+} // namespace bkit

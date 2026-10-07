@@ -4,7 +4,7 @@
 
 #include <cstdint>
 
-namespace bkfont {
+namespace bkit {
 
 using ThreadID = std::int64_t;
 
@@ -12,4 +12,4 @@ ThreadID GetThreadID();
 
 constexpr ThreadID kIllegalThreadID = 0;
 
-} // namespace bkfont
+} // namespace bkit

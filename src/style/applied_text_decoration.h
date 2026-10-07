@@ -13,7 +13,7 @@
 #include "style/computed_style_base_constants.h"
 #include "style/text_decoration_thickness.h"
 
-namespace bkfont {
+namespace bkit {
 
 class AppliedTextDecoration {
 public:
@@ -46,4 +46,4 @@ private:
 
 using AppliedTextDecorationVector = Vector<AppliedTextDecoration, 1>;
 
-} // namespace bkfont
+} // namespace bkit

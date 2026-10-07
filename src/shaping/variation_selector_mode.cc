@@ -7,7 +7,7 @@
 #include "variation_selector_mode.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 bool ShouldIgnoreVariationSelector(VariationSelectorMode mode) {
   return mode == kIgnoreVariationSelector;
@@ -32,4 +32,4 @@ VariationSelectorMode GetVariationSelectorModeFromFontVariantEmoji(
   NOTREACHED();
 }
 
-} // namespace bkfont
+} // namespace bkit

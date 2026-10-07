@@ -38,7 +38,7 @@
 #include "thread_specific.h"
 #include "type_traits.h"
 
-namespace bkfont {
+namespace bkit {
 
 #if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_WIN)
 base::PlatformThreadId CurrentThread();
@@ -91,4 +91,4 @@ inline Threading& BaseThreading() {
   return **Threading::static_data_;
 }
 
-} // namespace bkfont
+} // namespace bkit

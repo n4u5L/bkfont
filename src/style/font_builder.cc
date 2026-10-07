@@ -33,7 +33,7 @@
 #include "style/computed_style_constants.h"
 #include "style/style_host_context.h"
 
-namespace bkfont {
+namespace bkit {
 
 FontBuilder::FontBuilder(const StyleHostContext* host) : host_(host) {}
 
@@ -536,4 +536,4 @@ void FontBuilder::CreateInitialFont(ComputedStyleBuilder& builder) {
   builder.SetFont(Font(font_description, selector ? selector->shared_from_this() : nullptr));
 }
 
-} // namespace bkfont
+} // namespace bkit

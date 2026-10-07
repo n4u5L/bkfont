@@ -6,7 +6,7 @@
 #include <limits>
 #include <memory>
 
-namespace bkfont {
+namespace bkit {
 
 DWriteFontFileStream::DWriteFontFileStream(IDWriteFontFileStream* font_file_stream)
     : font_file_stream_(font_file_stream),
@@ -123,4 +123,4 @@ const void* DWriteFontFileStream::GetMemoryBase() {
   return locked_memory_;
 }
 
-} // namespace bkfont
+} // namespace bkit

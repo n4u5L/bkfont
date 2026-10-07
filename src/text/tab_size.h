@@ -8,7 +8,7 @@
 #include "runtime_enabled_features.h"
 #include "base/allocator/allocator.h"
 
-namespace bkfont {
+namespace bkit {
 
 enum class TabSizeValueType {
   kLength,
@@ -49,4 +49,4 @@ inline bool operator!=(const TabSize& a, const TabSize& b) {
   return !(a == b);
 }
 
-} // namespace bkfont
+} // namespace bkit

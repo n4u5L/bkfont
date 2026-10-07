@@ -13,7 +13,7 @@
 #include "base/text/wtf_string.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 bool BidiParagraph::SetParagraph(const String& text,
                                  std::optional<TextDirection> base_direction) {
@@ -162,4 +162,4 @@ void BidiParagraph::IndicesInVisualOrder(
   ubidi_reorderVisual(levels.data(), levels.size(), indices_in_visual_order_out.data());
 }
 
-} // namespace bkfont
+} // namespace bkit

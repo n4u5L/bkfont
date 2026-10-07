@@ -5,7 +5,7 @@
 #include "picture.h"
 #include "text_paint_style.h"
 
-namespace bkfont {
+namespace bkit {
 std::shared_ptr<const ImageFilter> MakeTextShadowFilter(const TextPaintStyle&);
 
 template <typename PaintProc>
@@ -30,4 +30,4 @@ void PaintWithTextShadow(PaintCanvas* canvas, const TextPaintStyle& style, Paint
   }
   paint(canvas, false);
 }
-} // namespace bkfont
+} // namespace bkit

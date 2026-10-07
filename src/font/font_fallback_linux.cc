@@ -12,7 +12,7 @@
 #include "base/mutex.h"
 #include "platform/fontconfig_util.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -91,4 +91,4 @@ bool GetFallbackFontForChar(std::int32_t character, const std::string& locale, F
   return font_set->GetFallbackFontForChar(character, fallback_font);
 }
 
-} // namespace bkfont
+} // namespace bkit

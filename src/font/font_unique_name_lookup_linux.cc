@@ -16,7 +16,7 @@
 #include "platform/font_manager_fontconfig.h"
 #include "platform/fontconfig_util.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -82,4 +82,4 @@ std::shared_ptr<Typeface> FontUniqueNameLookupLinux::MatchUniqueName(const Strin
   return MakeFontManagerFontconfig()->MakeFromStream(OpenFontconfigStream(match->filename), match->ttc_index);
 }
 
-} // namespace bkfont
+} // namespace bkit

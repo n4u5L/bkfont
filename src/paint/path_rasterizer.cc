@@ -11,7 +11,7 @@
 
 #include "path_geometry.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -466,4 +466,4 @@ void RasterizePath(const ScalarPath& path, const ScalarMatrix& matrix, const Int
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

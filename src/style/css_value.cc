@@ -17,7 +17,7 @@
 #include "style/css_value_list.h"
 #include "style/css_value_pair.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 template <class ChildClassType>
@@ -84,4 +84,4 @@ bool CSSValue::operator==(const CSSValue& other) const {
   return false;
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -13,7 +13,7 @@
 #include "path.h"
 #include "rect.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Coverage in [0, 1] for each pixel of a device rect.
 struct CoverageMask {
@@ -34,4 +34,4 @@ struct CoverageMask {
 void RasterizePath(const ScalarPath& path, const ScalarMatrix& matrix, const IntRect& clip,
                    bool anti_alias, CoverageMask* mask);
 
-} // namespace bkfont
+} // namespace bkit

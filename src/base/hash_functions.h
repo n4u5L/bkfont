@@ -28,7 +28,7 @@
 
 #include <bit>
 
-namespace bkfont {
+namespace bkit {
 
 namespace internal {
 
@@ -150,4 +150,4 @@ constexpr void AddFloatToHash(unsigned& hash, float value) {
   AddIntToHash(hash, HashFloat(value));
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -13,7 +13,7 @@
 #include "shaping/harfbuzz_face.h"
 #include "simple_font_data.h"
 
-namespace bkfont {
+namespace bkit {
 
 FontFallbackIterator::FontFallbackIterator(
     const FontDescription& description,
@@ -282,4 +282,4 @@ bool FontFallbackIterator::operator==(const FontFallbackIterator& other) const {
   return fallback_stage_ == other.fallback_stage_ && font_fallback_priority_ == other.font_fallback_priority_ && current_font_data_index_ == other.current_font_data_index_ && segmented_face_index_ == other.segmented_face_index_ && font_description_ == other.font_description_ && previously_asked_for_hint_ == other.previously_asked_for_hint_ && unique_font_data_for_range_sets_returned_ == other.unique_font_data_for_range_sets_returned_ && tracked_loading_range_sets_ == other.tracked_loading_range_sets_;
 }
 
-} // namespace bkfont
+} // namespace bkit

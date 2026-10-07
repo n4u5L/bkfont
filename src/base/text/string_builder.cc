@@ -35,7 +35,7 @@
 #include "base/text/integer_to_string_conversion.h"
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 String StringBuilder::ReleaseString() {
   if (!length_)
@@ -325,4 +325,4 @@ void StringBuilder::erase(unsigned index) {
   --length_;
 }
 
-} // namespace bkfont
+} // namespace bkit

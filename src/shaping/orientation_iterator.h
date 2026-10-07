@@ -11,7 +11,7 @@
 #include "script_run_iterator.h"
 #include "utf16_text_iterator.h"
 
-namespace bkfont {
+namespace bkit {
 
 class OrientationIterator {
 
@@ -38,4 +38,4 @@ private:
   bool at_end_;
 };
 
-} // namespace bkfont
+} // namespace bkit

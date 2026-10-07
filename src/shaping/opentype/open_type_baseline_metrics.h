@@ -11,7 +11,7 @@
 
 #include "font/font_description.h"
 
-namespace bkfont {
+namespace bkit {
 
 class HarfBuzzFace;
 
@@ -36,4 +36,4 @@ private:
   hb_direction_t hb_dir_;
 };
 
-} // namespace bkfont
+} // namespace bkit

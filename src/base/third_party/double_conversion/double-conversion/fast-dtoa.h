@@ -30,7 +30,7 @@
 
 #include "utils.h"
 
-namespace bkfont::double_conversion {
+namespace bkit::double_conversion {
 
 enum FastDtoaMode {
   // Computes the shortest representation of the given input. The returned
@@ -83,4 +83,4 @@ bool FastDtoa(double d,
               int* length,
               int* decimal_point);
 
-} // namespace bkfont::double_conversion
+} // namespace bkit::double_conversion

@@ -37,7 +37,7 @@
 #include "length_functions.h"
 #include "base/allocator/allocator.h"
 
-namespace bkfont {
+namespace bkit {
 
 class CalculationExpressionNode;
 
@@ -125,4 +125,4 @@ private:
   const bool is_non_negative_;
 };
 
-} // namespace bkfont
+} // namespace bkit

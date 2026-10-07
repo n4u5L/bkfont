@@ -14,7 +14,7 @@
 #include "base/text/string_impl.h"
 #include "base/threading.h"
 
-namespace bkfont {
+namespace bkit {
 
 // The underlying storage that keeps the map of unique AtomicStrings. This is
 // thread safe and there is a single table for all threads. Adding and removing
@@ -159,4 +159,4 @@ inline bool operator==(const AtomicString& lhs,
   return lhs.Impl() == rhs;
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -4,7 +4,7 @@
 #include "line_relative_rect.h"
 #include "paint_canvas.h"
 
-namespace bkfont {
+namespace bkit {
 class ComputedStyle;
 class Font;
 struct TextFragmentPaintInfo;
@@ -13,4 +13,4 @@ struct DecoratingBox;
 void PaintTextDecorations(PaintCanvas*, const TextFragmentPaintInfo&, const Font&, const PointF& text_origin,
                            const LineRelativeRect&, const ComputedStyle&, const TextPaintStyle&,
                            bool line_through, bool shadow_phase, std::span<const DecoratingBox> = {});
-} // namespace bkfont
+} // namespace bkit

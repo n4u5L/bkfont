@@ -35,7 +35,7 @@
 #include "base/hash_set.h"
 #include "base/text/string_hash.h"
 
-namespace bkfont {
+namespace bkit {
 
 struct SubtagScript {
   const char* subtag;
@@ -506,4 +506,4 @@ UScriptCode ScriptCodeForHanFromSubtags(const String& locale, char delimiter) {
   return USCRIPT_COMMON;
 }
 
-} // namespace bkfont
+} // namespace bkit

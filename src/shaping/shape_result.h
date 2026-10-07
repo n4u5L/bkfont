@@ -61,7 +61,7 @@
 
 struct hb_buffer_t;
 
-namespace bkfont {
+namespace bkit {
 
 struct CharacterRange;
 class Font;
@@ -196,10 +196,10 @@ public:
     return static_cast<TextDirection>(direction_);
   }
   bool IsLtr() const {
-    return bkfont::IsLtr(Direction());
+    return bkit::IsLtr(Direction());
   }
   bool IsRtl() const {
-    return bkfont::IsRtl(Direction());
+    return bkit::IsRtl(Direction());
   }
 
   // True if at least one glyph in this result has vertical offsets.
@@ -565,7 +565,7 @@ private:
 
 std::ostream& operator<<(std::ostream&, const ShapeResult&);
 
-} // namespace bkfont
+} // namespace bkit
 
 BASE_ALLOW_MOVE_INIT_AND_COMPARE_WITH_MEM_FUNCTIONS(
-    bkfont::ShapeResultCharacterData)
+    bkit::ShapeResultCharacterData)

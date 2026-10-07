@@ -53,7 +53,7 @@
 #include "base/text/wtf_string.h"
 #include "platform/font_style.h"
 
-namespace bkfont {
+namespace bkit {
 
 typedef struct {
   uint32_t parts[2];
@@ -378,16 +378,16 @@ public:
     return static_cast<FontOrientation>(fields_.orientation_);
   }
   bool IsVerticalAnyUpright() const {
-    return bkfont::IsVerticalAnyUpright(Orientation());
+    return bkit::IsVerticalAnyUpright(Orientation());
   }
   bool IsVerticalNonCJKUpright() const {
-    return bkfont::IsVerticalNonCJKUpright(Orientation());
+    return bkit::IsVerticalNonCJKUpright(Orientation());
   }
   bool IsVerticalUpright(UChar32 character) const {
-    return bkfont::IsVerticalUpright(Orientation(), character);
+    return bkit::IsVerticalUpright(Orientation(), character);
   }
   bool IsVerticalBaseline() const {
-    return bkfont::IsVerticalBaseline(Orientation());
+    return bkit::IsVerticalBaseline(Orientation());
   }
   FontWidthVariant WidthVariant() const {
     return static_cast<FontWidthVariant>(fields_.width_variant_);
@@ -683,7 +683,7 @@ private:
 
 template <>
 struct HashTraits<FontDescription>
-    : SimpleClassHashTraits<bkfont::FontDescription> {
+    : SimpleClassHashTraits<bkit::FontDescription> {
   // Owning fields use std::shared_ptr in this port. Construct an empty key;
   // do not assume that a zero-filled standard-library object is valid.
   static constexpr bool kEmptyValueIsZero = false;
@@ -694,4 +694,4 @@ struct HashTraits<FontDescription>
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

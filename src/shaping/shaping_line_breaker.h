@@ -17,7 +17,7 @@
 #include "text/text_direction.h"
 #include "base/text/atomic_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Font;
 class ShapeResult;
@@ -188,4 +188,4 @@ private:
   friend class ShapingLineBreakerTest;
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -26,8 +26,8 @@ struct Json {
   double number = 0;
   bool boolean = false;
   std::string string;
-  bkfont::Vector<Json> array;
-  bkfont::Vector<std::pair<std::string, Json>> object;
+  bkit::Vector<Json> array;
+  bkit::Vector<std::pair<std::string, Json>> object;
   const Json* Find(std::string_view name) const;
 };
 

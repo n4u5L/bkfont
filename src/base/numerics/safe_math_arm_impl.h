@@ -11,7 +11,7 @@
 
 #include "base/numerics/safe_conversions.h"
 
-namespace bkfont::base::internal {
+namespace bkit::base::internal {
 
 template <typename T, typename U>
 struct CheckedMulFastAsmOp {
@@ -114,4 +114,4 @@ struct ClampedMulFastAsmOp {
   }
 };
 
-} // namespace bkfont::base::internal
+} // namespace bkit::base::internal

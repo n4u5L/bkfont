@@ -10,7 +10,7 @@
 #include "base/compiler_specific.h"
 #include "build/build_config.h"
 
-namespace bkfont {
+namespace bkit {
 
 size_t GetUnderestimatedStackSize();
 void* GetStackStart();
@@ -48,4 +48,4 @@ ALWAYS_INLINE bool MayNotBeMainThread() {
   return address_diff >= internal::g_main_thread_underestimated_stack_size;
 }
 
-} // namespace bkfont
+} // namespace bkit

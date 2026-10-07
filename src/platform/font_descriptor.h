@@ -10,7 +10,7 @@
 #include "font_style.h"
 #include "stream.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkFontData. Named FontStreamData because Blink's FontData already exists in
 // this namespace.
@@ -97,4 +97,4 @@ private:
 // SkFontDescriptor::SkFontStyleWidthForWidthAxisValue.
 FontStyle::Width FontStyleWidthForWidthAxisValue(float width);
 
-} // namespace bkfont
+} // namespace bkit

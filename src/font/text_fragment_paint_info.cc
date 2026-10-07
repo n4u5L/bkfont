@@ -2,7 +2,7 @@
 
 #include "text_fragment_paint_info.h"
 
-namespace bkfont {
+namespace bkit {
 
 TextFragmentPaintInfo TextFragmentPaintInfo::Slice(unsigned slice_from,
                                                    unsigned slice_to) const {
@@ -19,4 +19,4 @@ TextFragmentPaintInfo TextFragmentPaintInfo::WithEndOffset(
   return Slice(from, end_to);
 }
 
-} // namespace bkfont
+} // namespace bkit

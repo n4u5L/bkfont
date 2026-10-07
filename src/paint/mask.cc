@@ -4,7 +4,7 @@
 
 #include <limits>
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -33,4 +33,4 @@ std::size_t Mask::ComputeTotalImageSize() const {
   return size;
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -10,7 +10,7 @@
 #include "base/compiler_specific.h"
 #include "base/containers/span.h"
 
-namespace bkfont::base {
+namespace bkit::base {
 
 // Helper function for creating a std::string_view from a string literal that
 // preserves internal NUL characters.
@@ -43,4 +43,4 @@ constexpr auto as_string_view(span<const wchar_t> s) {
   return std::wstring_view(s.begin(), s.end());
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base

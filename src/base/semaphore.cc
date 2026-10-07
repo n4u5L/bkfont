@@ -13,7 +13,7 @@
 #include <semaphore.h>
 #endif
 
-namespace bkfont {
+namespace bkit {
 
 #ifdef __APPLE__
 struct Semaphore::OSSemaphore {
@@ -98,4 +98,4 @@ bool Semaphore::TryWait() {
   return false;
 }
 
-} // namespace bkfont
+} // namespace bkit

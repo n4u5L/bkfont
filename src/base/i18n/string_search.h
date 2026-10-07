@@ -16,7 +16,7 @@
 
 struct UStringSearch;
 
-namespace bkfont::base {
+namespace bkit::base {
 
 namespace i18n {
 
@@ -118,4 +118,4 @@ private:
 
 } // namespace i18n
 
-} // namespace bkfont::base
+} // namespace bkit::base

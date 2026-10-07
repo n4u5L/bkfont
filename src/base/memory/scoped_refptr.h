@@ -16,14 +16,14 @@
 
 #include "base/compiler_specific.h"
 
-namespace bkfont {
+namespace bkit {
 
 template <class T>
 class scoped_refptr;
 
-} // namespace bkfont
+} // namespace bkit
 
-namespace bkfont::base {
+namespace bkit::base {
 
 template <class, typename>
 class RefCounted;
@@ -138,9 +138,9 @@ scoped_refptr<T> WrapRefCounted(T* t) {
   return scoped_refptr<T>(t);
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base
 
-namespace bkfont {
+namespace bkit {
 
 //
 // A smart pointer class for reference counted objects.  Use this class instead
@@ -348,7 +348,7 @@ protected:
 private:
   template <typename U>
   friend scoped_refptr<U> base::AdoptRef(U*);
-  friend class ::bkfont::base::SequencedTaskRunner;
+  friend class ::bkit::base::SequencedTaskRunner;
 
   scoped_refptr(T* p, base::subtle::AdoptRefTag)
       : ptr_(p) {
@@ -395,4 +395,4 @@ void swap(scoped_refptr<T>& lhs, scoped_refptr<T>& rhs) noexcept {
   lhs.swap(rhs);
 }
 
-} // namespace bkfont
+} // namespace bkit

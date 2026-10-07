@@ -15,7 +15,7 @@
 #include "paint/text_fragment_painter.h"
 #include "paint/text_decoration_info.h"
 
-namespace bkfont {
+namespace bkit {
 
 InlineFormattingContext::InlineFormattingContext(const InlineStyle& style, InlineLayoutOptions options)
     : InlineFormattingContext(Settings(),
@@ -655,4 +655,4 @@ void InlineFormattingContext::Paint(PaintCanvas* canvas, const PhysicalOffset& o
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

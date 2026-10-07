@@ -9,7 +9,7 @@
 
 #include "path_geometry.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -511,4 +511,4 @@ bool PathMeasure::NextContour() {
   return static_cast<bool>(contour_);
 }
 
-} // namespace bkfont
+} // namespace bkit

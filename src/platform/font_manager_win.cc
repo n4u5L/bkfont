@@ -15,7 +15,7 @@
 #include "typeface_freetype.h"
 #include "typeface_proxy.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -1156,4 +1156,4 @@ std::shared_ptr<FontManager> MakeFontManagerDirectWrite() {
                                                   default_family_name, default_family_name_len);
 }
 
-} // namespace bkfont
+} // namespace bkit

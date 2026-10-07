@@ -28,7 +28,7 @@
 #include "base/text/ascii_ctype.h"
 #include "base/text/wtf_uchar.h"
 
-namespace bkfont::unicode {
+namespace bkit::unicode {
 
 enum CharDirection {
   kLeftToRight = U_LEFT_TO_RIGHT,
@@ -178,4 +178,4 @@ inline bool IsSpaceOrNewline(UChar c) {
   return c <= 0x7F ? IsASCIISpace(c) : Direction(c) == kWhiteSpaceNeutral;
 }
 
-} // namespace bkfont::unicode
+} // namespace bkit::unicode

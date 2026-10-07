@@ -30,7 +30,7 @@
 #include "base/math_extras.h"
 #include "matrix.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Only the members used by the vertical text paint helpers are ported.
 // ToScalarMatrix() replaces ToSkMatrix(); both drop the perspective row.
@@ -97,4 +97,4 @@ private:
   double transform_[6];
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -5,7 +5,7 @@
 #include "base/vector.h"
 #include "font_descriptor.h"
 
-namespace bkfont {
+namespace bkit {
 
 String DWriteLocalizedString(IDWriteLocalizedStrings* names,
                              const wchar_t* prefered_locale) {
@@ -93,4 +93,4 @@ FontStyle DWriteFontStyle(IDWriteFont* font, IDWriteFontFace* font_face) {
   return FontStyle(weight, width, slant);
 }
 
-} // namespace bkfont
+} // namespace bkit

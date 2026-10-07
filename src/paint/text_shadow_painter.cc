@@ -2,7 +2,7 @@
 #include "text_shadow_painter.h"
 #include "image_filter.h"
 
-namespace bkfont {
+namespace bkit {
 std::shared_ptr<const ImageFilter> MakeTextShadowFilter(const TextPaintStyle& style) {
   if (!style.shadow) return nullptr;
   std::vector<std::shared_ptr<const ImageFilter>> filters;
@@ -17,4 +17,4 @@ std::shared_ptr<const ImageFilter> MakeTextShadowFilter(const TextPaintStyle& st
   }
   return ImageFilter::Merge(filters);
 }
-} // namespace bkfont
+} // namespace bkit

@@ -8,7 +8,7 @@
 #include "paint/platform_paint.h"
 #include "text/tab_size.h"
 
-namespace bkfont {
+namespace bkit {
 
 struct InlineStyle {
   explicit InlineStyle(Font font) : font(std::move(font)) {}
@@ -21,4 +21,4 @@ struct InlineStyle {
   InlineStyle Zoom(float factor) const;
 };
 
-} // namespace bkfont
+} // namespace bkit

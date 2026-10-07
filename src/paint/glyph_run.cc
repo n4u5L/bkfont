@@ -11,7 +11,7 @@
 #include "platform_paint.h"
 #include "platform/strike_spec.h"
 
-namespace bkfont {
+namespace bkit {
 
 // -- GlyphRun -----------------------------------------------------------------
 
@@ -333,4 +333,4 @@ const GlyphRunList& GlyphRunBuilder::SetGlyphRunList(const TextBlob* blob, const
   return glyph_run_list_.value();
 }
 
-} // namespace bkfont
+} // namespace bkit

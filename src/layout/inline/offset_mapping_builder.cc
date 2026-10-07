@@ -9,7 +9,7 @@
 
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 // GetAssociatedStartOffset() is always 0: there is no ::first-letter split.
 OffsetMappingBuilder::SourceNodeScope::SourceNodeScope(OffsetMappingBuilder* builder, const InlineObject* node)
@@ -257,4 +257,4 @@ std::shared_ptr<const OffsetMapping> OffsetMappingBuilder::Build(const InlineObj
                                                destination_string_, std::move(boundaries_));
 }
 
-} // namespace bkfont
+} // namespace bkit

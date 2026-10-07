@@ -32,7 +32,7 @@
 #include "base/std_lib_extras.h"
 #include "base/text/wtf_uchar.h"
 
-namespace bkfont {
+namespace bkit {
 
 // TODO(esprehn): See if we can generalize IntToStringT in
 // base/strings/string_number_conversions.cc, and use unsigned type expansion
@@ -76,4 +76,4 @@ private:
   unsigned length_;
 };
 
-} // namespace bkfont
+} // namespace bkit

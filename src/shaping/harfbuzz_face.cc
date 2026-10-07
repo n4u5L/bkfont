@@ -50,7 +50,7 @@
 #include "base/math_extras.h"
 #include "font/text_metrics.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -528,4 +528,4 @@ void HarfBuzzFace::Init() {
   FontFunctions();
 }
 
-} // namespace bkfont
+} // namespace bkit

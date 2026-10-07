@@ -7,7 +7,7 @@
 
 #include "base/numerics/safe_conversions.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Style data for the `hyphenate-limit-chars` property.
 // https://w3c.github.io/csswg-drafts/css-text-4/#propdef-hyphenate-limit-chars
@@ -40,4 +40,4 @@ private:
   uint8_t min_after_chars_ = 0;
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -5,7 +5,7 @@
 
 #pragma once
 
-namespace bkfont {
+namespace bkit {
 
 enum class AtomicStringUCharEncoding {
   kUnknown,
@@ -17,4 +17,4 @@ enum class AtomicStringUCharEncoding {
   kIs16Bit,
 };
 
-} // namespace bkfont
+} // namespace bkit

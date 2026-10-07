@@ -13,7 +13,7 @@
 #include "path_measure.h"
 #include "platform_paint.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -440,4 +440,4 @@ bool FillPathWithPaint(const ScalarPath& orig_src, const PlatformPaint& paint, S
   return !rec.IsHairlineStyle();
 }
 
-} // namespace bkfont
+} // namespace bkit

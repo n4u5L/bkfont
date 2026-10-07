@@ -7,10 +7,10 @@
 
 #include <ostream>
 
-namespace bkfont {
+namespace bkit {
 
 std::ostream& operator<<(std::ostream& ostream, TextDirection direction) {
   return ostream << (IsLtr(direction) ? "LTR" : "RTL");
 }
 
-} // namespace bkfont
+} // namespace bkit

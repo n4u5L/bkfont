@@ -7,7 +7,7 @@
 
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 String ToString(TextRenderingMode mode) {
   switch (mode) {
@@ -37,4 +37,4 @@ String ToStringForIdl(TextRenderingMode mode) {
   return "Unknown";
 }
 
-} // namespace bkfont
+} // namespace bkit

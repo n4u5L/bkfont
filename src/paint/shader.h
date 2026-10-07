@@ -21,7 +21,7 @@
 #include "pixmap.h"
 #include "rect.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkTileMode.
 enum class TileMode {
@@ -139,4 +139,4 @@ std::shared_ptr<const Shader> MakeImageShader(std::shared_ptr<const Image> image
                                               const SamplingOptions& sampling,
                                               const ScalarMatrix& local_matrix);
 
-} // namespace bkfont
+} // namespace bkit

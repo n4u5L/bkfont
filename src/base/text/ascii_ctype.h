@@ -45,7 +45,7 @@
 // strings or characters if the intent is to do processing only if the
 // character is ASCII.
 
-namespace bkfont {
+namespace bkit {
 
 template <typename CharType>
 constexpr inline bool IsASCII(CharType c) {
@@ -425,4 +425,4 @@ inline bool IsASCIIAlphaCaselessEqual(CharType css_character, char character) {
   return false;
 }
 
-} // namespace bkfont
+} // namespace bkit

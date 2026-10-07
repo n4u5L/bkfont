@@ -34,7 +34,7 @@
 #include "base/threading/platform_thread.h"
 #include "build/build_config.h"
 
-namespace bkfont {
+namespace bkit {
 
 extern base::PlatformThreadId g_main_thread_identifier;
 
@@ -54,4 +54,4 @@ inline bool IsMainThread() {
 }
 #endif
 
-} // namespace bkfont
+} // namespace bkit

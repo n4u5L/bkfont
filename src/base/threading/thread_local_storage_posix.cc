@@ -14,7 +14,7 @@
 #include "base/immediate_crash.h"
 #include "base/notreached.h"
 
-namespace bkfont::base {
+namespace bkit::base {
 
 namespace {
 
@@ -167,4 +167,4 @@ void ThreadLocalStorage::Slot::Set(void* value) {
   (*data)[slot_] = {value, version_};
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base

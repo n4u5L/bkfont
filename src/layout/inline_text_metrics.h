@@ -13,7 +13,7 @@
 #include "geometry/length.h"
 #include "layout/layout_unit.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Font;
 class FontDescription;
@@ -58,4 +58,4 @@ InlineTextMetrics ComputeTextMetrics(const Font&, const Length& line_height, Fon
 // box in the block direction of the parent line.
 FontHeight SynthesizeBaselineMetrics(LayoutUnit block_size, FontBaseline baseline_type);
 
-} // namespace bkfont
+} // namespace bkit

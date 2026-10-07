@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <string>
 
-namespace bkfont {
+namespace bkit {
 
 struct FallbackFontData {
   std::string name;
@@ -18,4 +18,4 @@ struct FallbackFontData {
 
 bool GetFallbackFontForChar(std::int32_t character, const std::string& locale, FallbackFontData* fallback_font);
 
-} // namespace bkfont
+} // namespace bkit

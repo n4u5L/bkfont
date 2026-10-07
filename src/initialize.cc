@@ -12,7 +12,7 @@
 #include "base/allocator/partitions.h"
 #include "base/wtf.h"
 
-namespace bkfont {
+namespace bkit {
 
 void InitializeFonts() {
   Partitions::Initialize();
@@ -22,4 +22,4 @@ void InitializeFonts() {
   InitializePlatformLanguage();
 }
 
-} // namespace bkfont
+} // namespace bkit

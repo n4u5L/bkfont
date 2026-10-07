@@ -34,7 +34,7 @@
 #include "ieee.h"
 #include "strtod.h"
 
-namespace bkfont::double_conversion {
+namespace bkit::double_conversion {
 
 #if defined(DOUBLE_CONVERSION_CORRECT_DOUBLE_OPERATIONS)
 // 2^53 = 9007199254740992.
@@ -595,4 +595,4 @@ float StrtofTrimmed(Vector<const char> trimmed, int exponent) {
   }
 }
 
-} // namespace bkfont::double_conversion
+} // namespace bkit::double_conversion

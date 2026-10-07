@@ -34,7 +34,7 @@
 
 #include <memory>
 #include "base/hash_map.h"
-namespace bkfont {
+namespace bkit {
 
 enum class AlternateFontName;
 class FontCache;
@@ -71,4 +71,4 @@ private:
   const float font_size_limit_;
 };
 
-} // namespace bkfont
+} // namespace bkit

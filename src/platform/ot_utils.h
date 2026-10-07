@@ -10,7 +10,7 @@
 #include "base/vector.h"
 #include "typeface.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkOTTableName::Iterator over the family name types (FontFamilyName,
 // PreferredFamily, WWSFamilyName), in that order. Defined in
@@ -57,4 +57,4 @@ private:
   bool has_next_;
 };
 
-} // namespace bkfont
+} // namespace bkit

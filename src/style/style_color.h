@@ -11,7 +11,7 @@
 #include "style/css_color.h"
 #include "style/css_identifier_value.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Color::toSkColor4f() (local ToColorFloat4()). The standalone ComputedStyle
 // stores resolved paint colors, so it converts where paint would.
@@ -50,4 +50,4 @@ private:
   bool current_color_ = true;
 };
 
-} // namespace bkfont
+} // namespace bkit

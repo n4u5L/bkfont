@@ -6,7 +6,7 @@
 #include "style/css_value.h"
 #include "style/css_value_keywords.h"
 
-namespace bkfont {
+namespace bkit {
 
 // css_value_id_mappings.h. Include it where ConvertTo() is instantiated.
 template <class T>
@@ -38,4 +38,4 @@ struct DowncastTraits<CSSIdentifierValue> {
   static bool AllowFrom(const CSSValue& value) { return value.IsIdentifierValue(); }
 };
 
-} // namespace bkfont
+} // namespace bkit

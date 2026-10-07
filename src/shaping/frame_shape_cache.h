@@ -15,7 +15,7 @@
 #include "base/vector_backed_linked_list.h"
 #include "paint/geometry.h"
 
-namespace bkfont {
+namespace bkit {
 
 class PlainTextItem;
 class PlainTextNode;
@@ -117,4 +117,4 @@ private:
   bool added_new_entries_ = false;
 };
 
-} // namespace bkfont
+} // namespace bkit

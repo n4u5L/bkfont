@@ -10,7 +10,7 @@
 #include "base/text/ascii_ctype.h"
 #include "base/text/character_names.h"
 
-namespace bkfont {
+namespace bkit {
 namespace unicode {
 
 static UChar32 mathVariantGreek(UChar32 code_point, UChar32 base_char) {
@@ -135,4 +135,4 @@ UChar32 ItalicMathVariant(UChar32 code_point) {
 }
 
 }  // namespace unicode
-}  // namespace bkfont
+}  // namespace bkit

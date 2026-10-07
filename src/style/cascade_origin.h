@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-namespace bkfont {
+namespace bkit {
 
 // https://drafts.csswg.org/css-cascade/#cascade-origin
 //
@@ -22,4 +22,4 @@ enum class CascadeOrigin : uint8_t {
   kTransition = 0b10000,
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -24,8 +24,8 @@
 
 #include "base/numerics/clamped_math.h"
 
-// The upstream gfx namespace is flattened into bkfont.
-namespace bkfont {
+// The upstream gfx namespace is flattened into bkit.
+namespace bkit {
 
 // This is the base template class of InsetsF and OutsetsF.
 template <typename T>
@@ -653,4 +653,4 @@ private:
   Size size_;
 };
 
-} // namespace bkfont
+} // namespace bkit

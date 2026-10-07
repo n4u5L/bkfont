@@ -30,7 +30,7 @@
 #include "type_traits.h"
 #include "wtf_size_t.h"
 
-namespace bkfont {
+namespace bkit {
 
 struct IdentityExtractor;
 
@@ -147,7 +147,7 @@ public:
   void clear();
   template <typename Collection>
   void RemoveAll(const Collection& to_be_removed) {
-    bkfont::RemoveAll(*this, to_be_removed);
+    bkit::RemoveAll(*this, to_be_removed);
   }
 
   ValueType Take(iterator);
@@ -356,4 +356,4 @@ inline auto HashSet<T, U, V>::TakeAny() -> ValueType {
   return Take(begin());
 }
 
-} // namespace bkfont
+} // namespace bkit

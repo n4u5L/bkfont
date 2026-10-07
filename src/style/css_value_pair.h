@@ -9,7 +9,7 @@
 #include "base/memory/values_equivalent.h"
 #include "style/css_value.h"
 
-namespace bkfont {
+namespace bkit {
 
 class CSSValuePair : public CSSValue {
 public:
@@ -49,4 +49,4 @@ struct DowncastTraits<CSSValuePair> {
   static bool AllowFrom(const CSSValue& value) { return value.IsValuePair(); }
 };
 
-} // namespace bkfont
+} // namespace bkit

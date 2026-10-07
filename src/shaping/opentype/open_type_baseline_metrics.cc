@@ -22,7 +22,7 @@ float HarfBuzzUnitsToFloat(hb_position_t value) {
 
 } // namespace
 
-namespace bkfont {
+namespace bkit {
 
 OpenTypeBaselineMetrics::OpenTypeBaselineMetrics(HarfBuzzFace* harf_buzz_face,
                                                  FontOrientation orientation) {
@@ -70,4 +70,4 @@ std::optional<float> OpenTypeBaselineMetrics::OpenTypeIdeographicBaseline() {
   return result;
 }
 
-} // namespace bkfont
+} // namespace bkit

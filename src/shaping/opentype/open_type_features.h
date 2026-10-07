@@ -10,7 +10,7 @@
 
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 class SimpleFontData;
 
@@ -33,4 +33,4 @@ private:
   Vector<hb_tag_t, kInitialSize> features_;
 };
 
-} // namespace bkfont
+} // namespace bkit

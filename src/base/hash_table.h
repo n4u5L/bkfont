@@ -36,7 +36,7 @@
 #include "type_traits.h"
 #include "wtf_size_t.h"
 
-namespace bkfont {
+namespace bkit {
 
 template <typename Key,
           typename Value,
@@ -1474,4 +1474,4 @@ inline void RemoveAll(Collection1& collection,
     collection.erase(*it);
 }
 
-} // namespace bkfont
+} // namespace bkit

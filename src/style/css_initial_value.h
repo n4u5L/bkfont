@@ -5,7 +5,7 @@
 
 #include "style/css_value.h"
 
-namespace bkfont {
+namespace bkit {
 
 class CSSInitialValue : public CSSValue {
 public:
@@ -31,4 +31,4 @@ struct DowncastTraits<CSSInitialValue> {
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

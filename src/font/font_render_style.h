@@ -12,7 +12,7 @@
 #include "platform/platform_font.h"
 #include "text_rendering_mode.h"
 
-namespace bkfont {
+namespace bkit {
 
 // The resolved WebFontRenderStyle fields. Every platform starts with the
 // gfx::FontRenderParams defaults, then applies Linux's device-scale and text
@@ -84,4 +84,4 @@ struct FontRenderStyle {
   bool use_subpixel_positioning = true;
 };
 
-} // namespace bkfont
+} // namespace bkit

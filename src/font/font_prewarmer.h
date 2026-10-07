@@ -6,11 +6,11 @@
 // found in the LICENSE file.
 #pragma once
 #include "base/text/wtf_string.h"
-namespace bkfont {
+namespace bkit {
 
 class FontPrewarmer {
 public:
   virtual void PrewarmFamily(const String& family_name) = 0;
 };
 
-} // namespace bkfont
+} // namespace bkit

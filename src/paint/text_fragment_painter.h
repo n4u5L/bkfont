@@ -12,7 +12,7 @@
 #include "layout/geometry/physical_rect.h"
 #include "text/writing_mode.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Font;
 class PlatformPaint;
@@ -68,4 +68,4 @@ void PaintTextCombine(PaintCanvas*,
 void PaintTextCombine(PaintCanvas*, const TextCombine&, const PhysicalOffset&,
                       const ComputedStyle&, NodeId = kInvalidNodeId);
 
-} // namespace bkfont
+} // namespace bkit

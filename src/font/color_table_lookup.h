@@ -8,11 +8,11 @@
 
 #include "platform/typeface.h"
 
-namespace bkfont {
+namespace bkit {
 
 class ColorTableLookup {
 public:
   static bool TypefaceHasAnySupportedColorTable(const Typeface* typeface);
 };
 
-} // namespace bkfont
+} // namespace bkit

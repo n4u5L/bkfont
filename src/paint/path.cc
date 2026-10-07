@@ -9,7 +9,7 @@
 #include <cmath>
 #include "path_geometry.h"
 
-namespace bkfont {
+namespace bkit {
 
 ScalarRect ScalarPath::ComputeTightBounds() const {
   if (points_.empty() || !IsFinite()) return {};
@@ -607,4 +607,4 @@ std::optional<ScalarPath::Verb> ScalarPath::Iter::Next(ScalarPoint pts[4]) {
   return verb;
 }
 
-} // namespace bkfont
+} // namespace bkit

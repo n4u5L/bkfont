@@ -30,7 +30,7 @@
 
 #include "utils.h"
 
-namespace bkfont::double_conversion {
+namespace bkit::double_conversion {
 
 // This "Do It Yourself Floating Point" class implements a floating-point number
 // with a uint64 significand and an int exponent. Normalized DiyFp numbers will
@@ -146,4 +146,4 @@ private:
   int32_t e_;
 };
 
-} // namespace bkfont::double_conversion
+} // namespace bkit::double_conversion

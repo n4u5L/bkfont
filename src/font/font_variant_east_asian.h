@@ -10,7 +10,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 class FontVariantEastAsian {
 
@@ -94,4 +94,4 @@ private:
   friend class FontDescription;
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -19,7 +19,7 @@
 #include "base/vector.h"
 #include "layout/inline/inline_object.h"
 
-namespace bkfont {
+namespace bkit {
 
 enum class TextAffinity {
   kUpstream,
@@ -238,4 +238,4 @@ private:
   BoundaryMap boundaries_;
 };
 
-} // namespace bkfont
+} // namespace bkit

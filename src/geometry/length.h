@@ -37,7 +37,7 @@
 #include "base/forward.h"
 #include "base/math_extras.h"
 
-namespace bkfont {
+namespace bkit {
 
 struct PixelsAndPercent {
 
@@ -469,7 +469,7 @@ public:
 
   static wtf_size_t GetCalcHandleMapSizeForTest();
 
-  bkfont::String ToString() const;
+  bkit::String ToString() const;
 
   unsigned GetHash() const;
 
@@ -504,4 +504,4 @@ private:
 
 std::ostream& operator<<(std::ostream&, const Length&);
 
-} // namespace bkfont
+} // namespace bkit

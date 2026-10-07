@@ -10,7 +10,7 @@
 #include "base/text/number_parsing_options.h"
 #include "base/text/wtf_uchar.h"
 
-namespace bkfont {
+namespace bkit {
 
 enum class NumberParsingResult {
   kSuccess,
@@ -141,4 +141,4 @@ float CharactersToFloat(base::span<const LChar>,
 float CharactersToFloat(base::span<const UChar>,
                         size_t& parsed_length);
 
-} // namespace bkfont
+} // namespace bkit

@@ -10,7 +10,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace bkfont::base {
+namespace bkit::base {
 
 class ThreadLocalStorage {
 public:
@@ -30,6 +30,6 @@ public:
   };
 };
 
-} // namespace bkfont::base
+} // namespace bkit::base
 
 #endif

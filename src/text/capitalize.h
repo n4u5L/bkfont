@@ -6,8 +6,8 @@
 
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 String Capitalize(const String&, UChar previous_character);
 
-} // namespace bkfont
+} // namespace bkit

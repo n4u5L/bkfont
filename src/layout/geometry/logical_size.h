@@ -7,7 +7,7 @@
 
 #include "layout/layout_unit.h"
 
-namespace bkfont {
+namespace bkit {
 
 // LogicalSize is the size of rect (typically a fragment) in the logical
 // coordinate system.
@@ -43,4 +43,4 @@ struct LogicalSize {
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

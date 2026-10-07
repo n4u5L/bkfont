@@ -7,7 +7,7 @@
 
 #include "font_selector.h"
 
-namespace bkfont {
+namespace bkit {
 
 std::shared_ptr<FontFallbackList> FontFallbackMap::Get(const FontDescription& description) {
   // Replace upstream weak-map GC cleanup without retaining dead descriptions.
@@ -65,4 +65,4 @@ void FontFallbackMap::FontCacheInvalidated() {
   InvalidateAll();
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -35,7 +35,7 @@
 #include "base/text/wtf_uchar.h"
 #include "base/wtf_size_t.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Assuming that a pointer is the size of a "machine word", then
 // uintptr_t is an integer type that is also a machine word.
@@ -177,4 +177,4 @@ ALWAYS_INLINE typename Allocator::ResultStringType ConvertAsciiCase(
   });
 }
 
-} // namespace bkfont
+} // namespace bkit

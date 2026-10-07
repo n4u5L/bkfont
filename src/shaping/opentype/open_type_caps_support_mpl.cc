@@ -13,7 +13,7 @@
 
 #include "open_type_caps_support.h"
 
-namespace bkfont {
+namespace bkit {
 
 bool OpenTypeCapsSupport::SupportsOpenTypeFeature(hb_script_t script,
                                                   uint32_t tag) const {
@@ -44,4 +44,4 @@ bool OpenTypeCapsSupport::SupportsOpenTypeFeature(hb_script_t script,
   return false;
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -23,7 +23,7 @@
 #include "text_painter.h"
 #include "text_shadow_painter.h"
 
-namespace bkfont {
+namespace bkit {
 
 PhysicalRect PhysicalBoxRect(const PhysicalRect& rect_in_container,
                              const PhysicalOffset& paint_offset,
@@ -183,4 +183,4 @@ void PaintTextCombine(PaintCanvas* canvas, const TextCombine& combine, const Phy
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

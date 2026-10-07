@@ -16,7 +16,7 @@
 #include "style/cascade_map.h"
 #include "style/match_result.h"
 
-namespace bkfont {
+namespace bkit {
 
 class StyleResolverState;
 
@@ -48,4 +48,4 @@ private:
   uint8_t generation_ = 0;
 };
 
-} // namespace bkfont
+} // namespace bkit

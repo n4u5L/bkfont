@@ -36,7 +36,7 @@
 #include "simple_font_data.h"
 #include "base/hash_map.h"
 #include "base/linked_hash_set.h"
-namespace bkfont {
+namespace bkit {
 
 struct FontDataCacheKeyHashTraits : GenericHashTraits<std::shared_ptr<const FontPlatformData>> {
   static unsigned GetHash(const std::shared_ptr<const FontPlatformData>& data) {
@@ -63,4 +63,4 @@ private:
   LinkedHashSet<std::shared_ptr<const SimpleFontData>> strong_reference_lru_;
 };
 
-} // namespace bkfont
+} // namespace bkit

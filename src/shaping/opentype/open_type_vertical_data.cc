@@ -37,7 +37,7 @@
 #include "platform/platform_font.h"
 #include "platform/typeface.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace open_type {
 
@@ -331,4 +331,4 @@ void OpenTypeVerticalData::GetVerticalTranslationsForGlyphs(
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

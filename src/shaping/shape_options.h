@@ -5,7 +5,7 @@
 
 #pragma once
 
-namespace bkfont {
+namespace bkit {
 
 //
 // Options when shaping by `HarfBuzzShaper`.
@@ -16,4 +16,4 @@ struct ShapeOptions {
   bool han_kerning_end = false;
 };
 
-} // namespace bkfont
+} // namespace bkit

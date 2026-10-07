@@ -10,7 +10,7 @@
 #include <string_view>
 #include <type_traits>
 
-namespace bkfont::base::internal {
+namespace bkit::base::internal {
 
 // ASCII-specific tolower.  The standard library's tolower is locale sensitive,
 // so we don't want to use it here.
@@ -61,4 +61,4 @@ inline bool EqualsCaseInsensitiveASCIIT(std::basic_string_view<CharT> a,
   });
 }
 
-} // namespace bkfont::base::internal
+} // namespace bkit::base::internal

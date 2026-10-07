@@ -14,7 +14,7 @@
 
 #include "style/cascade_origin.h"
 
-namespace bkfont {
+namespace bkit {
 
 class CascadePriority {
 public:
@@ -53,4 +53,4 @@ private:
   uint32_t high_bits_;
 };
 
-} // namespace bkfont
+} // namespace bkit

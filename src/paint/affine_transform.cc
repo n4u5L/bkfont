@@ -29,7 +29,7 @@
 
 #include <cmath>
 
-namespace bkfont {
+namespace bkit {
 
 AffineTransform& AffineTransform::Scale(double s) {
   return Scale(s, s);
@@ -80,4 +80,4 @@ ScalarMatrix AffineTransform::ToScalarMatrix() const {
                                ClampToFloat(B()), ClampToFloat(D()), ClampToFloat(F()));
 }
 
-} // namespace bkfont
+} // namespace bkit

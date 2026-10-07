@@ -12,7 +12,7 @@
 #include "path_geometry.h"
 #include "platform_paint.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -1472,4 +1472,4 @@ void Stroke::StrokeRect(const ScalarRect& orig_rect, ScalarPath* dst, PathDirect
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

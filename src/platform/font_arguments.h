@@ -4,7 +4,7 @@
 
 #include <cstdint>
 
-namespace bkfont {
+namespace bkit {
 
 // SkFontArguments. Represents a set of actual arguments for a font.
 struct FontArguments {
@@ -91,4 +91,4 @@ private:
   Palette palette_;
 };
 
-} // namespace bkfont
+} // namespace bkit

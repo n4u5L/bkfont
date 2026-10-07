@@ -30,7 +30,7 @@
 
 #include "utils.h"
 
-namespace bkfont::double_conversion {
+namespace bkit::double_conversion {
 
 class Bignum {
 public:
@@ -155,4 +155,4 @@ private:
   DOUBLE_CONVERSION_DISALLOW_COPY_AND_ASSIGN(Bignum);
 };
 
-} // namespace bkfont::double_conversion
+} // namespace bkit::double_conversion

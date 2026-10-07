@@ -5,7 +5,7 @@
 
 #pragma once
 
-namespace bkfont {
+namespace bkit {
 
 struct CharacterRange {
   CharacterRange(float from, float to, float ascent, float descent)
@@ -29,4 +29,4 @@ struct CharacterRange {
   float descent;
 };
 
-} // namespace bkfont
+} // namespace bkit

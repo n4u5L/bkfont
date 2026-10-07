@@ -10,7 +10,7 @@
 #include "style/cascade_priority.h"
 #include "style/style_declaration.h"
 
-namespace bkfont {
+namespace bkit {
 
 class CascadeMap {
 public:
@@ -39,4 +39,4 @@ private:
   std::array<CascadePriority, kNumCSSProperties> priorities_;
 };
 
-} // namespace bkfont
+} // namespace bkit

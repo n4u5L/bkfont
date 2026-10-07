@@ -38,7 +38,7 @@
 #include "base/text/wtf_string.h"
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Font;
 class SimpleFontData;
@@ -179,4 +179,4 @@ private:
   EmojiMetricsCallback emoji_metrics_reporter_for_testing_;
 };
 
-} // namespace bkfont
+} // namespace bkit

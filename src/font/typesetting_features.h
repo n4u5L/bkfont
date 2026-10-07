@@ -31,7 +31,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 constexpr int kMaxTypesettingFeatureIndex = 2;
 enum TypesettingFeature {
@@ -46,4 +46,4 @@ typedef unsigned TypesettingFeatures;
 
 String ToString(TypesettingFeatures);
 
-} // namespace bkfont
+} // namespace bkit

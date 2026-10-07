@@ -58,7 +58,7 @@ typedef const struct __CFString* CFStringRef;
 @class NSString;
 #endif
 
-namespace bkfont {
+namespace bkit {
 
 class AtomicStringTable;
 
@@ -848,8 +848,8 @@ inline wtf_size_t ReverseFind(base::span<const LChar> characters,
 
 inline wtf_size_t StringImpl::Find(LChar character, wtf_size_t start) const {
   if (Is8Bit())
-    return bkfont::Find(Span8(), character, start);
-  return bkfont::Find(Span16(), character, start);
+    return bkit::Find(Span8(), character, start);
+  return bkit::Find(Span16(), character, start);
 }
 
 ALWAYS_INLINE wtf_size_t StringImpl::Find(char character,
@@ -859,8 +859,8 @@ ALWAYS_INLINE wtf_size_t StringImpl::Find(char character,
 
 inline wtf_size_t StringImpl::Find(UChar character, wtf_size_t start) const {
   if (Is8Bit())
-    return bkfont::Find(Span8(), character, start);
-  return bkfont::Find(Span16(), character, start);
+    return bkit::Find(Span8(), character, start);
+  return bkit::Find(Span16(), character, start);
 }
 
 // Null-terminated strings is generally discouraged as it has high chance to
@@ -955,4 +955,4 @@ struct HashTraits<StringImpl*>;
 template <>
 struct HashTraits<scoped_refptr<StringImpl>>;
 
-} // namespace bkfont
+} // namespace bkit

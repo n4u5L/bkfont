@@ -27,7 +27,7 @@
 #include "base/allocator/allocator.h"
 #include "base/text/string_concatenate.h"
 
-namespace bkfont {
+namespace bkit {
 
 template <>
 class StringTypeAdapter<String> : public StringTypeAdapter<StringView> {
@@ -188,4 +188,4 @@ StringAppend<StringAppend<U, V>, W> operator+(const StringAppend<U, V>& string1,
   return StringAppend<StringAppend<U, V>, W>(string1, string2);
 }
 
-} // namespace bkfont
+} // namespace bkit

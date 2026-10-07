@@ -13,7 +13,7 @@
 
 #include "platform/typeface.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Creates a scoped HarfBuzz hb_face_t based on accessing the underlying Data
 // of the Typeface (using Typeface::OpenStream() and
@@ -21,4 +21,4 @@ namespace bkfont {
 // HarfBuzz does not recognize the requested face in it.
 hb::unique_ptr<hb_face_t> HbFaceFromTypeface(std::shared_ptr<Typeface> typeface);
 
-} // namespace bkfont
+} // namespace bkit

@@ -23,7 +23,7 @@
 #include "text/text_direction.h"
 #include "paint/affine_transform.h"
 
-namespace bkfont {
+namespace bkit {
 
 class FontSelector;
 class ShapeResult;
@@ -141,4 +141,4 @@ private:
   std::optional<Font> compressed_font_;
 };
 
-} // namespace bkfont
+} // namespace bkit

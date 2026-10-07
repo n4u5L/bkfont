@@ -15,7 +15,7 @@
 #include "base/lean_windows.h"
 #include "base/notreached.h"
 
-namespace bkfont::base {
+namespace bkit::base {
 
 namespace {
 
@@ -179,23 +179,23 @@ void ThreadLocalStorage::Slot::Set(void* value) {
 // image even when this translation unit is linked from a static library.
 #ifdef _WIN64
 #pragma comment(linker, "/INCLUDE:_tls_used")
-#pragma comment(linker, "/INCLUDE:bkfont_thread_local_storage_callback")
+#pragma comment(linker, "/INCLUDE:bkit_thread_local_storage_callback")
 #else
 #pragma comment(linker, "/INCLUDE:__tls_used")
-#pragma comment(linker, "/INCLUDE:_bkfont_thread_local_storage_callback")
+#pragma comment(linker, "/INCLUDE:_bkit_thread_local_storage_callback")
 #endif
 
 extern "C" {
 #ifdef _WIN64
 #pragma const_seg(".CRT$XLB")
-extern const PIMAGE_TLS_CALLBACK bkfont_thread_local_storage_callback;
-const PIMAGE_TLS_CALLBACK bkfont_thread_local_storage_callback = OnThreadExit;
+extern const PIMAGE_TLS_CALLBACK bkit_thread_local_storage_callback;
+const PIMAGE_TLS_CALLBACK bkit_thread_local_storage_callback = OnThreadExit;
 #pragma const_seg()
 #else
 #pragma data_seg(".CRT$XLB")
-PIMAGE_TLS_CALLBACK bkfont_thread_local_storage_callback = OnThreadExit;
+PIMAGE_TLS_CALLBACK bkit_thread_local_storage_callback = OnThreadExit;
 #pragma data_seg()
 #endif
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base

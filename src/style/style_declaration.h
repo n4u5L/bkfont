@@ -16,7 +16,7 @@
 #include "style/css_property_names.h"
 #include "style/css_value.h"
 
-namespace bkfont {
+namespace bkit {
 
 // The CSS-wide keywords a declaration can take (ConsumeCSSWideKeyword()),
 // without revert and revert-layer: there are no cascade origins to revert to.
@@ -84,4 +84,4 @@ private:
   std::shared_ptr<EntryVector> entries_;
 };
 
-} // namespace bkfont
+} // namespace bkit

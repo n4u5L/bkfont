@@ -26,7 +26,7 @@
 #include "style/css_value_pair.h"
 #include "style/white_space.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 using UnitType = CSSPrimitiveValue::UnitType;
@@ -137,7 +137,7 @@ PrimitiveRef LengthInputValue(const Input& input, ValueRange range) {
 // components are finite.
 ValueRef ColorValue(const StyleColorValue& color) {
   if (!color.IsCurrentColor()) {
-    const bkfont::Color rgba = color.GetColor();
+    const bkit::Color rgba = color.GetColor();
     if (!std::isfinite(rgba.Param0()) || !std::isfinite(rgba.Param1()) || !std::isfinite(rgba.Param2()) ||
         !std::isfinite(rgba.Alpha()))
       return nullptr;
@@ -431,10 +431,10 @@ ValueRef FontPalette::Make(const Input& input) {
   const Mix* mix = std::get<std::unique_ptr<Mix>>(input).get();
   if (!mix) return nullptr;
   // ConsumeColorInterpolationSpace(): a hue method needs a polar space.
-  using ColorSpace = bkfont::Color::ColorSpace;
+  using ColorSpace = bkit::Color::ColorSpace;
   const bool polar = mix->color_space == ColorSpace::kHSL || mix->color_space == ColorSpace::kHWB ||
                      mix->color_space == ColorSpace::kLch || mix->color_space == ColorSpace::kOklch;
-  if (!polar && mix->hue_interpolation != bkfont::Color::HueInterpolationMethod::kShorter) return nullptr;
+  if (!polar && mix->hue_interpolation != bkit::Color::HueInterpolationMethod::kShorter) return nullptr;
   // ConsumePercent(kAll), then the [0, 100] check of a literal.
   const auto percentage = [](const std::optional<CSSLengthOrCalc>& component, bool& valid) -> PrimitiveRef {
     if (!component) return nullptr;
@@ -1025,4 +1025,4 @@ bool WhiteSpace::Make(const Input& input, CSSPropertyValues& properties) {
 
 } // namespace css_shorthand
 
-} // namespace bkfont
+} // namespace bkit

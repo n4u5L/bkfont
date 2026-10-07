@@ -13,7 +13,7 @@
 #include "shader.h"
 #include "surface_props.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Canvas;
 class GlyphRunList;
@@ -63,4 +63,4 @@ private:
 // glyph mask. Images own their pixels, so the mask is copied.
 std::shared_ptr<const Image> MakeImageFromARGB32Mask(const Mask& mask);
 
-} // namespace bkfont
+} // namespace bkit

@@ -12,7 +12,7 @@
 #include "base/deque.h"
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 class ScriptData;
 
@@ -117,4 +117,4 @@ public:
   PairedBracketType GetPairedBracketType(UChar32) const override;
 };
 
-} // namespace bkfont
+} // namespace bkit

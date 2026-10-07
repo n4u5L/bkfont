@@ -8,7 +8,7 @@
 
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Stream;
 
@@ -65,4 +65,4 @@ private:
   std::size_t size_;
 };
 
-} // namespace bkfont
+} // namespace bkit

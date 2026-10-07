@@ -16,7 +16,7 @@
 #include "paint/surface_props.h"
 #include "typeface.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Strike;
 
@@ -145,4 +145,4 @@ private:
   std::shared_ptr<Strike> strike_;
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -8,7 +8,7 @@
 #include <limits>
 #include <utility>
 
-namespace bkfont {
+namespace bkit {
 
 namespace point {
 
@@ -777,4 +777,4 @@ int Conic::BuildUnitArc(ScalarPoint u_start, ScalarPoint u_stop, RotationDirecti
   return conic_count;
 }
 
-} // namespace bkfont
+} // namespace bkit

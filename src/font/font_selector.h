@@ -37,7 +37,7 @@
 #include <span>
 #include "base/vector.h"
 #include "base/hash_map.h"
-namespace bkfont {
+namespace bkit {
 
 class ExecutionContext;
 class FontData;
@@ -124,4 +124,4 @@ private:
   std::unique_ptr<FontFallbackMap> font_fallback_map_;
 };
 
-} // namespace bkfont
+} // namespace bkit

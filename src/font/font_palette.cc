@@ -12,7 +12,7 @@
 #include "base/text/string_builder.h"
 #include "base/compiler_specific.h"
 
-namespace bkfont {
+namespace bkit {
 
 unsigned FontPalette::GetHash() const {
   unsigned computed_hash = 0;
@@ -37,8 +37,8 @@ unsigned FontPalette::GetHash() const {
   if (palette_keyword_ != kCustomPalette)
     return computed_hash;
 
-  AddIntToHash(computed_hash, bkfont::GetHash(palette_values_name_));
-  AddIntToHash(computed_hash, match_font_family_.empty() ? 0 : bkfont::GetHash(match_font_family_));
+  AddIntToHash(computed_hash, bkit::GetHash(palette_values_name_));
+  AddIntToHash(computed_hash, match_font_family_.empty() ? 0 : bkit::GetHash(match_font_family_));
   AddIntToHash(computed_hash, base_palette_.type);
   AddIntToHash(computed_hash, base_palette_.index);
 
@@ -93,4 +93,4 @@ bool FontPalette::operator==(const FontPalette& other) const {
   return palette_keyword_ == other.palette_keyword_ && palette_values_name_ == other.palette_values_name_ && match_font_family_ == other.match_font_family_ && base_palette_ == other.base_palette_ && palette_overrides_ == other.palette_overrides_;
 }
 
-} // namespace bkfont
+} // namespace bkit

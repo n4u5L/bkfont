@@ -29,7 +29,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 enum FontBaseline {
   // https://drafts.csswg.org/css-inline/#alphabetic-baseline
@@ -57,4 +57,4 @@ enum FontBaseline {
   kTextOverBaseline
 };
 
-} // namespace bkfont
+} // namespace bkit

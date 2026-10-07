@@ -14,7 +14,7 @@
 #include "base/memory/scoped_refptr.h"
 #include "base/ref_counted.h"
 
-namespace bkfont {
+namespace bkit {
 
 class CSSValue;
 
@@ -101,4 +101,4 @@ private:
   const ClassType class_type_;
 };
 
-} // namespace bkfont
+} // namespace bkit

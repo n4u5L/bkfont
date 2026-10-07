@@ -36,7 +36,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Unclamped, unchecked, signed fixed-point number representing a value used for
 // font variations. Sixteen bits in total, one sign bit, two fractional bits,
@@ -452,4 +452,4 @@ inline FontSelectionValue DefaultMaximumForClamp<FontSelectionValue>() {
   return FontSelectionValue::MaximumValue();
 }
 
-} // namespace bkfont
+} // namespace bkit

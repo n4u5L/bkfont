@@ -14,7 +14,7 @@
 #include "base/containers/span.h"
 #include "base/strings/string_util.h"
 
-namespace bkfont::base {
+namespace bkit::base {
 
 // We separate the declaration from the implementation of this inline
 // function just so the PRINTF_FORMAT works.
@@ -42,4 +42,4 @@ inline int SpanPrintf(base::span<char> buffer, const char* format, ...) {
   return result;
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base

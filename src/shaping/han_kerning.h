@@ -16,7 +16,7 @@
 
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 class LayoutLocale;
 class ShapeResult;
@@ -168,4 +168,4 @@ inline void HanKerning::DidShapeSegment(ShapeResult& result) {
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

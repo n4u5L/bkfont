@@ -11,7 +11,7 @@
 #include "layout/inline/offset_mapping_builder.h"
 #include "text/bidi_paragraph.h"
 
-namespace bkfont {
+namespace bkit {
 
 class InlineLayoutAlgorithm {
 public:
@@ -71,4 +71,4 @@ private:
   wtf_size_t break_point_index_ = 0;
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -5,7 +5,7 @@
 
 #include "style/css_value.h"
 
-namespace bkfont {
+namespace bkit {
 namespace cssvalue {
 
 class CSSUnsetValue : public CSSValue {
@@ -34,4 +34,4 @@ struct DowncastTraits<cssvalue::CSSUnsetValue> {
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

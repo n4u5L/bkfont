@@ -20,7 +20,7 @@ namespace android {
 class Hyphenator;
 } // namespace android
 
-namespace bkfont {
+namespace bkit {
 
 class HyphenationMinikin final : public Hyphenation {
 public:
@@ -49,4 +49,4 @@ private:
   std::unique_ptr<android::Hyphenator> hyphenator_;
 };
 
-} // namespace bkfont
+} // namespace bkit

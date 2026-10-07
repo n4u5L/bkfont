@@ -33,8 +33,8 @@
 
 #include "base/allocator/allocator.h"
 
-namespace bkfont {
+namespace bkit {
 
 void InitStringStatics();
 
-} // namespace bkfont
+} // namespace bkit

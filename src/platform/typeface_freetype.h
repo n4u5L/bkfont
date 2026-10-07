@@ -12,7 +12,7 @@
 
 typedef struct FT_FaceRec_* FT_Face;
 
-namespace bkfont {
+namespace bkit {
 
 // f_t_mutex. Caller must lock it before calling into FreeType.
 Mutex& FreeTypeMutex();
@@ -84,4 +84,4 @@ private:
   const std::unique_ptr<const FontStreamData> data_;
 };
 
-} // namespace bkfont
+} // namespace bkit

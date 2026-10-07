@@ -32,7 +32,7 @@
 #include "font/font_size_adjust.h"
 #include "style/css_value_keywords.h"
 
-namespace bkfont {
+namespace bkit {
 
 class FontDescription;
 class SimpleFontData;
@@ -87,4 +87,4 @@ public:
   static std::optional<float> MetricsMultiplierAdjustedFontSize(const SimpleFontData*, const FontDescription&);
 };
 
-} // namespace bkfont
+} // namespace bkit

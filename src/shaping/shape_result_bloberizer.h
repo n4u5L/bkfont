@@ -20,7 +20,7 @@
 #include "shaping/shape_result_buffer.h"
 #include "paint/geometry.h"
 
-namespace bkfont {
+namespace bkit {
 
 class FontDescription;
 class PlainTextNode;
@@ -239,4 +239,4 @@ void DrawTextBlobs(const ShapeResultBloberizer::BlobBuffer& blobs,
                    const PlatformPaint& flags,
                    NodeId node_id = kInvalidNodeId);
 
-} // namespace bkfont
+} // namespace bkit

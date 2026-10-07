@@ -18,7 +18,7 @@
 #include "paint/surface_props.h"
 #include "typeface.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Arena;
 class Drawable;
@@ -324,4 +324,4 @@ protected:
   const MaskGamma::PreBlend pre_blend_;
 };
 
-} // namespace bkfont
+} // namespace bkit

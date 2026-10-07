@@ -21,7 +21,7 @@
 #include "base/memory/scoped_refptr.h"
 #include "base/text/atomic_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 // The embedding application supplies the dictionary-backed implementation of
 // LastHyphenLocation; the shared limits and search algorithms match Blink.
@@ -93,4 +93,4 @@ private:
   bool hyphenate_capitalized_word_ = false;
 };
 
-} // namespace bkfont
+} // namespace bkit

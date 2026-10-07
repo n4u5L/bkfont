@@ -13,7 +13,7 @@
 #include "color4f.h"
 #include "rect.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkColorType, reduced to the two glyph image formats: kAlpha_8 and the
 // premultiplied kN32 (B, G, R, A bytes; see PMColor).
@@ -145,4 +145,4 @@ private:
   mutable bool mipmap_built_ = false;
 };
 
-} // namespace bkfont
+} // namespace bkit

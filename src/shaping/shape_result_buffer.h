@@ -11,7 +11,7 @@
 
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 struct CharacterRange;
 class FontDescription;
@@ -70,4 +70,4 @@ private:
   bool has_vertical_offsets_;
 };
 
-} // namespace bkfont
+} // namespace bkit

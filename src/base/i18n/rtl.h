@@ -1,7 +1,7 @@
 // Ported from: chromium/base/i18n/rtl.h
 // Browser UI direction discovery is outside fonts.
 #pragma once
-namespace bkfont::base::i18n {
+namespace bkit::base::i18n {
 
 enum TextDirection {
   UNKNOWN_DIRECTION,
@@ -9,4 +9,4 @@ enum TextDirection {
   LEFT_TO_RIGHT
 };
 
-} // namespace bkfont::base::i18n
+} // namespace bkit::base::i18n

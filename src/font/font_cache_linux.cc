@@ -40,7 +40,7 @@
 #include "platform/fontconfig_util.h"
 #include "platform/font_manager_fontconfig.h"
 
-namespace bkfont {
+namespace bkit {
 
 std::shared_ptr<FontManager> FontCache::CreateFontManager() {
   return MakeFontManagerFontconfig();
@@ -134,4 +134,4 @@ std::shared_ptr<const SimpleFontData> FontCache::PlatformFallbackFontForCharacte
   return FontDataFromFontPlatformData(platform_data);
 }
 
-} // namespace bkfont
+} // namespace bkit

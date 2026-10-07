@@ -8,7 +8,7 @@
 #include "base/text/wtf_string.h"
 #include "platform/typeface.h"
 
-namespace bkfont {
+namespace bkit {
 
 // FontUniqueNameLookupWin. The browser-side DWriteFontProxyImpl::MatchUniqueFont
 // runs in process instead of over mojo.
@@ -21,4 +21,4 @@ private:
   static std::shared_ptr<Typeface> InstantiateFromFileAndTtcIndex(const String& file_path, std::uint32_t ttc_index);
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -32,7 +32,7 @@
 #include "base/vector.h"
 #include "font/glyph.h"
 
-namespace bkfont {
+namespace bkit {
 
 class PlatformFont;
 class Typeface;
@@ -76,4 +76,4 @@ private:
   int height_fallback_;
 };
 
-} // namespace bkfont
+} // namespace bkit

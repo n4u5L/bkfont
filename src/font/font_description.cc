@@ -44,7 +44,7 @@
 #include "font_cache.h"
 
 #include <span>
-namespace bkfont {
+namespace bkit {
 
 bool FontDescription::use_subpixel_text_positioning_ = false;
 
@@ -289,20 +289,20 @@ void FontDescription::UpdateTypesettingFeatures() {
   case kAutoTextRendering:
     break;
   case kOptimizeSpeed:
-    fields_.typesetting_features_ &= ~(bkfont::kKerning | kLigatures);
+    fields_.typesetting_features_ &= ~(bkit::kKerning | kLigatures);
     break;
   case kGeometricPrecision:
   case kOptimizeLegibility:
-    fields_.typesetting_features_ |= bkfont::kKerning | kLigatures;
+    fields_.typesetting_features_ |= bkit::kKerning | kLigatures;
     break;
   }
 
   switch (GetKerning()) {
   case FontDescription::kNoneKerning:
-    fields_.typesetting_features_ &= ~bkfont::kKerning;
+    fields_.typesetting_features_ &= ~bkit::kKerning;
     break;
   case FontDescription::kNormalKerning:
-    fields_.typesetting_features_ |= bkfont::kKerning;
+    fields_.typesetting_features_ |= bkit::kKerning;
     break;
   case FontDescription::kAutoKerning:
     break;
@@ -315,22 +315,22 @@ void FontDescription::UpdateTypesettingFeatures() {
   if (letter_spacing_.IsZero()) {
     switch (CommonLigaturesState()) {
     case FontDescription::kDisabledLigaturesState:
-      fields_.typesetting_features_ &= ~bkfont::kLigatures;
+      fields_.typesetting_features_ &= ~bkit::kLigatures;
       break;
     case FontDescription::kEnabledLigaturesState:
-      fields_.typesetting_features_ |= bkfont::kLigatures;
+      fields_.typesetting_features_ |= bkit::kLigatures;
       break;
     case FontDescription::kNormalLigaturesState:
       break;
     }
 
     if (DiscretionaryLigaturesState() == FontDescription::kEnabledLigaturesState || HistoricalLigaturesState() == FontDescription::kEnabledLigaturesState || ContextualLigaturesState() == FontDescription::kEnabledLigaturesState) {
-      fields_.typesetting_features_ |= bkfont::kLigatures;
+      fields_.typesetting_features_ |= bkit::kLigatures;
     }
   }
 
   if (VariantCaps() != kCapsNormal)
-    fields_.typesetting_features_ |= bkfont::kCaps;
+    fields_.typesetting_features_ |= bkit::kCaps;
 }
 
 unsigned FontDescription::StyleHashWithoutFamilyList() const {
@@ -377,7 +377,7 @@ unsigned FontDescription::GetHash() const {
     if (family->FamilyName().empty())
       continue;
     AddIntToHash(hash, family->FamilyIsGeneric());
-    AddIntToHash(hash, bkfont::GetHash(family->FamilyName()));
+    AddIntToHash(hash, bkit::GetHash(family->FamilyName()));
   }
   return hash;
 }
@@ -763,32 +763,32 @@ String FontDescription::ToString() const {
       LetterSpacing(),
       WordSpacing(),
       font_selection_request_.ToString().Ascii().c_str(),
-      bkfont::ToString(
+      bkit::ToString(
           static_cast<TypesettingFeatures>(fields_.typesetting_features_))
           .Ascii()
           .data(),
-      bkfont::ToString(Orientation()).Ascii().c_str(),
-      bkfont::ToString(WidthVariant()).Ascii().c_str(),
+      bkit::ToString(Orientation()).Ascii().c_str(),
+      bkit::ToString(WidthVariant()).Ascii().c_str(),
       FontDescription::ToString(VariantCaps()).Ascii().c_str(),
       (IsAbsoluteSize() ? "true" : "false"),
       FontDescription::ToString(GenericFamily()).Ascii().c_str(),
       FontDescription::ToString(Kerning()).Ascii().c_str(),
       GetVariantLigatures().ToString().Ascii().c_str(),
       KeywordSize(),
-      bkfont::ToString(FontSmoothing()).Ascii().c_str(),
-      bkfont::ToString(TextRendering()).Ascii().c_str(),
+      bkit::ToString(FontSmoothing()).Ascii().c_str(),
+      bkit::ToString(TextRendering()).Ascii().c_str(),
       (IsSyntheticBold() ? "true" : "false"),
       (IsSyntheticItalic() ? "true" : "false"),
       (UseSubpixelPositioning() ? "true" : "false"),
       (SubpixelAscentDescent() ? "true" : "false"),
       VariantNumeric().ToString().Ascii().c_str(),
       VariantEastAsian().ToString().Ascii().c_str(),
-      bkfont::ToString(FontOpticalSizing()).Ascii().c_str(),
+      bkit::ToString(FontOpticalSizing()).Ascii().c_str(),
       FontDescription::ToString(GetFontSynthesisWeight()).Ascii().c_str(),
       FontDescription::ToString(GetFontSynthesisStyle()).Ascii().c_str(),
       FontDescription::ToString(GetFontSynthesisSmallCaps()).Ascii().c_str(),
       FontDescription::ToString(VariantPosition()).Ascii().c_str(),
-      bkfont::ToString(VariantEmoji()).Ascii().c_str());
+      bkit::ToString(VariantEmoji()).Ascii().c_str());
 }
 
-} // namespace bkfont
+} // namespace bkit

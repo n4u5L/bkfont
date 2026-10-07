@@ -14,7 +14,7 @@
 #include "geometry/length.h"
 #include "style/css_primitive_value.h"
 
-namespace bkfont {
+namespace bkit {
 
 class ComputedStyle;
 class ComputedStyleBuilder;
@@ -125,4 +125,4 @@ private:
   float zoom_ = 1;
 };
 
-} // namespace bkfont
+} // namespace bkit

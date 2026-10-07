@@ -11,7 +11,7 @@
 #include "shaping/shape_result.h"
 #include "runtime_enabled_features.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Google Spreadsheet creates 320K nodes and shapes in a single frame for
 // a sheet including 160K rows. It consumed about 700MB and was never purged.
@@ -172,4 +172,4 @@ void FrameShapeCache::RegisterShapeEntry(const PlainTextItem& item,
   LimitCacheSize(shape_map_, shape_lru_list_, kMaximumShapeCacheEntries);
 }
 
-} // namespace bkfont
+} // namespace bkit

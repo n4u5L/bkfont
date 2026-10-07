@@ -20,7 +20,7 @@
 #include "paint/device_scale.h"
 #include "style/css_to_length_conversion_data.h"
 
-namespace bkfont {
+namespace bkit {
 
 class ComputedStyle;
 class ComputedStyleBuilder;
@@ -81,4 +81,4 @@ private:
   mutable std::shared_ptr<const ComputedStyle> initial_style_;
 };
 
-} // namespace bkfont
+} // namespace bkit

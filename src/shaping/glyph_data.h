@@ -11,7 +11,7 @@
 
 #include "paint/geometry.h"
 
-namespace bkfont {
+namespace bkit {
 
 enum class SafeToBreak : uint8_t {
   kSafe = 0,
@@ -51,7 +51,7 @@ struct HarfBuzzRunGlyphData {
     return static_cast<SafeToBreak>(unsafe_to_break_before);
   }
   bool IsSafeToBreakBefore() const {
-    return bkfont::IsSafeToBreak(SafeToBreakBefore());
+    return bkit::IsSafeToBreak(SafeToBreakBefore());
   }
   void SetSafeToBreakBefore(SafeToBreak value) {
     unsafe_to_break_before = static_cast<bool>(value);
@@ -82,4 +82,4 @@ struct HarfBuzzRunGlyphData {
 
 using GlyphOffset = Vector2dF;
 
-} // namespace bkfont
+} // namespace bkit

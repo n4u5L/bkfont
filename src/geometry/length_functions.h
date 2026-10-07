@@ -28,7 +28,7 @@
 #include "length.h"
 #include "platform_export.h"
 
-namespace bkfont {
+namespace bkit {
 
 class PointF;
 class SizeF;
@@ -64,4 +64,4 @@ SizeF SizeForLengthSize(const LengthSize&,
 PointF PointForLengthPoint(const LengthPoint&,
                                 const SizeF& box_size);
 
-} // namespace bkfont
+} // namespace bkit

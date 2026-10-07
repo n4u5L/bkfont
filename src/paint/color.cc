@@ -47,7 +47,7 @@
 #include "base/compiler_specific.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 const Color Color::kBlack = Color(0xFF000000);
 const Color Color::kWhite = Color(0xFFFFFFFF);
@@ -278,7 +278,7 @@ float Color::HueInterpolation(float value1,
     ;
     break;
   }
-  return AngleToUnitCircleDegrees(bkfont::Blend(value1, value2, percentage));
+  return AngleToUnitCircleDegrees(bkit::Blend(value1, value2, percentage));
 }
 
 std::array<bool, 3> Color::GetAnalogousMissingComponents(
@@ -463,23 +463,23 @@ Color Color::InterpolateColors(Color::ColorSpace interpolation_space,
           ? std::optional<float>(std::nullopt)
       : (interpolation_space == ColorSpace::kHSL || interpolation_space == ColorSpace::kHWB)
           ? HueInterpolation(color1.param0_, color2.param0_, percentage, hue_method.value())
-          : bkfont::Blend(color1.param0_, color2.param0_, percentage);
+          : bkit::Blend(color1.param0_, color2.param0_, percentage);
 
   std::optional<float> param1 =
       (color1.param1_is_none_ && color2.param1_is_none_)
           ? std::optional<float>(std::nullopt)
-          : bkfont::Blend(color1.param1_, color2.param1_, percentage);
+          : bkit::Blend(color1.param1_, color2.param1_, percentage);
 
   std::optional<float> param2 =
       (color1.param2_is_none_ && color2.param2_is_none_)
           ? std::optional<float>(std::nullopt)
       : (IsChromaSecondComponent(interpolation_space))
           ? HueInterpolation(color1.param2_, color2.param2_, percentage, hue_method.value())
-          : bkfont::Blend(color1.param2_, color2.param2_, percentage);
+          : bkit::Blend(color1.param2_, color2.param2_, percentage);
 
   std::optional<float> alpha = (color1.alpha_is_none_ && color2.alpha_is_none_)
                                    ? std::optional<float>(std::nullopt)
-                                   : bkfont::Blend(alpha1, alpha2, percentage);
+                                   : bkit::Blend(alpha1, alpha2, percentage);
 
   Color result =
       FromColorSpace(interpolation_space, param0, param1, param2, alpha);
@@ -1406,4 +1406,4 @@ std::ostream& operator<<(std::ostream& os, const Color& color) {
   return os << color.SerializeAsCSSColor();
 }
 
-} // namespace bkfont
+} // namespace bkit

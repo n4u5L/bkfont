@@ -7,7 +7,7 @@
 
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 std::ostream& operator<<(std::ostream& stream,
                          const TextOffsetMap::Entry& entry) {
@@ -138,4 +138,4 @@ Vector<TextOffsetMap::Length> TextOffsetMap::CreateLengthMap(
   return map;
 }
 
-} // namespace bkfont
+} // namespace bkit

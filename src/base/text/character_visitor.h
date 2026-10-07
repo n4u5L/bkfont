@@ -5,9 +5,9 @@
 
 #pragma once
 
-namespace bkfont {
+namespace bkit {
 
-// Visits the characters of a bkfont::String, AtomicString, StringView or
+// Visits the characters of a bkit::String, AtomicString, StringView or
 // compatible type.
 //
 // Intended to be used with a generic lambda or other functor overloaded to
@@ -38,4 +38,4 @@ decltype(auto) VisitCharacters(const StringType& string,
   return string.Is8Bit() ? functor(string.Span8()) : functor(string.Span16());
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -16,7 +16,7 @@
 #include <span>
 
 #include "platform/typeface.h"
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -138,4 +138,4 @@ FontFormatCheck::VariableFontSubType FontFormatCheck::ProbeVariableFont(
   return VariableFontSubType::kVariableTrueType;
 }
 
-} // namespace bkfont
+} // namespace bkit

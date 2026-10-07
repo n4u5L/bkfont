@@ -14,7 +14,7 @@
 #include "base/text/wtf_string.h"
 #include "paint/geometry.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Font;
 class FrameShapeCache;
@@ -153,4 +153,4 @@ private:
   bool has_vertical_offsets_ = false;
 };
 
-} // namespace bkfont
+} // namespace bkit

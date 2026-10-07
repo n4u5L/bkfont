@@ -5,7 +5,7 @@
 #include "decoration_line_painter.h"
 #include "style/computed_style.h"
 
-namespace bkfont {
+namespace bkit {
 class SimpleFontData;
 enum class ResolvedUnderlinePosition { kAuto, kFromFont, kUnder, kOver };
 struct DecoratingBox {
@@ -50,4 +50,4 @@ private:
   bool overline_;
   bool antialias_ = false;
 };
-} // namespace bkfont
+} // namespace bkit

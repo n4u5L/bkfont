@@ -10,7 +10,7 @@
 #include "font_settings.h"
 #include "shaping/font_features.h"
 
-namespace bkfont {
+namespace bkit {
 
 ResolvedFontFeatures ResolveFontFeatureSettingsDescriptor(
     const FontFeatureSettings* existing_features_settings,
@@ -44,4 +44,4 @@ ResolvedFontFeatures ResolveFontFeatureSettingsDescriptor(
   return resolved_font_features;
 }
 
-} // namespace bkfont
+} // namespace bkit

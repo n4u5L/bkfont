@@ -8,7 +8,7 @@
 
 #include "style/computed_style_base_constants.h"
 
-namespace bkfont {
+namespace bkit {
 
 enum class WhiteSpaceCollapse : uint8_t {
   kCollapse = 0,
@@ -85,4 +85,4 @@ inline TextWrapMode ToTextWrapMode(EWhiteSpace whitespace) {
   return static_cast<TextWrapMode>(static_cast<uint8_t>(whitespace) >> kWhiteSpaceCollapseBits);
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -21,7 +21,7 @@
 
 #include "scalar.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -1159,4 +1159,4 @@ std::shared_ptr<const Shader> MakeImageShader(std::shared_ptr<const Image> image
   return std::make_shared<ImageShader>(std::move(image), sampling, local_matrix);
 }
 
-} // namespace bkfont
+} // namespace bkit

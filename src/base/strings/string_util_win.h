@@ -19,7 +19,7 @@
 #include "base/containers/span.h"
 #include "base/strings/string_util.h"
 
-namespace bkfont::base {
+namespace bkit::base {
 
 // Chromium code style is to not use malloc'd strings; this is only for use
 // for interaction with APIs that require it.
@@ -209,4 +209,4 @@ std::wstring ReplaceStringPlaceholders(
     base::span<const std::wstring> subst,
     std::vector<size_t>* offsets);
 
-} // namespace bkfont::base
+} // namespace bkit::base

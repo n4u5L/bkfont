@@ -1,10 +1,10 @@
 # Local implementation: standalone font library build configuration.
 cmake_minimum_required(VERSION 3.28)
-project(bkfont LANGUAGES CXX)
-if(DEFINED BLINK_FONTS_SHOWINCLUDES_PREFIX)
+project(bkit LANGUAGES CXX)
+if(DEFINED BKIT_SHOWINCLUDES_PREFIX)
   # CMake's compiler probe may misdecode UTF-8 diagnostics from a localized
   # MSVC installation. Ninja needs the exact prefix for header dependencies.
-  set(CMAKE_CL_SHOWINCLUDES_PREFIX "${BLINK_FONTS_SHOWINCLUDES_PREFIX}")
+  set(CMAKE_CL_SHOWINCLUDES_PREFIX "${BKIT_SHOWINCLUDES_PREFIX}")
 endif()
 
 if(WIN32)
@@ -21,10 +21,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 if(WIN32)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-  set(BLINK_FONTS_PACKAGES_ROOT "D:/MyPackages" CACHE PATH "Prebuilt MSVC x64 dependencies")
+  set(BKIT_PACKAGES_ROOT "D:/MyPackages" CACHE PATH "Prebuilt MSVC x64 dependencies")
 endif()
 get_filename_component(_chromium_default "${CMAKE_CURRENT_SOURCE_DIR}/../../../Qt5/qtwebengine/src/3rdparty/chromium" ABSOLUTE)
-set(BLINK_FONTS_CHROMIUM_ROOT "${_chromium_default}" CACHE PATH "Source Chromium checkout")
+set(BKIT_CHROMIUM_ROOT "${_chromium_default}" CACHE PATH "Source Chromium checkout")
 
 if(MSVC)
   add_compile_options(/utf-8 /Zc:__cplusplus /permissive- /bigobj)
@@ -36,10 +36,10 @@ include(cmake/FontPackages.cmake)
 include(cmake/FontSanitizer.cmake)
 add_subdirectory(tools/character_data)
 
-add_library(bkfont STATIC)
-add_library(bkfont::bkfont ALIAS bkfont)
-add_dependencies(bkfont generate_character_data)
-target_sources(bkfont PRIVATE
+add_library(bkit STATIC)
+add_library(bkit::bkit ALIAS bkit)
+add_dependencies(bkit generate_character_data)
+target_sources(bkit PRIVATE
   src/base/base_export.h
   src/base/bit_cast.h
   src/base/compiler_specific.h
@@ -487,18 +487,18 @@ target_sources(bkfont PRIVATE
 # Ragel output textually included by symbols_iterator.cc.
 set_source_files_properties(src/shaping/emoji_presentation_scanner.c
   PROPERTIES HEADER_FILE_ONLY ON)
-target_include_directories(bkfont
+target_include_directories(bkit
   PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src"
   PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/tools/character_data/generated"
           "${CMAKE_CURRENT_SOURCE_DIR}/src/base/third_party/double_conversion/double-conversion")
-target_compile_features(bkfont PUBLIC cxx_std_20)
-target_link_libraries(bkfont
+target_compile_features(bkit PUBLIC cxx_std_20)
+target_link_libraries(bkit
   PUBLIC harfbuzz::harfbuzz ICU::i18n ICU::uc
-  PRIVATE bkfont::ots Freetype::Freetype)
+  PRIVATE bkit::ots Freetype::Freetype)
 # Native discovery/matching, host font metadata and OS thread storage only.
 # Both backends use the shared font-data, shaping and FreeType raster sources.
 if(WIN32)
-  target_sources(bkfont PRIVATE
+  target_sources(bkit PRIVATE
     src/base/threading/thread_local_storage_win.cc
     src/font/font_cache_win.cc
     src/font/font_fallback_win.h src/font/font_fallback_win.cc
@@ -506,10 +506,10 @@ if(WIN32)
     src/platform/dwrite_font_file_stream.h src/platform/dwrite_font_file_stream.cc
     src/platform/dwrite_internal.h src/platform/dwrite_internal.cc
     src/platform/font_manager_win.h src/platform/font_manager_win.cc)
-  target_compile_definitions(bkfont PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN)
-  target_link_libraries(bkfont PRIVATE dwrite user32)
+  target_compile_definitions(bkit PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN)
+  target_link_libraries(bkit PRIVATE dwrite user32)
 else()
-  target_sources(bkfont PRIVATE
+  target_sources(bkit PRIVATE
     src/base/threading/thread_local_storage_posix.h
     src/base/threading/thread_local_storage_posix.cc
     src/font/font_cache_linux.cc
@@ -517,10 +517,10 @@ else()
     src/font/font_unique_name_lookup_linux.h src/font/font_unique_name_lookup_linux.cc
     src/platform/fontconfig_util.h src/platform/fontconfig_util.cc
     src/platform/font_manager_fontconfig.h src/platform/font_manager_fontconfig.cc)
-  target_link_libraries(bkfont PRIVATE Fontconfig::Fontconfig Threads::Threads)
+  target_link_libraries(bkit PRIVATE Fontconfig::Fontconfig Threads::Threads)
 endif()
 
-option(BLINK_FONTS_BUILD_EXAMPLES "Build the GLFW multilingual text example" ON)
-if(BLINK_FONTS_BUILD_EXAMPLES)
+option(BKIT_BUILD_EXAMPLES "Build the GLFW multilingual text example" ON)
+if(BKIT_BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()

@@ -172,7 +172,7 @@ typedef uint16_t uc16;
   DOUBLE_CONVERSION_DISALLOW_COPY_AND_ASSIGN(TypeName)
 #endif
 
-namespace bkfont::double_conversion {
+namespace bkit::double_conversion {
 
 inline int StrLength(const char* string) {
   size_t length = strlen(string);
@@ -363,4 +363,4 @@ Dest BitCast(Source* source) {
   return BitCast<Dest>(reinterpret_cast<uintptr_t>(source));
 }
 
-} // namespace bkfont::double_conversion
+} // namespace bkit::double_conversion

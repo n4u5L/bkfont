@@ -8,7 +8,7 @@
 
 #include "rect.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkMask::Format.
 enum class MaskFormat : std::uint8_t {
@@ -79,4 +79,4 @@ inline constexpr std::uint16_t Pack888ToRGB16(unsigned r, unsigned g, unsigned b
   return static_cast<std::uint16_t>(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -40,7 +40,7 @@
 #include "type_traits.h"
 #endif
 
-namespace bkfont {
+namespace bkit {
 
 #if defined(LEAK_SANITIZER)
 class LeakSanitizerDisabler {
@@ -64,7 +64,7 @@ public:
 // TODO(sof): once layering rules allow wtf/ to make use of the Oilpan
 // infrastructure, remove this macro.
 #define BASE_INTERNAL_LEAK_SANITIZER_DISABLED_SCOPE    \
-  bkfont::LeakSanitizerDisabler leakSanitizerDisabler; \
+  bkit::LeakSanitizerDisabler leakSanitizerDisabler;   \
   static_cast<void>(0)
 
 // LEAK_SANITIZER_IGNORE_OBJECT(X): the heap object referenced by pointer X
@@ -81,4 +81,4 @@ public:
 #define LEAK_SANITIZER_IGNORE_OBJECT(X) ((void)0)
 #endif // defined(LEAK_SANITIZER)
 
-} // namespace bkfont
+} // namespace bkit

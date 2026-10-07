@@ -6,7 +6,7 @@
 
 #include "scalar.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -119,4 +119,4 @@ void TMaskGammaBuildCorrectingLut(std::uint8_t* table, unsigned src_i, float con
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

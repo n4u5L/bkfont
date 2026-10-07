@@ -12,20 +12,20 @@
 #include "base/allocator/partitions.h"
 #include "base/ref_counted.h"
 #include "base/type_traits.h"
-namespace bkfont::base {
+namespace bkit::base {
 
 enum class NotNullTag {
   kNotNull
 };
 
-} // namespace bkfont::base
+} // namespace bkit::base
 
-inline void* operator new(std::size_t, bkfont::base::NotNullTag, void* address) noexcept {
+inline void* operator new(std::size_t, bkit::base::NotNullTag, void* address) noexcept {
   return address;
 }
-inline void operator delete(void*, bkfont::base::NotNullTag, void*) noexcept {
+inline void operator delete(void*, bkit::base::NotNullTag, void*) noexcept {
 }
-namespace bkfont {
+namespace bkit {
 
 class PartitionAllocator;
 namespace internal {
@@ -34,12 +34,12 @@ class __thisIsHereToForceASemicolonAfterThisMacro;
 
 } // namespace internal
 
-} // namespace bkfont
+} // namespace bkit
 
 #define DISALLOW_NEW()                                                          \
 public:                                                                         \
   using IsDisallowNewMarker [[maybe_unused]] = int;                             \
-  void* operator new(std::size_t, ::bkfont::base::NotNullTag, void* location) { \
+  void* operator new(std::size_t, ::bkit::base::NotNullTag, void* location) {   \
     return location;                                                            \
   }                                                                             \
   void* operator new(std::size_t, void* location) {                             \
@@ -50,20 +50,20 @@ private:                                                                        
   void* operator new(std::size_t) = delete;                                     \
                                                                                 \
 public:                                                                         \
-  friend class ::bkfont::internal::__thisIsHereToForceASemicolonAfterThisMacro
+  friend class ::bkit::internal::__thisIsHereToForceASemicolonAfterThisMacro
 
 #define STATIC_ONLY(Type)                                                      \
   Type() = delete;                                                             \
   Type(const Type&) = delete;                                                  \
   Type& operator=(const Type&) = delete;                                       \
   void* operator new(std::size_t) = delete;                                    \
-  void* operator new(std::size_t, ::bkfont::base::NotNullTag, void*) = delete; \
+  void* operator new(std::size_t, ::bkit::base::NotNullTag, void*) = delete;   \
   void* operator new(std::size_t, void*) = delete
 
 #if defined(OFFICIAL_BUILD)
 #define BASE_HEAP_PROFILER_TYPE_NAME(T) nullptr
 #else
-#define BASE_HEAP_PROFILER_TYPE_NAME(T) ::bkfont::GetStringWithTypeName<T>()
+#define BASE_HEAP_PROFILER_TYPE_NAME(T) ::bkit::GetStringWithTypeName<T>()
 #endif
 
 #define USING_FAST_MALLOC(type) \
@@ -79,21 +79,21 @@ public:                                                                         
     return p;                                                                   \
   }                                                                             \
   void* operator new(std::size_t size) {                                        \
-    return ::bkfont::Partitions::FastMalloc(size, type_name);                   \
+    return ::bkit::Partitions::FastMalloc(size, type_name);                     \
   }                                                                             \
   void operator delete(void* p) {                                               \
-    ::bkfont::Partitions::FastFree(p);                                          \
+    ::bkit::Partitions::FastFree(p);                                            \
   }                                                                             \
   void* operator new[](std::size_t size) {                                      \
-    return ::bkfont::Partitions::FastMalloc(size, type_name);                   \
+    return ::bkit::Partitions::FastMalloc(size, type_name);                     \
   }                                                                             \
   void operator delete[](void* p) {                                             \
-    ::bkfont::Partitions::FastFree(p);                                          \
+    ::bkit::Partitions::FastFree(p);                                            \
   }                                                                             \
-  void* operator new(std::size_t, ::bkfont::base::NotNullTag, void* location) { \
+  void* operator new(std::size_t, ::bkit::base::NotNullTag, void* location) {   \
     return location;                                                            \
   }                                                                             \
-  void operator delete(void*, ::bkfont::base::NotNullTag, void*) {              \
+  void operator delete(void*, ::bkit::base::NotNullTag, void*) {                \
   }                                                                             \
   void operator delete(void*, void*) {                                          \
   }                                                                             \
@@ -101,4 +101,4 @@ public:                                                                         
   }                                                                             \
                                                                                 \
 private:                                                                        \
-  friend class ::bkfont::internal::__thisIsHereToForceASemicolonAfterThisMacro
+  friend class ::bkit::internal::__thisIsHereToForceASemicolonAfterThisMacro

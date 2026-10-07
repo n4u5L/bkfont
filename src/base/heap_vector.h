@@ -5,7 +5,7 @@
 
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Without Oilpan, HeapVector uses Vector's
 // PartitionAllocator backing, inline capacity and ordinary element destruction.
@@ -13,4 +13,4 @@ namespace bkfont {
 template <typename T, wtf_size_t InlineCapacity = 0>
 using HeapVector = Vector<T, InlineCapacity>;
 
-} // namespace bkfont
+} // namespace bkit

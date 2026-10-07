@@ -31,7 +31,7 @@
 #include "base/compiler_specific.h"
 #include "build/build_config.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Returns a string that contains the type name of |T| as a substring.
 template <typename T>
@@ -142,4 +142,4 @@ public:
 template <typename T>
 concept IsStackAllocatedTypeV = IsStackAllocatedType<T>::value;
 
-} // namespace bkfont
+} // namespace bkit

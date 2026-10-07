@@ -16,7 +16,7 @@
 #include "paint/rect.h"
 #include "stream.h"
 
-namespace bkfont {
+namespace bkit {
 
 class ScalerContext;
 struct ScalerContextRec;
@@ -227,4 +227,4 @@ private:
   mutable Once bounds_once_;
 };
 
-} // namespace bkfont
+} // namespace bkit

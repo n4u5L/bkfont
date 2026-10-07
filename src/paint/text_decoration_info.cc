@@ -9,7 +9,7 @@
 #include "font/simple_font_data.h"
 #include "geometry/length_functions.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 bool Has(TextDecorationLine lines, TextDecorationLine line) { return (lines & line) != TextDecorationLine::kNone; }
 bool Has(TextUnderlinePosition value, TextUnderlinePosition flag) {
@@ -122,4 +122,4 @@ Color4f TextDecorationInfo::Color() const {
   if (Has(decoration_.Lines(), TextDecorationLine::kGrammarError)) return Color4f::FromColor(0xffc0c0c0);
   return decoration_.GetColor();
 }
-} // namespace bkfont
+} // namespace bkit

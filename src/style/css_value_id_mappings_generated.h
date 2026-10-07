@@ -8,7 +8,7 @@
 #include "style/computed_style_base.h"
 #include "style/css_value_keywords.h"
 
-namespace bkfont {
+namespace bkit {
 namespace detail {
 
 template <class T>
@@ -560,4 +560,4 @@ inline CSSValueID platformEnumToCSSValueIDGenerated(WritingMode v) {
 }
 
 } // namespace detail
-} // namespace bkfont
+} // namespace bkit

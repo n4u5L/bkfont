@@ -29,7 +29,7 @@
 #include "paint/geometry.h"
 #include "style/style_color.h"
 
-namespace bkfont {
+namespace bkit {
 
 // skia_utils.h BlurRadiusToStdDev().
 inline float BlurRadiusToStdDev(float radius) {
@@ -91,4 +91,4 @@ private:
   float opacity_;
 };
 
-} // namespace bkfont
+} // namespace bkit

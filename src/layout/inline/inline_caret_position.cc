@@ -9,7 +9,7 @@
 #include "editing/bidi_adjustment.h"
 #include "runtime_enabled_features.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 bool CanResolveBefore(const InlineCursor& cursor, TextAffinity affinity) {
@@ -104,4 +104,4 @@ InlineCaretPosition ComputeInlineCaretPosition(InlineFormattingContext& context,
   return AdjustInlineCaretPositionForBidiText(candidate);
 }
 
-} // namespace bkfont
+} // namespace bkit

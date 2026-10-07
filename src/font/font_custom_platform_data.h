@@ -44,7 +44,7 @@
 
 #include <span>
 #include "platform/typeface.h"
-namespace bkfont {
+namespace bkit {
 
 class FontPlatformData;
 class FontVariationSettings;
@@ -93,4 +93,4 @@ private:
   size_t data_size_;
 };
 
-} // namespace bkfont
+} // namespace bkit

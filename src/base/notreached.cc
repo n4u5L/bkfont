@@ -10,7 +10,7 @@
 #include "lean_windows.h"
 #endif
 
-namespace bkfont::logging {
+namespace bkit::logging {
 
 // NotReachedNoreturnError::~NotReachedNoreturnError. The message is flushed
 // before terminating. This function ends up in crash stack traces.
@@ -25,4 +25,4 @@ void NotReachedFailure(std::source_location location) {
 #endif
 }
 
-} // namespace bkfont::logging
+} // namespace bkit::logging

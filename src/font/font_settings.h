@@ -10,7 +10,7 @@
 #include "base/text/string_builder.h"
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 uint32_t AtomicStringToFourByteTag(const AtomicString& tag);
 AtomicString FourByteTagToAtomicString(uint32_t tag);
@@ -154,4 +154,4 @@ private:
   FontVariationSettings() = default;
 };
 
-} // namespace bkfont
+} // namespace bkit

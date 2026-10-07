@@ -31,7 +31,7 @@
  */
 
 #include "font_data_cache.h"
-namespace bkfont {
+namespace bkit {
 
 std::shared_ptr<const SimpleFontData> FontDataCache::Get(std::shared_ptr<const FontPlatformData> platform_data, bool subpixel_ascent_descent) {
   if (!platform_data || !platform_data->Typeface()) return nullptr;
@@ -52,4 +52,4 @@ std::shared_ptr<const SimpleFontData> FontDataCache::Get(std::shared_ptr<const F
   return result;
 }
 
-} // namespace bkfont
+} // namespace bkit

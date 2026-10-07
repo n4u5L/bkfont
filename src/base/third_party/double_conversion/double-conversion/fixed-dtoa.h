@@ -30,7 +30,7 @@
 
 #include "utils.h"
 
-namespace bkfont::double_conversion {
+namespace bkit::double_conversion {
 
 // Produces digits necessary to print a given number with
 // 'fractional_count' digits after the decimal point.
@@ -51,4 +51,4 @@ namespace bkfont::double_conversion {
 bool FastFixedDtoa(double v, int fractional_count,
                    Vector<char> buffer, int* length, int* decimal_point);
 
-} // namespace bkfont::double_conversion
+} // namespace bkit::double_conversion

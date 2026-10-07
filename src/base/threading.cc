@@ -9,7 +9,7 @@
 #include "build/build_config.h"
 #include "base/stack_util.h"
 
-namespace bkfont {
+namespace bkit {
 
 #if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_WIN)
 base::PlatformThreadId CurrentThread() {
@@ -65,4 +65,4 @@ size_t Threading::ThreadStackSize() {
 }
 #endif
 
-} // namespace bkfont
+} // namespace bkit

@@ -8,7 +8,7 @@
 #include "base/text/wtf_string.h"
 
 #include "platform/typeface.h"
-namespace bkfont {
+namespace bkit {
 
 struct VariationAxis {
   String tag;
@@ -23,4 +23,4 @@ public:
   static Vector<VariationAxis> GetVariationAxes(std::shared_ptr<Typeface> typeface);
 };
 
-} // namespace bkfont
+} // namespace bkit

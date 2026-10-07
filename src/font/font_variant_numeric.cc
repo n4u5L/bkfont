@@ -7,7 +7,7 @@
 
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 static const char* kUnknownNumericString = "Unknown";
 
@@ -78,4 +78,4 @@ String FontVariantNumeric::ToString() const {
       ToString(SlashedZeroValue()).Ascii().c_str());
 }
 
-} // namespace bkfont
+} // namespace bkit

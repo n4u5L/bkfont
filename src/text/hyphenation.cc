@@ -12,7 +12,7 @@
 #include "base/containers/adapters.h"
 #include "base/text/string_view.h"
 
-namespace bkfont {
+namespace bkit {
 
 void Hyphenation::Initialize(const AtomicString& locale) {
   // TODO(crbug.com/1318385): How to control hyphenating capitalized words is
@@ -73,4 +73,4 @@ Vector<wtf_size_t, 8> Hyphenation::HyphenLocations(
   return hyphen_locations;
 }
 
-} // namespace bkfont
+} // namespace bkit

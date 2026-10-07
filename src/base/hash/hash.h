@@ -16,7 +16,7 @@
 #include "base/base_export.h"
 #include "base/containers/span.h"
 
-namespace bkfont::base {
+namespace bkit::base {
 
 // WARNING: These hash functions should not be used for any cryptographic
 // purpose.
@@ -97,4 +97,4 @@ size_t HashCombine(size_t seed, const T& first, const V&... values) {
   return HashCombine(hash, values...);
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base

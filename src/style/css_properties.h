@@ -33,7 +33,7 @@
 #include "style/css_value_keywords.h"
 #include "style/style_color.h"
 
-namespace bkfont {
+namespace bkit {
 
 // A <number> token (UnitType::kNumber).
 struct CSSNumber {
@@ -146,8 +146,8 @@ struct FontPalette {
     // <color-interpolation-method> (ConsumeColorInterpolationSpace()); a hue
     // interpolation method other than kShorter needs a polar space. kNone is
     // no method.
-    bkfont::Color::ColorSpace color_space = bkfont::Color::ColorSpace::kNone;
-    bkfont::Color::HueInterpolationMethod hue_interpolation = bkfont::Color::HueInterpolationMethod::kShorter;
+    bkit::Color::ColorSpace color_space = bkit::Color::ColorSpace::kNone;
+    bkit::Color::HueInterpolationMethod hue_interpolation = bkit::Color::HueInterpolationMethod::kShorter;
     Input palette1;
     // A percentage in [0, 100] (a CSSLength) or a math function.
     std::optional<CSSLengthOrCalc> percentage1;
@@ -652,4 +652,4 @@ struct WhiteSpace {
 
 } // namespace css_shorthand
 
-} // namespace bkfont
+} // namespace bkit

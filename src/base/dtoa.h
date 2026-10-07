@@ -26,7 +26,7 @@
 #include "text/ascii_ctype.h"
 #include "text/wtf_uchar.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Size = 80 for sizeof(DtoaBuffer) + some sign bits, decimal point, 'e',
 // exponent digits.
@@ -53,4 +53,4 @@ void InitializeDoubleConverter();
 
 } // namespace internal
 
-} // namespace bkfont
+} // namespace bkit

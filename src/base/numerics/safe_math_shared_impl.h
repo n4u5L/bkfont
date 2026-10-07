@@ -22,7 +22,7 @@
 #define BASE_HAS_OPTIMIZED_SAFE_MATH (0)
 #endif
 
-namespace bkfont::base {
+namespace bkit::base {
 
 namespace internal {
 
@@ -197,4 +197,4 @@ struct MathWrapper {
 
 } // namespace internal
 
-} // namespace bkfont::base
+} // namespace bkit::base

@@ -5,7 +5,7 @@
 // found in the LICENSE file.
 #include "base/allocator/partition_allocator.h"
 
-namespace bkfont {
+namespace bkit {
 
 void* PartitionAllocator::AllocateBacking(std::size_t size,
                                           const char* type_name) {
@@ -22,4 +22,4 @@ char* PartitionAllocator::AllocateVectorBacking<char>(std::size_t size) {
       AllocateBacking(size, "PartitionAllocator::allocateVectorBacking<char>"));
 }
 
-} // namespace bkfont
+} // namespace bkit

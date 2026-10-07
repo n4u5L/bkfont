@@ -54,7 +54,7 @@
 #define SK_OUTLINE_EMBOLDEN_DIVISOR 24
 #endif
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -1997,4 +1997,4 @@ std::shared_ptr<Typeface> TypefaceFreeType::MakeFromStream(std::unique_ptr<Strea
   return std::make_shared<TypefaceFreeTypeStream>(std::move(data), name, style, is_fixed_pitch);
 }
 
-} // namespace bkfont
+} // namespace bkit

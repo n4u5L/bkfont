@@ -31,7 +31,7 @@ extern "C" void* __libc_stack_end; // NOLINT
 #include <sanitizer/asan_interface.h>
 #endif
 
-namespace bkfont {
+namespace bkit {
 
 size_t GetUnderestimatedStackSize() {
 // FIXME: ASAN bot uses a fake stack as a thread stack frame,
@@ -259,4 +259,4 @@ size_t ThreadStackSize() {
 
 } // namespace internal
 
-} // namespace bkfont
+} // namespace bkit

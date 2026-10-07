@@ -2,7 +2,7 @@
 #include "text_paint_style.h"
 #include "style/computed_style.h"
 
-namespace bkfont {
+namespace bkit {
 TextPaintStyle TextPaintStyle::FromStyle(const ComputedStyle& style) {
   return {style.Color(), style.ResolvedTextFillColor(), style.ResolvedTextStrokeColor(),
           style.ResolvedTextEmphasisColor(), style.TextStrokeWidth(), style.SharedTextShadow(), style.LegacyPaint()};
@@ -20,4 +20,4 @@ PlatformPaint TextPaintStyle::StrokePaint(bool shadow_phase) const {
   paint.SetColor(shadow_phase ? kBlackColor4f : stroke_color);
   return paint;
 }
-} // namespace bkfont
+} // namespace bkit

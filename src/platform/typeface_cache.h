@@ -8,7 +8,7 @@
 #include "base/vector.h"
 #include "typeface.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkGraphics::GetTypefaceCacheCountLimit's historical default value.
 inline constexpr int kTypefaceCacheCountLimit = 1024;
@@ -50,4 +50,4 @@ private:
   Vector<std::shared_ptr<Typeface>> typefaces_;
 };
 
-} // namespace bkfont
+} // namespace bkit

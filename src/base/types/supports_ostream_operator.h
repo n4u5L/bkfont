@@ -9,7 +9,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace bkfont::base::internal {
+namespace bkit::base::internal {
 
 // Detects whether using operator<< would work.
 //
@@ -19,4 +19,4 @@ template <typename T>
 concept SupportsOstreamOperator =
     requires(const T& t, std::ostream& os) { os << t; };
 
-} // namespace bkfont::base::internal
+} // namespace bkit::base::internal

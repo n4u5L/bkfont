@@ -12,7 +12,7 @@
 #include "font/unicode_range_set.h"
 #include "variation_selector_mode.h"
 
-namespace bkfont {
+namespace bkit {
 
 class FontPlatformData;
 class OpenTypeVerticalData;
@@ -46,4 +46,4 @@ private:
 };
 inline constexpr hb_codepoint_t kUnmatchedVSGlyphId = static_cast<hb_codepoint_t>(-1);
 
-} // namespace bkfont
+} // namespace bkit

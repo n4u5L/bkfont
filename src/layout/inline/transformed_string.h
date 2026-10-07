@@ -10,7 +10,7 @@
 #include "base/text/string_view.h"
 #include "base/text/text_offset_map.h"
 
-namespace bkfont {
+namespace bkit {
 
 // A string view with a TextOffsetMap::Length map: the Nth element is the
 // source length of the Nth character. An empty map means identity.
@@ -38,4 +38,4 @@ private:
   const std::span<const TextOffsetMap::Length> length_map_;
 };
 
-} // namespace bkfont
+} // namespace bkit

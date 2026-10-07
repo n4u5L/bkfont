@@ -5,7 +5,7 @@
 // Use of this source code is governed by a BSD-style license in LICENSE.
 #include "computed_style_base.h"
 
-namespace bkfont {
+namespace bkit {
 
 ComputedStyleBase::ComputedStyleBase()
     : inherited_data_(std::make_shared<StyleInheritedData>())
@@ -137,4 +137,4 @@ ComputedStyleBuilderBase::ComputedStyleBuilderBase(
       }
 {}
 
-} // namespace bkfont
+} // namespace bkit

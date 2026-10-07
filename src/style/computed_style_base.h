@@ -27,7 +27,7 @@
 #include "text/unicode_bidi.h"
 #include "text/writing_mode.h"
 
-namespace bkfont {
+namespace bkit {
 
 class ComputedStyleBuilderBase;
 
@@ -1263,4 +1263,4 @@ private:
   ComputedStyleBase::Data data_;
 };
 
-} // namespace bkfont
+} // namespace bkit

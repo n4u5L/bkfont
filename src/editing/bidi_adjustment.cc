@@ -6,7 +6,7 @@
 #include <cassert>
 #include <unicode/ubidi.h>
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 // NG-only adapter; the traversal/adjustment algorithms below are upstream's.
@@ -411,4 +411,4 @@ InlineCaretPosition AdjustHitTestForBidi(const InlineCaretPosition& position) {
   return adjusted.ToInlineCaretPosition();
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -11,7 +11,7 @@
 #include "text/text_run.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 template <typename TextContainerType>
 bool ShapeResultSpacing<TextContainerType>::SetSpacing(
@@ -195,4 +195,4 @@ TextRunLayoutUnit ShapeResultSpacing<TextContainerType>::ComputeSpacing(
 template class ShapeResultSpacing<TextRun>;
 template class ShapeResultSpacing<String>;
 
-} // namespace bkfont
+} // namespace bkit

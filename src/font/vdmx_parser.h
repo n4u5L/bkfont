@@ -35,7 +35,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace bkfont {
+namespace bkit {
 
 bool ParseVDMX(int* y_max,
                int* y_min,
@@ -43,4 +43,4 @@ bool ParseVDMX(int* y_max,
                std::size_t vdmx_length,
                unsigned target_pixel_size);
 
-} // namespace bkfont
+} // namespace bkit

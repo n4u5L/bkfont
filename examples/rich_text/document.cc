@@ -17,9 +17,9 @@ namespace {
 
 constexpr size_t kMaxFileBytes = 16 * 1024 * 1024;
 constexpr size_t kMaxTextUnits = 2 * 1024 * 1024;
-constexpr bkfont::wtf_size_t kHistoryLimit = 256;
+constexpr bkit::wtf_size_t kHistoryLimit = 256;
 // Views catch up at every input event, so a short log suffices.
-constexpr bkfont::wtf_size_t kEditLog = 64;
+constexpr bkit::wtf_size_t kEditLog = 64;
 
 // Each document numbers its edits in a range of its own, so a view never
 // takes another document's edits for its own.
@@ -75,7 +75,7 @@ uint32_t Document::Intern(Properties properties) {
   std::sort(properties.begin(), properties.end());
   for (uint32_t i = 0; i < styles_.size(); ++i)
     if (styles_[i].properties == properties) return i;
-  bkfont::StyleDeclaration declaration;
+  bkit::StyleDeclaration declaration;
   std::string error;
   const bool valid = BuildDeclaration(properties, declaration, error);
   assert(valid);
@@ -88,7 +88,7 @@ void Document::New(bool sample) {
   *this = Document();
   if (!sample) return;
   std::u16string text;
-  bkfont::Vector<PieceTree::Piece> pieces;
+  bkit::Vector<PieceTree::Piece> pieces;
   paragraphs_.clear();
   const auto paragraph = [&](std::u16string_view content, Properties character, Properties block) {
     const uint32_t character_id = Intern(std::move(character));
@@ -100,7 +100,7 @@ void Document::New(bool sample) {
   };
   paragraph(u"把想法，写成作品。", {{"font-size", "40px"}, {"font-weight", "700"}, {"color", "#185abd"}},
             {{"line-height", "1.25"}});
-  paragraph(u"一份可以编辑的排版实验 · bkfont", {{"font-size", "14px"}, {"color", "#808080"}, {"letter-spacing", "2px"}}, {});
+  paragraph(u"一份可以编辑的排版实验 · bkit", {{"font-size", "14px"}, {"color", "#808080"}, {"letter-spacing", "2px"}}, {});
   paragraph(u"从这里开始", {{"font-size", "24px"}, {"font-weight", "600"}}, {});
   paragraph(u"点击文字放置光标，拖动选择一段内容，再使用上方功能区更改格式。支持中文输入、复制粘贴、撤销重做，以及 JSON 文件的打开和保存。", {},
             {{"text-indent", "2em"}});
@@ -130,13 +130,13 @@ void Document::Select(Offset anchor, Offset focus) {
   typing_style_ = tree_.StyleAt(position);
 }
 
-Document::Offset Document::PiecesLength(const bkfont::Vector<PieceTree::Piece>& pieces) {
+Document::Offset Document::PiecesLength(const bkit::Vector<PieceTree::Piece>& pieces) {
   Offset result = 0;
   for (const auto& piece : pieces) result += piece.length;
   return result;
 }
-bkfont::Vector<uint32_t> Document::ParagraphStyles(Offset first, Offset count) const {
-  bkfont::Vector<uint32_t> styles;
+bkit::Vector<uint32_t> Document::ParagraphStyles(Offset first, Offset count) const {
+  bkit::Vector<uint32_t> styles;
   styles.Append(paragraphs_.data() + first, count);
   return styles;
 }
@@ -175,13 +175,13 @@ bool Document::ReplaceSelection(std::u16string_view input, std::string& error) {
   }
   const Offset first_paragraph = tree_.LineBreaksBefore(start);
   const Offset removed_paragraphs = tree_.LineBreaksBefore(start + removed) - first_paragraph;
-  const auto inserted_paragraphs = static_cast<bkfont::wtf_size_t>(std::count(text.begin(), text.end(), u'\n'));
+  const auto inserted_paragraphs = static_cast<bkit::wtf_size_t>(std::count(text.begin(), text.end(), u'\n'));
   Change change = BeginChange(start, removed, first_paragraph, removed_paragraphs + 1);
   if (!text.empty()) change.after.push_back(tree_.Append(text, typing_style_));
   tree_.Replace(start, removed, change.after);
   const uint32_t paragraph_style = paragraphs_[first_paragraph];
   paragraphs_.EraseAt(first_paragraph + 1, removed_paragraphs);
-  paragraphs_.InsertVector(first_paragraph + 1, bkfont::Vector<uint32_t>(inserted_paragraphs, paragraph_style));
+  paragraphs_.InsertVector(first_paragraph + 1, bkit::Vector<uint32_t>(inserted_paragraphs, paragraph_style));
   selection_ = {start + static_cast<Offset>(text.size()), start + static_cast<Offset>(text.size())};
   Commit(std::move(change), inserted_paragraphs + 1);
   error.clear();
@@ -190,7 +190,7 @@ bool Document::ReplaceSelection(std::u16string_view input, std::string& error) {
 
 bool Document::Format(std::string_view name, std::string_view value, std::string& error) {
   const auto* spec = FindProperty(name);
-  bkfont::StyleDeclaration validation;
+  bkit::StyleDeclaration validation;
   if (!spec || (!value.empty() && !BuildDeclaration({{std::string(name), std::string(value)}}, validation, error))) return false;
   const auto changed_style = [&](uint32_t old) {
     Properties properties = styles_[old].properties;
@@ -231,7 +231,7 @@ void Document::ClearCharacterFormatting() {
 }
 
 bool Document::SetCharacterStyle(Properties properties, std::string& error) {
-  bkfont::StyleDeclaration declaration;
+  bkit::StyleDeclaration declaration;
   if (!BuildDeclaration(properties, declaration, error)) return false;
   for (const auto& [name, value] : properties) {
     if (FindProperty(name)->paragraph) {
@@ -280,7 +280,7 @@ std::string Document::SelectedText() const {
 std::string Document::Serialize() const {
   // Only persist referenced styles, in first-use order, not undo history or
   // runtime node indices. Loading reconstructs a compact original buffer.
-  bkfont::Vector<uint32_t, 16> ids{0};
+  bkit::Vector<uint32_t, 16> ids{0};
   const auto remap = [&](uint32_t id) {
     const auto found = std::find(ids.begin(), ids.end(), id);
     if (found != ids.end()) return static_cast<uint32_t>(found - ids.begin());
@@ -303,7 +303,7 @@ std::string Document::Serialize() const {
     if (!paragraphs.empty()) paragraphs += ", ";
     paragraphs += std::to_string(remap(id));
   }
-  std::string output = "{\n  \"format\": \"bkfont-rich-text\",\n  \"version\": 1,\n  \"styles\": [\n";
+  std::string output = "{\n  \"format\": \"bkit-rich-text\",\n  \"version\": 1,\n  \"styles\": [\n";
   for (size_t i = 0; i < ids.size(); ++i) {
     if (i) output += ",\n";
     output += "    {";
@@ -328,14 +328,14 @@ bool Document::Load(std::string_view source, std::string& error) {
   const auto *format = json.Find("format"), *version = json.Find("version"), *styles = json.Find("styles"),
              *paragraphs = json.Find("paragraphs"), *runs = json.Find("runs");
   const auto fail = [&](const char* message) { error = message; return false; };
-  if (!format || format->type != Json::Type::String || format->string != "bkfont-rich-text" ||
+  if (!format || format->type != Json::Type::String || format->string != "bkit-rich-text" ||
       !version || version->type != Json::Type::Number || version->number != 1)
-    return fail("Expected bkfont-rich-text JSON version 1");
+    return fail("Expected bkit-rich-text JSON version 1");
   if (!styles || styles->type != Json::Type::Array || styles->array.empty() || styles->array.size() > 4096 ||
       !paragraphs || paragraphs->type != Json::Type::Array || !runs || runs->type != Json::Type::Array ||
       runs->array.size() > 100000) return fail("Invalid style, paragraph or run table");
   Document loaded;
-  bkfont::Vector<uint32_t> style_ids;
+  bkit::Vector<uint32_t> style_ids;
   for (const Json& style : styles->array) {
     if (style.type != Json::Type::Object || style.object.size() > PropertyCatalog().size()) return fail("Invalid style object");
     Properties properties;
@@ -343,7 +343,7 @@ bool Document::Load(std::string_view source, std::string& error) {
       if (value.type != Json::Type::String) return fail("CSS values must be strings");
       properties.emplace_back(name, value.string);
     }
-    bkfont::StyleDeclaration validation;
+    bkit::StyleDeclaration validation;
     if (!BuildDeclaration(properties, validation, error)) return false;
     style_ids.push_back(loaded.Intern(std::move(properties)));
   }
@@ -359,7 +359,7 @@ bool Document::Load(std::string_view source, std::string& error) {
     loaded.paragraphs_.push_back(style_ids[id]);
   }
   std::u16string original;
-  bkfont::Vector<PieceTree::Piece> pieces;
+  bkit::Vector<PieceTree::Piece> pieces;
   for (const Json& run : runs->array) {
     uint32_t id;
     const auto* text = run.Find("text");
@@ -405,7 +405,7 @@ bool Document::SaveFile(const std::string& path, std::string& error) {
     return false;
   }
   // Use a sibling temporary file. A failed write leaves the original intact.
-  const std::string temporary = path + ".bkfont-tmp";
+  const std::string temporary = path + ".bkit-tmp";
   FILE* file = Open(temporary, true);
   if (!file) {
     error = "Cannot create file: " + temporary;

@@ -16,7 +16,7 @@
 #include <climits>
 #include <limits>
 
-namespace bkfont::color_math {
+namespace bkit::color_math {
 
 constexpr float INFINITY_ = std::numeric_limits<float>::infinity();
 static inline float floorf_(float x) {
@@ -490,4 +490,4 @@ bool skcms_TransferFunction_invert(const skcms_TransferFunction* src, skcms_Tran
   return classify(*dst) == skcms_TFType_sRGBish;
 }
 
-} // namespace bkfont::color_math
+} // namespace bkit::color_math

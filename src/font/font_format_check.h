@@ -9,7 +9,7 @@
 #include <span>
 
 #include "platform/typeface.h"
-namespace bkfont {
+namespace bkit {
 
 class FontFormatCheck {
 
@@ -54,4 +54,4 @@ private:
   COLRVersion colr_version_ = COLRVersion::kNoCOLR;
 };
 
-} // namespace bkfont
+} // namespace bkit

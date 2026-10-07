@@ -8,7 +8,7 @@
 #include "strike.h"
 #include "strike_cache.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -219,4 +219,4 @@ const ScalerContextRec& BulkGlyphMetricsAndImages::Descriptor() const {
   return strike_->GetDescriptor();
 }
 
-} // namespace bkfont
+} // namespace bkit

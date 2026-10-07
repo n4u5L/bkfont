@@ -24,7 +24,7 @@
 #include "shape_result_run.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 ShapeResultView::RunInfoPart::RunInfoPart(const ShapeResultRun* run,
                                           GlyphDataRange range,
@@ -145,10 +145,10 @@ private:
     return direction;
   }
   bool IsLtr() const {
-    return bkfont::IsLtr(Direction());
+    return bkit::IsLtr(Direction());
   }
   bool IsRtl() const {
-    return bkfont::IsRtl(Direction());
+    return bkit::IsRtl(Direction());
   }
 
   template <typename ShapeResultType>
@@ -686,4 +686,4 @@ void ShapeResultView::ExpandRangeToIncludePartialGlyphs(unsigned* from,
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -14,7 +14,7 @@
 #include "base/text/string_hasher.h"
 
 #include <span>
-namespace bkfont {
+namespace bkit {
 
 uint32_t AtomicStringToFourByteTag(const AtomicString& tag) {
 
@@ -40,4 +40,4 @@ unsigned FontVariationSettings::GetHash() const {
   return computed_hash;
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -12,7 +12,7 @@
 #include "paint/rect.h"
 #include "typeface.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkFontHinting.
 enum class FontHinting : std::uint8_t {
@@ -165,4 +165,4 @@ private:
   FontHinting hinting_;
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -11,7 +11,7 @@
 #include "paint/color.h"
 
 #include "platform/typeface.h"
-namespace bkfont {
+namespace bkit {
 
 class PaletteInterpolation {
 public:
@@ -37,4 +37,4 @@ private:
   std::shared_ptr<Typeface> typeface_;
 };
 
-} // namespace bkfont
+} // namespace bkit

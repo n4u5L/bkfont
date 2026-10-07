@@ -39,7 +39,7 @@
 #include "shaping/shape_result_view.h"
 #include "text_fragment_paint_info.h"
 #include "text_run_paint_info.h"
-namespace bkfont {
+namespace bkit {
 
 static std::shared_ptr<FontFallbackList> GetOrCreateFontFallbackList(const FontDescription& description,
                                                                      FontSelector* selector) {
@@ -199,9 +199,9 @@ bool Font::IsFallbackValid() const {
   return !font_fallback_list_ || font_fallback_list_->IsValid();
 }
 
-} // namespace bkfont
+} // namespace bkit
 
-namespace bkfont {
+namespace bkit {
 
 void Font::DrawText(PaintCanvas* canvas,
                     const TextFragmentPaintInfo& text_info,
@@ -467,9 +467,9 @@ float Font::DeprecatedSubRunWidth(const TextRun& run,
   return x_pos;
 }
 
-} // namespace bkfont
+} // namespace bkit
 
-namespace bkfont {
+namespace bkit {
 
 GlyphData Font::GetEmphasisMarkGlyphData(const AtomicString& mark) const {
   if (mark.empty())
@@ -507,4 +507,4 @@ int Font::EmphasisMarkHeight(const AtomicString& mark) const {
   return mark_font_data->GetFontMetrics().Height();
 }
 
-} // namespace bkfont
+} // namespace bkit

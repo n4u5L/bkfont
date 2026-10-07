@@ -5,7 +5,7 @@
 // ports; exposing their bits does not mean those layout features exist yet.
 #pragma once
 
-namespace bkfont {
+namespace bkit {
 
 class StyleDifference {
 public:
@@ -28,4 +28,4 @@ private:
   unsigned flags_ = 0;
 };
 
-} // namespace bkfont
+} // namespace bkit

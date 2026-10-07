@@ -8,7 +8,7 @@
 #include <pthread.h>
 #endif
 
-namespace bkfont {
+namespace bkit {
 
 ThreadID GetThreadID() {
 #ifdef _WIN32
@@ -20,4 +20,4 @@ ThreadID GetThreadID() {
 #endif
 }
 
-} // namespace bkfont
+} // namespace bkit

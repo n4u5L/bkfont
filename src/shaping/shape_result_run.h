@@ -52,7 +52,7 @@
 
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 class SimpleFontData;
 
@@ -497,4 +497,4 @@ private:
   CanvasRotationInVertical canvas_rotation_;
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -12,7 +12,7 @@
 #include "base/text/atomic_string_hash.h"
 #include "style/style_declaration.h"
 
-namespace bkfont {
+namespace bkit {
 
 class StyleSheet {
 public:
@@ -56,4 +56,4 @@ private:
   uint64_t revision_ = 0;
 };
 
-} // namespace bkfont
+} // namespace bkit

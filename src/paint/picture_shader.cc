@@ -11,7 +11,7 @@
 #include "raster_canvas.h"
 #include "scalar.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 class PictureShader final : public Shader {
@@ -140,4 +140,4 @@ std::shared_ptr<const Shader> MakePictureShader(std::shared_ptr<const Picture> p
   if (!picture || picture->CullRect().IsEmpty() || tile.IsEmpty()) return MakeEmptyShader();
   return std::make_shared<PictureShader>(std::move(picture), tile, x, y, filter, local);
 }
-} // namespace bkfont
+} // namespace bkit

@@ -5,7 +5,7 @@
 
 #include "rect.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkMatrix restricted to affine transforms. COLRv1 paints also use translation
 // and transforms around a center; no glyph metrics transform uses perspective.
@@ -115,4 +115,4 @@ private:
 // where A maps the horizontal baseline.
 void ComputeGivensRotation(const ScalarPoint& h, ScalarMatrix* g);
 
-} // namespace bkfont
+} // namespace bkit

@@ -5,7 +5,7 @@
 #include <atomic>
 #include <utility>
 
-namespace bkfont {
+namespace bkit {
 
 TypefaceCache::TypefaceCache() = default;
 
@@ -56,4 +56,4 @@ std::uint32_t TypefaceCache::NewTypefaceID() {
   return static_cast<std::uint32_t>(next_id.fetch_add(1, std::memory_order_relaxed));
 }
 
-} // namespace bkfont
+} // namespace bkit

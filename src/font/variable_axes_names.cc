@@ -13,7 +13,7 @@
 
 #include "platform/typeface.h"
 #include "shaping/harfbuzz_face_from_typeface.h"
-namespace bkfont {
+namespace bkit {
 
 Vector<VariationAxis> VariableAxesNames::GetVariationAxes(
     std::shared_ptr<Typeface> typeface) {
@@ -59,4 +59,4 @@ Vector<VariationAxis> VariableAxesNames::GetVariationAxes(
   return output;
 }
 
-} // namespace bkfont
+} // namespace bkit

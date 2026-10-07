@@ -12,7 +12,7 @@
 #include "rect.h"
 #include "shader.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Drawable;
 class GlyphRunBuilder;
@@ -104,4 +104,4 @@ private:
   int save_count_ = 0;
 };
 
-} // namespace bkfont
+} // namespace bkit

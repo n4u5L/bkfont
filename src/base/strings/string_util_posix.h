@@ -16,7 +16,7 @@
 #include <string.h>
 #include <wchar.h>
 
-namespace bkfont::base {
+namespace bkit::base {
 
 // Chromium code style is to not use malloc'd strings; this is only for use
 // for interaction with APIs that require it.
@@ -39,4 +39,4 @@ inline int vswprintf(wchar_t* buffer,
   return ::vswprintf(buffer, size, format, arguments);
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base

@@ -8,7 +8,7 @@
 // FontSrcLocalMatching: content/common/features.cc, forwarded by runtime_features.cc.
 // Browser field trials are replaced by explicit configuration before font use.
 #pragma once
-namespace bkfont {
+namespace bkit {
 
 class RuntimeEnabledFeatures {
 public:
@@ -163,4 +163,4 @@ private:
   inline static bool TextSpacingTrimFallback2_ = false;
 };
 
-} // namespace bkfont
+} // namespace bkit

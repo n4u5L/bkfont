@@ -8,7 +8,7 @@
 #include <span>
 #include <string_view>
 
-namespace bkfont {
+namespace bkit {
 
 // Only ported properties have IDs. Longhands come first (high-priority
 // longhands before the others), then shorthands, then aliases, each in
@@ -157,4 +157,4 @@ CSSPropertyID CSSPropertyIDFromName(std::string_view);
 // CSSProperty::IsInSameLogicalPropertyGroupWithDifferentMappingLogic().
 bool IsInSameLogicalPropertyGroupWithDifferentMappingLogic(CSSPropertyID, CSSPropertyID);
 
-} // namespace bkfont
+} // namespace bkit

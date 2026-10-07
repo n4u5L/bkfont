@@ -15,7 +15,7 @@
 
 #include "matrix.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkPathDirection.
 enum class PathDirection : std::uint8_t {
@@ -166,4 +166,4 @@ private:
   FillType fill_type_ = FillType::kWinding;
 };
 
-} // namespace bkfont
+} // namespace bkit

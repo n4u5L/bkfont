@@ -10,7 +10,7 @@
 #include "base/vector.h"
 #include "layout/inline/offset_mapping.h"
 
-namespace bkfont {
+namespace bkit {
 
 // This is the helper class for constructing the model-to-TextContent offset
 // mapping. It holds an offset mapping, and provides APIs to modify the mapping
@@ -107,4 +107,4 @@ private:
   friend class SourceNodeScope;
 };
 
-} // namespace bkfont
+} // namespace bkit

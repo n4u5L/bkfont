@@ -30,7 +30,7 @@
 #include "base/forward.h"
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Returns a BCP-47 language tag such as "en-US".  This is the UI locale of the
 // browser application.
@@ -46,4 +46,4 @@ IndexOfBestMatchingLanguageInList(const AtomicString& language,
                                   const Vector<AtomicString>& language_list);
 void InitializePlatformLanguage();
 
-} // namespace bkfont
+} // namespace bkit

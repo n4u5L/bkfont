@@ -20,7 +20,7 @@
 #include "base/text/character_names.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -543,4 +543,4 @@ HanKerning::FontData::FontData(const SimpleFontData& font,
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

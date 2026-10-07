@@ -11,7 +11,7 @@
 #include "base/numerics/safe_conversions.h"
 #include "base/numerics/safe_math_shared_impl.h" // IWYU pragma: export
 
-namespace bkfont::base {
+namespace bkit::base {
 
 namespace internal {
 
@@ -251,4 +251,4 @@ using internal::ClampSub;
 using internal::ClampXor;
 using internal::MakeClampedNum;
 
-} // namespace bkfont::base
+} // namespace bkit::base

@@ -30,7 +30,7 @@
 
 #include "utils.h"
 
-namespace bkfont::double_conversion {
+namespace bkit::double_conversion {
 
 class DoubleToStringConverter {
 public:
@@ -437,4 +437,4 @@ private:
   DOUBLE_CONVERSION_DISALLOW_IMPLICIT_CONSTRUCTORS(DoubleToStringConverter);
 };
 
-} // namespace bkfont::double_conversion
+} // namespace bkit::double_conversion

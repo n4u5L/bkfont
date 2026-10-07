@@ -5,9 +5,9 @@
 
 #include "layout/inline/inline_caret_position.h"
 
-namespace bkfont {
+namespace bkit {
 
 InlineCaretPosition AdjustCaretForBidi(const InlineCaretPosition&);
 InlineCaretPosition AdjustHitTestForBidi(const InlineCaretPosition&);
 
-} // namespace bkfont
+} // namespace bkit

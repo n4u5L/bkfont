@@ -6,7 +6,7 @@
 
 #include <array>
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 constexpr CSSPropertyID kFontLonghands[] = {
@@ -196,4 +196,4 @@ bool IsInSameLogicalPropertyGroupWithDifferentMappingLogic(CSSPropertyID id, CSS
          a->is_logical != b->is_logical;
 }
 
-} // namespace bkfont
+} // namespace bkit

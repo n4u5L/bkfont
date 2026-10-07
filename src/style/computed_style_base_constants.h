@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-namespace bkfont {
+namespace bkit {
 
 enum class EOverflowWrap : uint8_t {
   kNormal,
@@ -185,4 +185,4 @@ enum class TextWrapStyle : uint8_t {
   kMaxEnumValue = kStable,
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -7,7 +7,7 @@
 #include <memory>
 #include <string>
 
-namespace bkfont {
+namespace bkit {
 
 class StreamAsset;
 
@@ -42,4 +42,4 @@ bool IsValidFallbackFont(FcPattern* pattern);
 // Fontconfig paths are native POSIX bytes and need not be valid UTF-8.
 std::unique_ptr<StreamAsset> OpenFontconfigStream(const std::string& filename);
 
-} // namespace bkfont
+} // namespace bkit

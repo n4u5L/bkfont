@@ -13,7 +13,7 @@
 #include "base/types/to_address.h"
 #include "base/forward.h"
 
-namespace bkfont {
+namespace bkit {
 
 //
 // A code point iterator for 8-bits or 16-bits strings.
@@ -177,4 +177,4 @@ inline void CodePointIterator::Utf16::operator++() {
   AdvanceByCodeUnits(code_point_length_);
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -26,7 +26,7 @@
 
 #include "font_selection_algorithm.h"
 
-namespace bkfont {
+namespace bkit {
 
 auto FontSelectionAlgorithm::StretchDistance(
     FontSelectionCapabilities capabilities) const -> DistanceResult {
@@ -156,4 +156,4 @@ bool FontSelectionAlgorithm::IsBetterMatchForRequest(
   return false;
 }
 
-} // namespace bkfont
+} // namespace bkit

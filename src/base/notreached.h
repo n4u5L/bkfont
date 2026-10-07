@@ -6,7 +6,7 @@
 
 #include "compiler_specific.h"
 
-namespace bkfont::logging {
+namespace bkit::logging {
 
 // NOTREACHED() annotates should-be unreachable code. It is fatal in every
 // build: it writes "<file>(<line>): fatal error: "NOTREACHED hit."" to stderr
@@ -14,6 +14,6 @@ namespace bkfont::logging {
 // not ported.
 [[noreturn]] NOINLINE void NotReachedFailure(std::source_location location = std::source_location::current());
 
-} // namespace bkfont::logging
+} // namespace bkit::logging
 
-#define NOTREACHED() ::bkfont::logging::NotReachedFailure()
+#define NOTREACHED() ::bkit::logging::NotReachedFailure()

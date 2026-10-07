@@ -8,7 +8,7 @@
 #include "font_manager.h"
 #include "typeface_freetype.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkTypeface_Custom. The base Typeface implementation for the custom font
 // manager.
@@ -99,4 +99,4 @@ private:
 // SkFontMgr_New_Custom_Empty.
 std::shared_ptr<FontManager> MakeFontManagerCustomEmpty();
 
-} // namespace bkfont
+} // namespace bkit

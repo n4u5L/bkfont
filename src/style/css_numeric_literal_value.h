@@ -5,7 +5,7 @@
 
 #include "style/css_primitive_value.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Represents a numeric literal: a number, percentage, length or angle with a
 // unit.
@@ -44,4 +44,4 @@ struct DowncastTraits<CSSNumericLiteralValue> {
   static bool AllowFrom(const CSSValue& value) { return value.IsNumericLiteralValue(); }
 };
 
-} // namespace bkfont
+} // namespace bkit

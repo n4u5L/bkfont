@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -270,4 +270,4 @@ bool BlendModeAffectsTransparentBlack(BlendMode mode) {
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

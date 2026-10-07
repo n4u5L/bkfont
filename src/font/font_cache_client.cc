@@ -4,7 +4,7 @@
 
 #include "font_cache.h"
 
-namespace bkfont {
+namespace bkit {
 
 FontCacheClient::~FontCacheClient() {
   while (!font_caches_.empty()) {
@@ -12,4 +12,4 @@ FontCacheClient::~FontCacheClient() {
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -8,7 +8,7 @@
 
 #include <string_view>
 
-namespace bkfont {
+namespace bkit {
 
 enum class CSSValueID {
   kInvalid = 0,
@@ -1133,4 +1133,4 @@ inline bool IsValidCSSValueID(CSSValueID id) {
 
 std::string_view GetCSSValueName(CSSValueID);
 
-} // namespace bkfont
+} // namespace bkit

@@ -32,7 +32,7 @@
 #include "base/allocator/allocator.h"
 #include "base/text/string_view.h"
 
-namespace bkfont {
+namespace bkit {
 
 template <typename StringType>
 class StringTypeAdapter {
@@ -193,4 +193,4 @@ private:
   const StringView view_;
 };
 
-} // namespace bkfont
+} // namespace bkit

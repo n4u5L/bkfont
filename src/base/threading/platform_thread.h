@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #endif
-namespace bkfont::base {
+namespace bkit::base {
 
 #if BUILDFLAG(IS_WIN)
 using PlatformThreadId = DWORD;
@@ -28,4 +28,4 @@ public:
   }
 };
 
-} // namespace bkfont::base
+} // namespace bkit::base

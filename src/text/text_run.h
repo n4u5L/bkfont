@@ -31,7 +31,7 @@
 #include "base/text/string_view.h"
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 // TextRun instances are immutable.
 class TextRun final {
@@ -138,4 +138,4 @@ private:
   const unsigned normalize_space_ : 1;
 };
 
-} // namespace bkfont
+} // namespace bkit

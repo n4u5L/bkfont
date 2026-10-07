@@ -30,15 +30,15 @@ float HarfBuzzUnitsToFloatOTMS(hb_position_t value) {
 constexpr unsigned kMaxHarfBuzzRecords = 20;
 
 hb_direction_t HarfBuzzDirection(
-    bkfont::OpenTypeMathStretchData::StretchAxis stretch_axis) {
-  return stretch_axis == bkfont::OpenTypeMathStretchData::StretchAxis::Horizontal
+    bkit::OpenTypeMathStretchData::StretchAxis stretch_axis) {
+  return stretch_axis == bkit::OpenTypeMathStretchData::StretchAxis::Horizontal
              ? HB_DIRECTION_LTR
              : HB_DIRECTION_BTT;
 }
 
 } // namespace
 
-namespace bkfont {
+namespace bkit {
 
 bool OpenTypeMathSupport::HasMathData(const HarfBuzzFace* harfbuzz_face) {
   if (!harfbuzz_face)
@@ -241,4 +241,4 @@ OpenTypeMathSupport::GetGlyphPartRecords(
   return parts;
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -17,7 +17,7 @@
 #include "scaler_context.h"
 #include "strike.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -519,4 +519,4 @@ GlyphPositionRoundingSpec::GlyphPositionRoundingSpec(bool is_subpixel, AxisAlign
       ignore_position_field_mask_y{IgnorePositionMaskY(is_subpixel, axis_alignment) & PackedGlyphID::kYFieldMask} {
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -32,7 +32,7 @@
 #include <cmath>
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 class FontPlatformData;
 class PlatformFont;
@@ -293,4 +293,4 @@ private:
   bool has_zero_width_ = false;
 };
 
-} // namespace bkfont
+} // namespace bkit

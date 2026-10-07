@@ -7,7 +7,7 @@
 #include "paint/color.h"
 #include "style/css_value.h"
 
-namespace bkfont {
+namespace bkit {
 namespace cssvalue {
 
 // Represents the non-keyword subset of <color>.
@@ -53,4 +53,4 @@ struct DowncastTraits<cssvalue::CSSColor> {
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

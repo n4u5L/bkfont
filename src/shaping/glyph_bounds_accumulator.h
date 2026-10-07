@@ -39,7 +39,7 @@
 #include "shape_result_run.h"
 #include "paint/geometry.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Helper class to accumulate glyph bounding box.
 //
@@ -123,4 +123,4 @@ private:
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

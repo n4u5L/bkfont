@@ -9,7 +9,7 @@
 #include "glyph.h"
 #include "paint/rect.h"
 
-namespace bkfont {
+namespace bkit {
 
 class PlatformFont;
 
@@ -40,4 +40,4 @@ float FontGetWidthForGlyph(const PlatformFont&, Glyph);
 // SkiaScalarToHarfBuzzPosition.
 hb_position_t ScalarToHarfBuzzPosition(float value);
 
-} // namespace bkfont
+} // namespace bkit

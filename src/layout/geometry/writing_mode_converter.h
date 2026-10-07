@@ -11,7 +11,7 @@
 #include "text/text_direction.h"
 #include "text/writing_mode.h"
 
-namespace bkfont {
+namespace bkit {
 
 // The physical-to-logical subset used by inline hit testing. The two enums
 // stand in for Blink's WritingDirectionMode; inner_size is zero for a point,
@@ -50,4 +50,4 @@ private:
   PhysicalSize outer_size_;
 };
 
-} // namespace bkfont
+} // namespace bkit

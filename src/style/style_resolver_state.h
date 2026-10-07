@@ -13,7 +13,7 @@
 #include "style/font_builder.h"
 #include "style/style_host_context.h"
 
-namespace bkfont {
+namespace bkit {
 
 class StyleResolverState {
 public:
@@ -62,4 +62,4 @@ private:
   CSSToLengthConversionData css_to_length_conversion_data_;
 };
 
-} // namespace bkfont
+} // namespace bkit

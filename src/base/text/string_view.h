@@ -21,7 +21,7 @@
 #include "base/memory/scoped_refptr.h"
 #endif
 
-namespace bkfont {
+namespace bkit {
 
 class CodePointIterator;
 
@@ -427,7 +427,7 @@ inline bool EqualIgnoringASCIICase(const StringView& a,
                     : EqualIgnoringASCIICase(a.Span16(), span);
 }
 
-// TODO(esprehn): Can't make this an overload of bkfont::equal since that makes
+// TODO(esprehn): Can't make this an overload of bkit::equal since that makes
 // calls to equal() that pass literal strings ambiguous. Figure out if we can
 // replace all the callers with equalStringView and then rename it to equal().
 bool EqualStringView(const StringView&, const StringView&);
@@ -442,8 +442,8 @@ inline bool operator!=(const StringView& a, const StringView& b) {
 
 inline wtf_size_t StringView::Find(CharacterMatchFunctionPtr match_function,
                                    wtf_size_t start) const {
-  return Is8Bit() ? bkfont::Find(Span8(), match_function, start)
-                  : bkfont::Find(Span16(), match_function, start);
+  return Is8Bit() ? bkit::Find(Span8(), match_function, start)
+                  : bkit::Find(Span16(), match_function, start);
 }
 
 template <bool isSpecialCharacter(UChar)>
@@ -457,4 +457,4 @@ inline bool StringView::IsAllSpecialCharacters() const {
 
 std::ostream& operator<<(std::ostream&, const StringView&);
 
-} // namespace bkfont
+} // namespace bkit

@@ -9,7 +9,7 @@
 
 #include <limits>
 
-namespace bkfont::base {
+namespace bkit::base {
 
 // [span.syn]: Constants
 inline constexpr size_t dynamic_extent = std::numeric_limits<size_t>::max();
@@ -24,4 +24,4 @@ template <typename ElementType,
           typename InternalPtrType = ElementType*>
 class span;
 
-} // namespace bkfont::base
+} // namespace bkit::base

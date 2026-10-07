@@ -4,7 +4,7 @@
 
 #include <utility>
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -39,4 +39,4 @@ bool LocalizedStringsNameTable::Next(Typeface::LocalizedString* localized_string
   return true;
 }
 
-} // namespace bkfont
+} // namespace bkit

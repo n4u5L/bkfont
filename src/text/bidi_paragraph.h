@@ -17,7 +17,7 @@
 #include "base/text/string_view.h"
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 // BidiParagraph resolves bidirectional runs in a paragraph using ICU BiDi.
 // http://userguide.icu-project.org/transforms/bidi
@@ -30,7 +30,7 @@ class BidiParagraph {
 
 public:
   BidiParagraph() = default;
-  BidiParagraph(const bkfont::String& text,
+  BidiParagraph(const bkit::String& text,
                 std::optional<TextDirection> base_direction) {
     SetParagraph(text, base_direction);
   }
@@ -40,7 +40,7 @@ public:
   //
   // Returns false on failure. Nothing other than the destructor should be
   // called.
-  bool SetParagraph(const bkfont::String&,
+  bool SetParagraph(const bkit::String&,
                     std::optional<TextDirection> base_direction);
 
   // @return the entire text is unidirectional.
@@ -74,7 +74,7 @@ public:
   // string with a Unicode BiDi override character (LRO or ROL) and PDF.
   // https://unicode.org/reports/tr9/#Explicit_Directional_Overrides
   // https://unicode.org/reports/tr9/#Terminating_Explicit_Directional_Embeddings_and_Overrides
-  static bkfont::String StringWithDirectionalOverride(const StringView& text,
+  static bkit::String StringWithDirectionalOverride(const StringView& text,
                                                       TextDirection direction);
 
   struct Run {
@@ -104,7 +104,7 @@ public:
   // Get a list of `Run` in the logical order (before bidi reorder.)
   // `text` must be the same one as `SetParagraph`.
   // This is higher-level API for `GetLogicalRun`.
-  void GetLogicalRuns(const bkfont::String& text, Runs* runs) const;
+  void GetLogicalRuns(const bkit::String& text, Runs* runs) const;
 
   // Returns the end offset of a logical run that starts from the |start|
   // offset.
@@ -113,7 +113,7 @@ public:
   // Get a list of `Run` in the visual order (after bidi reorder.)
   // `text` must be the same one as `SetParagraph`.
   // This is higher-level API for `GetLogicalRuns` and `IndicesInVisualOrder`.
-  void GetVisualRuns(const bkfont::String& text, Runs* runs) const;
+  void GetVisualRuns(const bkit::String& text, Runs* runs) const;
 
   // Create a list of indices in the visual order.
   // A wrapper for ICU |ubidi_reorderVisual()|.
@@ -150,4 +150,4 @@ inline TextDirection BidiParagraph::BaseDirectionForStringOrLtr(
   return BaseDirectionForString(text, stop_at).value_or(TextDirection::kLtr);
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -16,7 +16,7 @@
 #include "scaler_context.h"
 #include "strike_spec.h"
 
-namespace bkfont {
+namespace bkit {
 
 class StrikeCache;
 
@@ -122,4 +122,4 @@ private:
   bool removed_{false};
 };
 
-} // namespace bkfont
+} // namespace bkit

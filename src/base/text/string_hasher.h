@@ -30,7 +30,7 @@
 #include "base/text/wtf_uchar.h"
 #include "third_party/rapidhash/rapidhash.h"
 
-namespace bkfont {
+namespace bkit {
 
 class StringHasher {
 
@@ -106,4 +106,4 @@ private:
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

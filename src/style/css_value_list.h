@@ -11,7 +11,7 @@
 #include "style/css_value.h"
 #include "style/css_value_keywords.h"
 
-namespace bkfont {
+namespace bkit {
 
 class CSSValueList : public CSSValue {
 public:
@@ -92,4 +92,4 @@ struct DowncastTraits<CSSFunctionValue> {
   static bool AllowFrom(const CSSValue& value) { return value.IsFunctionValue(); }
 };
 
-} // namespace bkfont
+} // namespace bkit

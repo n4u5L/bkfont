@@ -5,7 +5,7 @@
 #include "base/text/string_view.h"
 #include "platform_export.h"
 
-namespace bkfont {
+namespace bkit {
 
 class ShapeResultView;
 
@@ -32,4 +32,4 @@ public:
   const ShapeResultView* shape_result;
 };
 
-} // namespace bkfont
+} // namespace bkit

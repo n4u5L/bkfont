@@ -8,7 +8,7 @@
 #include "style/css_initial_value.h"
 #include "style/css_unset_value.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 // ConsumeCSSWideKeyword().
@@ -113,4 +113,4 @@ bool StyleDeclaration::operator==(const StyleDeclaration& other) const {
   return entries_ == other.entries_ || std::ranges::equal(Entries(), other.Entries());
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -29,7 +29,7 @@
 #include "base/text/wtf_string.h"
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 class QuotesData : public RefCounted<QuotesData> {
 
@@ -62,4 +62,4 @@ private:
   Vector<std::pair<String, String>> quote_pairs_;
 };
 
-} // namespace bkfont
+} // namespace bkit

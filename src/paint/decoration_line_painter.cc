@@ -10,7 +10,7 @@
 #include "picture.h"
 #include "shader.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 float SelectBestDashGap(float length, float dash, float gap) {
   const float min_dashes = std::floor((length + gap) / (dash + gap));
@@ -177,4 +177,4 @@ void DecorationLinePainter::Paint(PaintCanvas* canvas, const DecorationGeometry&
     if (geometry.style == ETextDecorationStyle::kDouble) draw_rect(geometry.double_offset);
   }
 }
-} // namespace bkfont
+} // namespace bkit

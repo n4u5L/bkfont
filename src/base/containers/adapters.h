@@ -12,7 +12,7 @@
 #include "base/compiler_specific.h"
 #include "base/containers/adapters_internal.h"
 
-namespace bkfont::base {
+namespace bkit::base {
 
 // Returns a range adapter that exposes its elements as rvalues. When used as an
 // input range, this means the values in `range` will be moved from (and
@@ -45,4 +45,4 @@ auto Reversed(Range&& range LIFETIME_BOUND) {
   return internal::ReversedAdapter<Range>(std::forward<Range>(range));
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base

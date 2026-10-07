@@ -2,9 +2,9 @@
 // Japanese (vertical), Korean, English, Thai, Arabic and a few more scripts,
 // styled with the CSS longhands the style system implements.
 //
-//   bkfont_mushoku_tensei_example                 opens a scrollable window
-//   bkfont_mushoku_tensei_example --snapshot a.bmp renders the whole page
-//   bkfont_mushoku_tensei_example --render-scale 0.5 starts at half resolution
+//   bkit_mushoku_tensei_example                 opens a scrollable window
+//   bkit_mushoku_tensei_example --snapshot a.bmp renders the whole page
+//   bkit_mushoku_tensei_example --render-scale 0.5 starts at half resolution
 //   Keys: 1/2/3 = 100%/50%/25% resolution, F = nearest/linear magnification.
 //   --render-scale also applies to snapshots (the BMP stores the raster pixels).
 //
@@ -38,7 +38,7 @@
 
 namespace {
 
-using namespace bkfont;
+using namespace bkit;
 using P = CSSPropertyID;
 using V = CSSValueID;
 using Unit = CSSPrimitiveValue::UnitType;
@@ -722,9 +722,9 @@ Card EgyptianCard(const std::shared_ptr<FontSelector>& fonts) {
 // the hieroglyphs fall back to the system fonts.
 std::shared_ptr<FontSelector> LoadExampleFonts() {
   auto fonts = std::make_shared<FileFontSelector>();
-#ifdef BKFONT_EXAMPLE_FONT_DIR
+#ifdef BKIT_EXAMPLE_FONT_DIR
   (void)fonts->AddFontFile(AtomicString("Noto Sans Egyptian Hieroglyphs"),
-                           BKFONT_EXAMPLE_FONT_DIR "/NotoSansEgyptianHieroglyphs-Regular.ttf");
+                           BKIT_EXAMPLE_FONT_DIR "/NotoSansEgyptianHieroglyphs-Regular.ttf");
 #endif
   return fonts;
 }
@@ -964,7 +964,7 @@ int main(int argc, char** argv) {
   bool linear_filter = false;
   const char* snapshot_path = nullptr;
   const auto usage = [] {
-    std::puts("Usage: bkfont_mushoku_tensei_example [--render-scale 1|0.5|0.25] [--linear] [--snapshot file.bmp]\n"
+    std::puts("Usage: bkit_mushoku_tensei_example [--render-scale 1|0.5|0.25] [--linear] [--snapshot file.bmp]\n"
               "Keys: 1 = 100%, 2 = 50%, 3 = 25%, F = nearest/linear magnification, Esc = close.\n"
               "Snapshots store the selected render resolution, before magnification.");
   };
@@ -1003,7 +1003,7 @@ int main(int argc, char** argv) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
   glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
   GLFWwindow* window =
-      glfwCreateWindow(kWindowWidth, kWindowHeight, "bkfont | Mushoku Tensei multilingual", nullptr, nullptr);
+      glfwCreateWindow(kWindowWidth, kWindowHeight, "bkit | Mushoku Tensei multilingual", nullptr, nullptr);
   if (!window) {
     glfwTerminate();
     return 1;
@@ -1059,7 +1059,7 @@ int main(int argc, char** argv) {
         Present(raster.Pixels(), texture, width, height, resized, updated, page.linear_filter);
         char title[256];
         std::snprintf(title, sizeof(title),
-                        "bkfont | %d%% %dx%d -> %dx%d | %s | 1:100%% 2:50%% 3:25%% F:filter | Last raster %.1f ms",
+                        "bkit | %d%% %dx%d -> %dx%d | %s | 1:100%% 2:50%% 3:25%% F:filter | Last raster %.1f ms",
                         100 / page.render_divisor, raster.Pixels().Width(), raster.Pixels().Height(), width, height,
                         page.linear_filter ? "Linear" : "Nearest", raster_ms);
         glfwSetWindowTitle(window, title);

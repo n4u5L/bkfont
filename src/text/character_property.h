@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-namespace bkfont {
+namespace bkit {
 
 using CharacterPropertyType = uint16_t;
 
@@ -49,4 +49,4 @@ inline CharacterProperty operator|=(CharacterProperty& a, CharacterProperty b) {
   return a;
 }
 
-} // namespace bkfont
+} // namespace bkit

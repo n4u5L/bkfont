@@ -10,7 +10,7 @@
 #include "base/text/character_names.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -311,7 +311,7 @@ void ScriptRunIterator::CloseBracket(UChar32 ch) {
         // And pop stack to this point.
         int num_popped =
             static_cast<int>(std::distance(brackets_.rbegin(), it));
-        // TODO: No resize operation in bkfont::Deque?
+        // TODO: No resize operation in bkit::Deque?
         for (int i = 0; i < num_popped; ++i)
           brackets_.pop_back();
         brackets_fixup_depth_ = static_cast<wtf_size_t>(
@@ -499,4 +499,4 @@ UScriptCode ScriptRunIterator::ResolveCurrentScript() const {
   return result == USCRIPT_COMMON ? common_preferred_ : result;
 }
 
-} // namespace bkfont
+} // namespace bkit

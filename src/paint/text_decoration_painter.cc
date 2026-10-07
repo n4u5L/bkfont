@@ -7,7 +7,7 @@
 #include "text_decoration_info.h"
 #include "text_paint_style.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 void ClipDecorationLine(PaintCanvas* canvas, const DecorationGeometry& geometry, float baseline,
                         const PointF& origin, const Font& font, const TextFragmentPaintInfo& text,
@@ -56,4 +56,4 @@ void PaintTextDecorations(PaintCanvas* canvas, const TextFragmentPaintInfo& text
     }
   }
 }
-} // namespace bkfont
+} // namespace bkit

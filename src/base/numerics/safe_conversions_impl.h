@@ -17,7 +17,7 @@
 
 #include "base/numerics/integral_constant_like.h"
 
-namespace bkfont::base::internal {
+namespace bkit::base::internal {
 
 // The std library doesn't provide a binary max_exponent for integers, however
 // we can compute an analog using std::numeric_limits<>::digits.
@@ -698,4 +698,4 @@ constexpr Dst CommonMaxOrMin(bool is_min) {
   return is_min ? kCommonMin<Dst, Src> : kCommonMax<Dst, Src>;
 }
 
-} // namespace bkfont::base::internal
+} // namespace bkit::base::internal

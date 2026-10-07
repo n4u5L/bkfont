@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <cassert>
 
-namespace bkfont {
+namespace bkit {
 
 size_t FragmentItems::FirstInlineFragmentItemIndex(const InlineObject& object) const {
   const auto found = first_items_.find(&object);
@@ -148,4 +148,4 @@ void FragmentItems::DirtyTextRange(const InlineObject& object, unsigned offset) 
   DirtyLine(dirty);
 }
 
-} // namespace bkfont
+} // namespace bkit

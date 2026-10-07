@@ -17,7 +17,7 @@
 #include "style/inline_style.h"
 #include "style/style_declaration.h"
 
-namespace bkfont {
+namespace bkit {
 
 class InlineFormattingContext;
 using InlineNodeId = uint64_t;
@@ -121,4 +121,4 @@ private:
   LayoutUnit atomic_baseline_;
 };
 
-} // namespace bkfont
+} // namespace bkit

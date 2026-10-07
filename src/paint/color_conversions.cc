@@ -14,10 +14,10 @@
 #include <numeric>
 #include <tuple>
 
-namespace bkfont {
+namespace bkit {
 
-using namespace bkfont::color_math;
-using bkfont::ColorFloat4;
+using namespace bkit::color_math;
+using bkit::ColorFloat4;
 
 // Namespace containing some of the helper methods for color conversions.
 namespace {
@@ -750,4 +750,4 @@ ColorFloat4 HWBToColorFloat4(float h, float w, float b, float alpha) {
   return ColorFloat4{red, green, blue, alpha};
 }
 
-} // namespace bkfont
+} // namespace bkit

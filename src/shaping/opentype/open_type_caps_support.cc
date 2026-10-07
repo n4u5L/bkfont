@@ -18,7 +18,7 @@
 #include "open_type_caps_support.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -305,4 +305,4 @@ bool OpenTypeCapsSupport::SyntheticSmallCapsAllowed() const {
   return font_synthesis_small_caps_ == FontDescription::kAutoFontSynthesisSmallCaps;
 }
 
-} // namespace bkfont
+} // namespace bkit

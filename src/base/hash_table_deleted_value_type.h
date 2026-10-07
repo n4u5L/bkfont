@@ -31,10 +31,10 @@
 
 // From Blink platform/wtf/hash_table_deleted_value_type.h.
 #pragma once
-namespace bkfont {
+namespace bkit {
 
 enum HashTableDeletedValueType {
   kHashTableDeletedValue
 };
 
-} // namespace bkfont
+} // namespace bkit

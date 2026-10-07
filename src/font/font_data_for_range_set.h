@@ -35,7 +35,7 @@
 #include <cmath>
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 class SimpleFontData;
 
@@ -82,4 +82,4 @@ protected:
   std::shared_ptr<const UnicodeRangeSet> range_set_;
 };
 
-} // namespace bkfont
+} // namespace bkit

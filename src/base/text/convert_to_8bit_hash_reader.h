@@ -33,7 +33,7 @@
 
 #include "base/compiler_specific.h"
 
-namespace bkfont {
+namespace bkit {
 
 // This HashReader is for converting 16-bit strings to 8-bit strings,
 // assuming that all characters are within Latin1 (i.e., the high bit
@@ -104,4 +104,4 @@ struct ConvertTo8BitHashReader {
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -12,7 +12,7 @@
 #include <cstdlib>
 #include "base/immediate_crash.h"
 
-namespace bkfont {
+namespace bkit {
 
 void Partitions::Initialize() {
   // The CRT heap needs no explicit initialization.
@@ -94,4 +94,4 @@ void Partitions::FastFree(void* address) {
   std::free(address);
 }
 
-} // namespace bkfont
+} // namespace bkit

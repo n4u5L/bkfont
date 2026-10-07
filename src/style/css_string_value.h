@@ -9,7 +9,7 @@
 #include "base/text/wtf_string.h"
 #include "style/css_value.h"
 
-namespace bkfont {
+namespace bkit {
 
 // A <string>.
 class CSSStringValue : public CSSValue {
@@ -74,4 +74,4 @@ struct DowncastTraits<CSSFontFamilyValue> {
   static bool AllowFrom(const CSSValue& value) { return value.IsFontFamilyValue(); }
 };
 
-} // namespace bkfont
+} // namespace bkit

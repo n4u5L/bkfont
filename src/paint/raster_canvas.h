@@ -19,7 +19,7 @@
 #include "path_rasterizer.h"
 #include "surface_props.h"
 
-namespace bkfont {
+namespace bkit {
 
 class RasterCanvas final : public Canvas, private GlyphRunListPainterCPU::BitmapDevicePainter {
 public:
@@ -160,4 +160,4 @@ private:
   ScratchBuffer* scratch_ = nullptr;
 };
 
-} // namespace bkfont
+} // namespace bkit

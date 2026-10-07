@@ -25,7 +25,7 @@
 #include <utility>
 #include "base/memory/scoped_refptr.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Original bulk-operation traits. Collection tracing and clearing unused GC
 // slots are absent; ordinary object construction and destruction remain.
@@ -84,10 +84,10 @@ struct VectorTraits<std::pair<First, Second>> {
       FirstTraits::kCanCompareWithMemcmp && SecondTraits::kCanCompareWithMemcmp;
 };
 
-} // namespace bkfont
+} // namespace bkit
 
 #define BASE_ALLOW_MOVE_INIT_AND_COMPARE_WITH_MEM_FUNCTIONS(ClassName)    \
-  namespace bkfont {                                                      \
+  namespace bkit {                                                        \
                                                                           \
   template <>                                                             \
   struct VectorTraits<ClassName> : SimpleClassVectorTraits<ClassName> {}; \
@@ -95,7 +95,7 @@ struct VectorTraits<std::pair<First, Second>> {
   }
 
 #define BASE_ALLOW_MOVE_AND_INIT_WITH_MEM_FUNCTIONS(ClassName)   \
-  namespace bkfont {                                             \
+  namespace bkit {                                               \
                                                                  \
   template <>                                                    \
   struct VectorTraits<ClassName> : VectorTraitsBase<ClassName> { \
@@ -106,7 +106,7 @@ struct VectorTraits<std::pair<First, Second>> {
   }
 
 #define BASE_ALLOW_INIT_WITH_MEM_FUNCTIONS(ClassName)            \
-  namespace bkfont {                                             \
+  namespace bkit {                                               \
                                                                  \
   template <>                                                    \
   struct VectorTraits<ClassName> : VectorTraitsBase<ClassName> { \

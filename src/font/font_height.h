@@ -11,7 +11,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Represents line-progression metrics for line boxes and inline boxes.
 // Computed for inline boxes, then the metrics of inline boxes are united to
@@ -69,4 +69,4 @@ struct FontHeight {
 
 std::ostream& operator<<(std::ostream&, const FontHeight&);
 
-} // namespace bkfont
+} // namespace bkit

@@ -40,7 +40,7 @@
 #include "base/text/string_view.h"
 #include "base/wtf_size_t.h"
 
-namespace bkfont {
+namespace bkit {
 
 // This class lets you get UTF-8 data out of a String without mallocing a
 // separate buffer to hold the data if the String happens to be 8 bit and
@@ -80,4 +80,4 @@ private:
   base::raw_span<const char> span_;
 };
 
-} // namespace bkfont
+} // namespace bkit

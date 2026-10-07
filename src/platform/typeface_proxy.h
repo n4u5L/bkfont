@@ -7,7 +7,7 @@
 #include "scaler_context.h"
 #include "typeface.h"
 
-namespace bkfont {
+namespace bkit {
 
 class TypefaceProxy;
 
@@ -60,4 +60,4 @@ private:
   std::shared_ptr<Typeface> real_typeface_;
 };
 
-} // namespace bkfont
+} // namespace bkit

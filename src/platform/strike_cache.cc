@@ -7,7 +7,7 @@
 
 #include "strike.h"
 
-namespace bkfont {
+namespace bkit {
 
 StrikeCache* StrikeCache::GlobalStrikeCache() {
   static auto* cache = new StrikeCache;
@@ -184,4 +184,4 @@ void StrikeCache::InternalRemoveStrike(Strike* strike) {
   strike_lookup_.erase(desc);
 }
 
-} // namespace bkfont
+} // namespace bkit

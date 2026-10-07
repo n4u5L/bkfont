@@ -4,7 +4,7 @@
 
 #include <utility>
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -274,4 +274,4 @@ std::shared_ptr<Typeface> FontStyleSet::MatchStyleCSS3(const FontStyle& pattern)
   return CreateTypeface(max_score.index);
 }
 
-} // namespace bkfont
+} // namespace bkit

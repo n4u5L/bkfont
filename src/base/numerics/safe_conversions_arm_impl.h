@@ -15,7 +15,7 @@
 
 #include "base/numerics/safe_conversions_impl.h"
 
-namespace bkfont::base {
+namespace bkit::base {
 
 namespace internal {
 
@@ -45,4 +45,4 @@ struct SaturateFastAsmOp {
 
 } // namespace internal
 
-} // namespace bkfont::base
+} // namespace bkit::base

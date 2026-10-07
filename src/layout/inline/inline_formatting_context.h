@@ -16,7 +16,7 @@
 #include "style/style_resolver.h"
 #include "style/style_sheet.h"
 
-namespace bkfont {
+namespace bkit {
 
 class PaintCanvas;
 class InlineCursor;
@@ -73,8 +73,8 @@ public:
   void SetStyle(const InlineObject&, const InlineStyle&);
   void SetInlineStyle(const InlineObject&, const StyleDeclaration&);
   void SetRules(const InlineObject&, Vector<AtomicString>);
-  bkfont::StyleSheet& StyleSheet() { return style_sheet_; }
-  const bkfont::StyleSheet& StyleSheet() const { return style_sheet_; }
+  bkit::StyleSheet& StyleSheet() { return style_sheet_; }
+  const bkit::StyleSheet& StyleSheet() const { return style_sheet_; }
   // Document-level style inputs. Changing either recalculates every style.
   const StyleHostContext& StyleHost() const {
     return style_host_;
@@ -169,7 +169,7 @@ private:
   // Settings, font selector, root style and zoom factors. Root declarations
   // do not affect the cached initial style.
   StyleHostContext style_host_;
-  bkfont::StyleSheet style_sheet_;
+  bkit::StyleSheet style_sheet_;
   StyleDifference invalidation_;
   // The root needs or has a descendant needing style recalc.
   bool styles_dirty_ = true;
@@ -181,4 +181,4 @@ private:
   InlineNodeId next_id_ = 1;
 };
 
-} // namespace bkfont
+} // namespace bkit

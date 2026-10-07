@@ -45,7 +45,7 @@
 #include "base/third_party/double_conversion/double-conversion/double-conversion.h"
 #include "base/wtf_size_t.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -205,4 +205,4 @@ void InitializeDoubleConverter() {
 
 } // namespace internal
 
-} // namespace bkfont
+} // namespace bkit

@@ -7,7 +7,7 @@
 #include "style/style_builder.h"
 #include "style/style_resolver_state.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 // CascadeExpansion objects which exceed these limits emit nothing.
@@ -117,4 +117,4 @@ void StyleCascade::LookupAndApplyDeclaration(CSSPropertyID id, CascadePriority* 
   StyleBuilder::ApplyPhysicalProperty(id, state_, *ValueAt(match_result_, priority->GetPosition()));
 }
 
-} // namespace bkfont
+} // namespace bkit

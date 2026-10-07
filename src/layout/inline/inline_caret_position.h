@@ -3,7 +3,7 @@
 
 #include "layout/inline/inline_cursor.h"
 
-namespace bkfont {
+namespace bkit {
 
 enum class InlineCaretPositionType {
   kBeforeBox,
@@ -25,4 +25,4 @@ struct InlineCaretPosition {
 
 InlineCaretPosition ComputeInlineCaretPosition(InlineFormattingContext&, InlinePosition);
 
-} // namespace bkfont
+} // namespace bkit

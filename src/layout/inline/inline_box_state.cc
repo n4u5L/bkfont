@@ -11,7 +11,7 @@
 #include "layout/inline_text_metrics.h"
 #include "shaping/shape_result_view.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 FontHeight ComputeEmphasisMarkOutsets(const ComputedStyle& style, const Font& font) {
@@ -305,4 +305,4 @@ FontHeight InlineLayoutStateStack::MetricsForTopAndBottomAlign(const InlineBoxSt
   return max;
 }
 
-} // namespace bkfont
+} // namespace bkit

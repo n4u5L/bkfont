@@ -5,7 +5,7 @@
 
 #include <algorithm>
 
-namespace bkfont {
+namespace bkit {
 
 float FragmentItem::CaretInlinePosition(unsigned offset, const String& text,
                                         AdjustMidCluster adjust_mid_cluster) const {
@@ -38,4 +38,4 @@ unsigned FragmentItem::TextOffsetForPoint(float position, const String& text) co
   return std::clamp(offset, text_offset_.start, text_offset_.end);
 }
 
-} // namespace bkfont
+} // namespace bkit

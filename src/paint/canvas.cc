@@ -10,7 +10,7 @@
 #include "picture.h"
 #include "text_blob.h"
 
-namespace bkfont {
+namespace bkit {
 
 Canvas::Canvas()
     : scratch_glyph_run_builder_(std::make_unique<GlyphRunBuilder>()) {
@@ -117,4 +117,4 @@ void Canvas::OnDrawTextBlob(const std::shared_ptr<const TextBlob>& blob, float x
   OnDrawGlyphRunList(glyph_run_list, paint);
 }
 
-} // namespace bkfont
+} // namespace bkit

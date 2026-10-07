@@ -16,7 +16,7 @@
 #include "layout/inline/offset_mapping_builder.h"
 #include "layout/inline/transformed_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 class InlineItemsBuilder {
 public:
@@ -100,4 +100,4 @@ private:
   UChar previous_character_ = uchar::kSpace;
 };
 
-} // namespace bkfont
+} // namespace bkit

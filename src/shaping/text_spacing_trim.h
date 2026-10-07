@@ -5,7 +5,7 @@
 
 #pragma once
 
-namespace bkfont {
+namespace bkit {
 
 // Values for the `text-spacing-trim` property.
 // https://drafts.csswg.org/css-text-4/#text-spacing-trim-property
@@ -36,4 +36,4 @@ inline bool ShouldTrimEnd(TextSpacingTrim value) {
   return value != TextSpacingTrim::kSpaceAll;
 }
 
-} // namespace bkfont
+} // namespace bkit

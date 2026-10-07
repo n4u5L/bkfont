@@ -12,7 +12,7 @@
 
 #include <type_traits>
 
-namespace bkfont {
+namespace bkit {
 
 inline int Blend(int from, int to, double progress) {
   return static_cast<int>(lround(from + (to - from) * progress));
@@ -45,4 +45,4 @@ inline PointF Blend(const PointF& from,
                      Blend(from.y(), to.y(), progress));
 }
 
-} // namespace bkfont
+} // namespace bkit

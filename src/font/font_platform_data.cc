@@ -31,7 +31,7 @@
 #include "runtime_enabled_features.h"
 #include "shaping/harfbuzz_face.h"
 
-namespace bkfont {
+namespace bkit {
 
 FontPlatformData::FontPlatformData() = default;
 
@@ -56,7 +56,7 @@ FontPlatformData::FontPlatformData(const FontPlatformData& src, float text_size)
                        src.synthetic_italic_, src.text_rendering_, src.resolved_font_features_, src.orientation_) {
 }
 
-FontPlatformData::FontPlatformData(std::shared_ptr<bkfont::Typeface> typeface,
+FontPlatformData::FontPlatformData(std::shared_ptr<bkit::Typeface> typeface,
                                    const String&,
                                    float text_size,
                                    bool synthetic_bold,
@@ -79,7 +79,7 @@ FontPlatformData::~FontPlatformData() = default;
 bool FontPlatformData::operator==(const FontPlatformData& a) const {
   const bool equal_faces = (!typeface_ || !a.typeface_)
                                ? typeface_ == a.typeface_
-                               : bkfont::Typeface::Equal(typeface_.get(), a.typeface_.get());
+                               : bkit::Typeface::Equal(typeface_.get(), a.typeface_.get());
   return equal_faces && text_size_ == a.text_size_ &&
          is_hash_table_deleted_value_ == a.is_hash_table_deleted_value_ &&
          synthetic_bold_ == a.synthetic_bold_ &&
@@ -96,7 +96,7 @@ std::uint32_t FontPlatformData::UniqueID() const {
 
 String FontPlatformData::FontFamilyName() const {
   auto font_family_iterator = typeface_->CreateFamilyNameIterator();
-  bkfont::Typeface::LocalizedString localized_string{String(""), String("")};
+  bkit::Typeface::LocalizedString localized_string{String(""), String("")};
   while (font_family_iterator->Next(&localized_string) &&
          localized_string.string.empty()) {
   }
@@ -161,4 +161,4 @@ PlatformFont FontPlatformData::CreatePlatformFont(const FontDescription*) const 
   return font;
 }
 
-} // namespace bkfont
+} // namespace bkit

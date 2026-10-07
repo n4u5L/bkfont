@@ -29,7 +29,7 @@
 #include "font/font_description.h"
 #include "style/font_size_functions.h"
 
-namespace bkfont {
+namespace bkit {
 
 class ComputedStyle;
 class ComputedStyleBuilder;
@@ -186,4 +186,4 @@ private:
   static_assert(static_cast<int>(PropertySetFlag::kNumFlags) <= sizeof(flags_) * 8);
 };
 
-} // namespace bkfont
+} // namespace bkit

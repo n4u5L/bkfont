@@ -22,7 +22,7 @@
 // Note: This algorithm is also in Blink under Source/wtf/StringHasher.h.
 extern "C" uint32_t SuperFastHash(const char* data, int len);
 
-namespace bkfont::base {
+namespace bkit::base {
 
 namespace {
 
@@ -162,4 +162,4 @@ size_t HashInts64(uint64_t value1, uint64_t value2) {
   return Scramble(HashInts64Impl(value1, value2));
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base

@@ -47,7 +47,7 @@
 
 #include <span>
 #include <string>
-namespace bkfont {
+namespace bkit {
 
 // Multiplying the floating point size by 100 gives two decimal point
 // precision which should be sufficient.
@@ -98,7 +98,7 @@ public:
         device_scale_factor_hash,
         size_adjust_ ? size_adjust_.GetHash() : 0,
 #if BUILDFLAG(IS_ANDROID)
-        (locale_.empty() ? 0 : bkfont::GetHash(locale_)) ^
+        (locale_.empty() ? 0 : bkit::GetHash(locale_)) ^
 #endif // BUILDFLAG(IS_ANDROID)
             (variation_settings_ ? variation_settings_->GetHash() : 0),
         palette_ ? palette_->GetHash() : 0,
@@ -155,7 +155,7 @@ private:
 };
 
 template <>
-struct HashTraits<FontCacheKey> : SimpleClassHashTraits<bkfont::FontCacheKey> {
+struct HashTraits<FontCacheKey> : SimpleClassHashTraits<bkit::FontCacheKey> {
   // std::string (inside FontFaceCreationParams) and the std::shared_ptr
   // fields require construction; their empty state need not be all zero.
   static const bool kEmptyValueIsZero = false;
@@ -166,11 +166,11 @@ struct HashTraits<FontCacheKey> : SimpleClassHashTraits<bkfont::FontCacheKey> {
 // strings. Copying this string as part of `KeyValuePairExtractor` will thus
 // trigger ASAN warnings.
 
-} // namespace bkfont
+} // namespace bkit
 
 template <>
-struct std::hash<bkfont::FontCacheKey> {
-  std::size_t operator()(bkfont::FontCacheKey const& s) const noexcept {
+struct std::hash<bkit::FontCacheKey> {
+  std::size_t operator()(bkit::FontCacheKey const& s) const noexcept {
     return static_cast<size_t>(s.GetHash());
   }
 };

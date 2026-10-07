@@ -38,7 +38,7 @@
 #include "base/vector.h"
 #include "style/shadow_data.h"
 
-namespace bkfont {
+namespace bkit {
 
 using ShadowDataVector = Vector<ShadowData, 1>;
 
@@ -73,4 +73,4 @@ private:
   ShadowDataVector shadows_;
 };
 
-} // namespace bkfont
+} // namespace bkit

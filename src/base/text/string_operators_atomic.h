@@ -25,7 +25,7 @@
 
 #include "base/text/string_operators.h"
 
-namespace bkfont {
+namespace bkit {
 
 template <>
 class StringTypeAdapter<AtomicString> : public StringTypeAdapter<StringView> {
@@ -53,4 +53,4 @@ StringAppend<AtomicString, T> operator+(const AtomicString& string1,
   return StringAppend<AtomicString, T>(string1, string2);
 }
 
-} // namespace bkfont
+} // namespace bkit

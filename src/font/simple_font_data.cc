@@ -59,7 +59,7 @@
 #include "paint/geometry.h"
 #include "text_metrics.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -507,4 +507,4 @@ float SimpleFontData::ZeroInlineSize() const {
   return size;
 }
 
-} // namespace bkfont
+} // namespace bkit

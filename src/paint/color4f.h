@@ -8,7 +8,7 @@
 
 #include "mask_gamma.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkRGBA4f. Unpremultiplied (Color4f) or premultiplied (PMColor4f) floats in
 // the sRGB-encoded legacy color space, which is the only one used here.
@@ -73,4 +73,4 @@ inline constexpr Color4f kBlackColor4f{0, 0, 0, 1};
 inline constexpr ColorARGB kColorTransparent = 0x00000000u;
 inline constexpr ColorARGB kColorBlack = 0xFF000000u;
 
-} // namespace bkfont
+} // namespace bkit

@@ -9,7 +9,7 @@
 #include "style/css_identifier_value.h"
 #include "style/css_primitive_value.h"
 
-namespace bkfont {
+namespace bkit {
 
 // One shadow of text-shadow. `blur`, `spread`, `style` and `color` may be
 // null when omitted.
@@ -49,4 +49,4 @@ struct DowncastTraits<CSSShadowValue> {
   static bool AllowFrom(const CSSValue& value) { return value.IsShadowValue(); }
 };
 
-} // namespace bkfont
+} // namespace bkit

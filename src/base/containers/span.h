@@ -31,7 +31,7 @@
 // removed; callers must satisfy the original bounds/lifetime preconditions.
 // Size parameters retain this port's size_t interface.
 
-namespace bkfont::base {
+namespace bkit::base {
 
 // Provides a compile-time fixed extent to the `count` argument of the span
 // constructor.
@@ -40,20 +40,20 @@ namespace bkfont::base {
 template <size_t N>
 using fixed_extent = std::integral_constant<size_t, N>;
 
-} // namespace bkfont::base
+} // namespace bkit::base
 
 // Mark `span` as satisfying the `view` and `borrowed_range` concepts. This
 // should be done before the definition of `span`, so that any inlined calls to
 // range functionality use the correct specializations.
 template <typename ElementType, size_t Extent, typename InternalPtrType>
 inline constexpr bool
-    std::ranges::enable_view<bkfont::base::span<ElementType, Extent, InternalPtrType>> =
+    std::ranges::enable_view<bkit::base::span<ElementType, Extent, InternalPtrType>> =
         true;
 template <typename ElementType, size_t Extent, typename InternalPtrType>
 inline constexpr bool std::ranges::enable_borrowed_range<
-    bkfont::base::span<ElementType, Extent, InternalPtrType>> = true;
+    bkit::base::span<ElementType, Extent, InternalPtrType>> = true;
 
-namespace bkfont::base {
+namespace bkit::base {
 
 // Allows global use of a type for conversion to byte spans.
 template <typename T>
@@ -170,14 +170,14 @@ concept CanSafelyConvertNonUniqueToByteSpan =
 // Used to bypass the safety check when compiling a class with std::atomic,
 // which is not trivially copyable on MSVC
 #define SKIP_BYTE_SPAN_SAFETY_CHECK_FOR(X)      \
-  namespace bkfont::base::internal {            \
+  namespace bkit::base::internal {              \
                                                 \
   template <>                                   \
   struct ByteSpanSafetyCheckSkippedForType<X> { \
     static constexpr bool value = true;         \
   };                                            \
                                                 \
-  } // namespace bkfont::base::internal
+  } // namespace bkit::base::internal
 
 #endif // !defined(_MSC_VER)
 
@@ -1359,4 +1359,4 @@ constexpr auto as_writable_byte_span(
   return as_writable_bytes(allow_nonunique_obj, span<ElementType, Extent>(arr));
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base

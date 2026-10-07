@@ -46,7 +46,7 @@
 #endif
 #endif
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -1774,4 +1774,4 @@ bool ScalerContextFTUtils::ComputeColrV1GlyphBoundingBox(FT_Face face, std::uint
 #endif
 }
 
-} // namespace bkfont
+} // namespace bkit

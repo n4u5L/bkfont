@@ -45,7 +45,7 @@
 #include "platform/platform_font.h"
 #include "platform/typeface.h"
 
-namespace bkfont {
+namespace bkit {
 
 class HarfBuzzFace;
 class FontDescription;
@@ -56,7 +56,7 @@ public:
   explicit FontPlatformData(HashTableDeletedValueType);
   FontPlatformData(const FontPlatformData&);
   FontPlatformData(const FontPlatformData&, float text_size);
-  FontPlatformData(std::shared_ptr<bkfont::Typeface>, const String& family, float text_size,
+  FontPlatformData(std::shared_ptr<bkit::Typeface>, const String& family, float text_size,
                    bool synthetic_bold, bool synthetic_italic,
                    TextRenderingMode, ResolvedFontFeatures,
                    FontOrientation = FontOrientation::kHorizontal);
@@ -85,7 +85,7 @@ public:
   bool SyntheticItalic() const {
     return synthetic_italic_;
   }
-  const std::shared_ptr<bkfont::Typeface>& Typeface() const {
+  const std::shared_ptr<bkit::Typeface>& Typeface() const {
     return typeface_;
   }
   HarfBuzzFace* GetHarfBuzzFace() const;
@@ -99,10 +99,10 @@ public:
     return resolved_font_features_;
   }
   bool IsVerticalAnyUpright() const {
-    return bkfont::IsVerticalAnyUpright(orientation_);
+    return bkit::IsVerticalAnyUpright(orientation_);
   }
   bool IsVerticalNonCJKUpright() const {
-    return bkfont::IsVerticalNonCJKUpright(orientation_);
+    return bkit::IsVerticalNonCJKUpright(orientation_);
   }
   void SetOrientation(FontOrientation value) {
     orientation_ = value;
@@ -126,7 +126,7 @@ public:
   bool FontContainsCharacter(UChar32) const;
 
 private:
-  const std::shared_ptr<bkfont::Typeface> typeface_;
+  const std::shared_ptr<bkit::Typeface> typeface_;
 
 public:
   float text_size_ = 0;
@@ -145,4 +145,4 @@ private:
   bool is_hash_table_deleted_value_ = false;
 };
 
-} // namespace bkfont
+} // namespace bkit

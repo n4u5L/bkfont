@@ -16,7 +16,7 @@
 #include <iterator>
 #include <memory>
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -661,4 +661,4 @@ Vector<Typeface::LocalizedString> FamilyNamesFromNameTable(std::span<const std::
   return result;
 }
 
-} // namespace bkfont
+} // namespace bkit

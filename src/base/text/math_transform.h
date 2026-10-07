@@ -6,7 +6,7 @@
 
 #include <unicode/umachine.h>
 
-namespace bkfont {
+namespace bkit {
 namespace unicode {
 
 // Lookup the mathematical italic variant of a code point.
@@ -14,4 +14,4 @@ namespace unicode {
 UChar32 ItalicMathVariant(UChar32 code_point);
 
 } // namespace unicode
-} // namespace bkfont
+} // namespace bkit

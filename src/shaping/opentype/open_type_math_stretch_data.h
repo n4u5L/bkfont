@@ -10,7 +10,7 @@
 
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 class OpenTypeMathStretchData {
 public:
@@ -43,4 +43,4 @@ public:
   };
 };
 
-} // namespace bkfont
+} // namespace bkit

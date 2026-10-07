@@ -20,7 +20,7 @@
 #include "text/hyphenation/hyphenator_aosp.h"
 #include "text/layout_locale.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -270,4 +270,4 @@ scoped_refptr<HyphenationMinikin> HyphenationMinikin::FromDataForTesting(const A
   return hyphenation;
 }
 
-} // namespace bkfont
+} // namespace bkit

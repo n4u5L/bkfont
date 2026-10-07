@@ -7,7 +7,7 @@
 #include "paint/picture.h"
 #include "strike_cache.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -180,4 +180,4 @@ void Strike::UpdateMemoryUsage(std::size_t increase) {
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

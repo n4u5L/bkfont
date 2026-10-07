@@ -7,7 +7,7 @@
 #include "font/font_selector.h"
 #include "layout/inline/inline_formatting_context.h"
 
-namespace bkfont {
+namespace bkit {
 
 InlineStyle InlineStyle::Zoom(float factor) const {
   assert(std::isfinite(factor) && factor > 0);
@@ -89,4 +89,4 @@ bool InlineObject::HasInlineFragments() const {
   return root_->HasInlineFragments(*this);
 }
 
-} // namespace bkfont
+} // namespace bkit

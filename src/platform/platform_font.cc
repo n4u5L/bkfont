@@ -7,7 +7,7 @@
 #include "strike.h"
 #include "strike_spec.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -207,4 +207,4 @@ float PlatformFont::GetMetrics(PlatformFontMetrics* metrics) const {
   return metrics->descent - metrics->ascent + metrics->leading;
 }
 
-} // namespace bkfont
+} // namespace bkit

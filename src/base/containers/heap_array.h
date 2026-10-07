@@ -14,7 +14,7 @@
 #include "base/compiler_specific.h"
 #include "base/containers/span.h"
 
-namespace bkfont::base {
+namespace bkit::base {
 
 // HeapArray<T> is a replacement for std::unique_ptr<T[]> that keeps track
 // of its size. It is intended to provide easy conversion to span<T> for most
@@ -255,4 +255,4 @@ private:
   size_t size_ = 0u;
 };
 
-} // namespace bkfont::base
+} // namespace bkit::base

@@ -42,7 +42,7 @@
 #include "color_float.h"
 #include <cstdint>
 
-namespace bkfont {
+namespace bkit {
 
 typedef unsigned RGBA32; // RGBA quadruplet
 
@@ -115,7 +115,7 @@ public:
   };
 
   // For testing purposes and for serializer.
-  static bkfont::String ColorSpaceToString(Color::ColorSpace color_space);
+  static bkit::String ColorSpaceToString(Color::ColorSpace color_space);
 
   // https://www.w3.org/TR/css-color-4/#predefined
   static bool IsPredefinedColorSpace(ColorSpace color_space) {
@@ -151,7 +151,7 @@ public:
   }
 
   // TODO(crbug.com/ 1333988): We have to reevaluate how we input int RGB and
-  // RGBA values into bkfont::color. We should remove the int inputs in the
+  // RGBA values into bkit::color. We should remove the int inputs in the
   // interface, to avoid callers to have the double values and convert them to
   // int for then being converted again internally to float. We should deprecate
   // FromRGB, FromRGBA and FromRGBAFloat methods, to only allow for
@@ -270,28 +270,28 @@ public:
   // Host configuration replacing the Chromium feature (default disabled).
   static void SetBakedGamutMappingEnabled(bool);
 
-  bkfont::String SerializeInternal() const;
+  bkit::String SerializeInternal() const;
   // Returns the color serialized according to HTML5:
   // http://www.whatwg.org/specs/web-apps/current-work/#serialization-of-a-color
-  bkfont::String SerializeAsCSSColor() const;
+  bkit::String SerializeAsCSSColor() const;
   // Canvas colors are serialized somewhat differently:
   // https://html.spec.whatwg.org/multipage/canvas.html#serialisation-of-a-color
-  bkfont::String SerializeAsCanvasColor() const;
+  bkit::String SerializeAsCanvasColor() const;
   // For appending color interpolation spaces and hue interpolation methods to
   // the serialization of gradients and color-mix functions.
-  static bkfont::String SerializeInterpolationSpace(
+  static bkit::String SerializeInterpolationSpace(
       Color::ColorSpace color_space,
       Color::HueInterpolationMethod hue_interpolation_method =
           Color::HueInterpolationMethod::kShorter);
 
   // Returns the color serialized as either #RRGGBB or #RRGGBBAA. The latter
   // format is not a valid CSS color, and should only be seen in DRT dumps.
-  bkfont::String NameForLayoutTreeAsText() const;
+  bkit::String NameForLayoutTreeAsText() const;
 
   // Returns whether parsing succeeded. The resulting Color is arbitrary
   // if parsing fails.
-  bool SetFromString(const bkfont::String&);
-  bool SetNamedColor(const bkfont::String&);
+  bool SetFromString(const bkit::String&);
+  bool SetNamedColor(const bkit::String&);
 
   bool IsFullyTransparent() const {
     return Alpha() <= 0.0f;
@@ -412,7 +412,7 @@ public:
   void ResolveNonFiniteValues();
 
 private:
-  bkfont::String SerializeLegacyColorAsCSSColor() const;
+  bkit::String SerializeLegacyColorAsCSSColor() const;
   constexpr explicit Color(RGBA32 color)
       : param0_is_none_(0),
         param1_is_none_(0),
@@ -499,4 +499,4 @@ std::ostream& operator<<(std::ostream& os, const Color& color);
 
 int DifferenceSquared(const Color&, const Color&);
 
-} // namespace bkfont
+} // namespace bkit

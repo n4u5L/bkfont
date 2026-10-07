@@ -40,7 +40,7 @@
 #include "base/thread_specific.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -1027,4 +1027,4 @@ TextBreakIterator* CursorMovementIterator(base::span<const UChar> string) {
   return iterator.get();
 }
 
-} // namespace bkfont
+} // namespace bkit

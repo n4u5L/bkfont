@@ -4,7 +4,7 @@
 
 #include <cstdint>
 
-namespace bkfont {
+namespace bkit {
 
 // SkFontMetrics. The Metrics for a single font, in the typeface's y-down
 // coordinates.
@@ -105,4 +105,4 @@ struct PlatformFontMetrics {
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

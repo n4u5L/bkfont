@@ -11,7 +11,7 @@
 #include "rect.h"
 #include "scalar.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkPointPriv / SkPoint helpers on vectors.
 namespace point {
@@ -136,4 +136,4 @@ struct Conic {
   float w = 1;
 };
 
-} // namespace bkfont
+} // namespace bkit

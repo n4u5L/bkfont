@@ -30,7 +30,7 @@ public:
   };
   struct Style {
     Properties properties;
-    bkfont::StyleDeclaration declaration;
+    bkit::StyleDeclaration declaration;
   };
   // Paragraphs [paragraph, paragraph + removed) became [paragraph,
   // paragraph + inserted); text or style changed in the new ones only.
@@ -43,7 +43,7 @@ public:
   const PieceTree& Tree() const {
     return tree_;
   }
-  const bkfont::Vector<uint32_t>& Paragraphs() const {
+  const bkit::Vector<uint32_t>& Paragraphs() const {
     return paragraphs_;
   }
   const Style& GetStyle(uint32_t index) const {
@@ -95,30 +95,30 @@ public:
 private:
   struct Change {
     Offset position = 0;
-    bkfont::Vector<PieceTree::Piece> before, after;
+    bkit::Vector<PieceTree::Piece> before, after;
     // Only the styles of the edited paragraphs, not of the whole document.
     Edit edit;
-    bkfont::Vector<uint32_t> paragraphs_before, paragraphs_after;
+    bkit::Vector<uint32_t> paragraphs_before, paragraphs_after;
     Selection selection_before, selection_after;
     uint64_t revision_before = 0, revision_after = 0;
   };
   uint32_t Intern(Properties);
   Change BeginChange(Offset position, Offset length, Offset paragraph, Offset paragraphs) const;
   void Commit(Change, Offset paragraphs);
-  bkfont::Vector<uint32_t> ParagraphStyles(Offset first, Offset count) const;
+  bkit::Vector<uint32_t> ParagraphStyles(Offset first, Offset count) const;
   void RecordEdit(Edit);
   void Restore(const Change&, bool forward);
-  static Offset PiecesLength(const bkfont::Vector<PieceTree::Piece>&);
+  static Offset PiecesLength(const bkit::Vector<PieceTree::Piece>&);
 
   PieceTree tree_;
-  bkfont::Vector<Style> styles_;
-  bkfont::Vector<uint32_t> paragraphs_{0};
+  bkit::Vector<Style> styles_;
+  bkit::Vector<uint32_t> paragraphs_{0};
   Selection selection_;
   uint32_t typing_style_ = 0;
-  bkfont::Vector<Change> history_;
-  bkfont::wtf_size_t history_cursor_ = 0;
+  bkit::Vector<Change> history_;
+  bkit::wtf_size_t history_cursor_ = 0;
   uint64_t revision_ = 0, saved_revision_ = 0, next_revision_ = 1;
-  bkfont::Vector<Edit> edits_; // The latest edits, ending at edit_version_.
+  bkit::Vector<Edit> edits_; // The latest edits, ending at edit_version_.
   uint64_t edit_version_;
 };
 

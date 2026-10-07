@@ -33,7 +33,7 @@
 #include "bignum.h"
 #include "ieee.h"
 
-namespace bkfont::double_conversion {
+namespace bkit::double_conversion {
 
 static int NormalizedExponent(uint64_t significand, int exponent) {
   (void)0;
@@ -633,4 +633,4 @@ static void FixupMultiply10(int estimated_power, bool is_even,
   }
 }
 
-} // namespace bkfont::double_conversion
+} // namespace bkit::double_conversion

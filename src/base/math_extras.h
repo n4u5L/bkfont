@@ -47,7 +47,7 @@
 #include <sys/types.h>
 #endif
 
-namespace bkfont {
+namespace bkit {
 
 constexpr double kPiDouble = M_PI;
 constexpr float kPiFloat = static_cast<float>(M_PI);
@@ -335,4 +335,4 @@ constexpr size_t LowestCommonMultiple(size_t a, size_t b) {
   return a && b ? a / GreatestCommonDivisor(a, b) * b : 0;
 }
 
-} // namespace bkfont
+} // namespace bkit

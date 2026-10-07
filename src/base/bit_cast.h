@@ -2,8 +2,8 @@
 // Upstream reference: chromium/base/bit_cast.h
 #pragma once
 #include <bit>
-namespace bkfont::base {
+namespace bkit::base {
 
 using std::bit_cast;
 
-} // namespace bkfont::base
+} // namespace bkit::base

@@ -37,7 +37,7 @@
 #include "text/text_run.h"
 #include "base/text/character_names.h"
 
-namespace bkfont {
+namespace bkit {
 
 #define STRING_BUFFER_SIZE 2048
 
@@ -211,4 +211,4 @@ String StringTruncator::RightTruncate(const String& string,
   return TruncateString(string, max_width, font, RightTruncateToBuffer);
 }
 
-} // namespace bkfont
+} // namespace bkit

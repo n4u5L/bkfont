@@ -11,7 +11,7 @@
 
 #include "canvas.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkPicture: a recorded list of canvas operations.
 class Picture {
@@ -86,4 +86,4 @@ private:
   std::unique_ptr<RecordingCanvas> canvas_;
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -1,7 +1,7 @@
 // Ported from: chromium/base/types/pass_key.h
 // access token used by extracted constructors.
 #pragma once
-namespace bkfont::base {
+namespace bkit::base {
 
 template <typename T>
 class PassKey {
@@ -9,4 +9,4 @@ class PassKey {
   constexpr PassKey() = default;
 };
 
-} // namespace bkfont::base
+} // namespace bkit::base

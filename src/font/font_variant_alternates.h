@@ -14,7 +14,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 class FontVariantAlternates {
 public:
@@ -103,4 +103,4 @@ private:
   ResolvedFontFeatures resolved_features_;
 };
 
-} // namespace bkfont
+} // namespace bkit

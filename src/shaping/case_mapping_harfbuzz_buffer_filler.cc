@@ -12,7 +12,7 @@
 #include "base/text/case_map.h"
 #include "base/text/utf16.h"
 
-namespace bkfont {
+namespace bkit {
 
 static const uint16_t* ToUint16(const UChar* src) {
   // FIXME: This relies on undefined behavior however it works on the
@@ -94,4 +94,4 @@ void CaseMappingHarfBuzzBufferFiller::FillSlowCase(
   hb_buffer_add_utf16(harfbuzz_buffer_, ToUint16(buffer.data()), buffer.size(), start_index + num_characters, 0);
 }
 
-} // namespace bkfont
+} // namespace bkit

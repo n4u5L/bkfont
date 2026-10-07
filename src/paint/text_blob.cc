@@ -14,7 +14,7 @@
 #include "platform_paint.h"
 #include "platform/strike_spec.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -473,4 +473,4 @@ std::shared_ptr<const TextBlob> TextBlobBuilder::Make() {
   return blob;
 }
 
-} // namespace bkfont
+} // namespace bkit

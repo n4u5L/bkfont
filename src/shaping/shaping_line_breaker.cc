@@ -19,7 +19,7 @@
 #include "shaping/shape_result_view.h"
 #include "text/text_break_iterator.h"
 
-namespace bkfont {
+namespace bkit {
 
 ShapingLineBreaker::ShapingLineBreaker(
     const ShapeResult* result,
@@ -708,4 +708,4 @@ std::unique_ptr<const ShapeResultView> ShapingLineBreaker::ShapeLineAt(unsigned 
                             line_start_result, line_end_result);
 }
 
-} // namespace bkfont
+} // namespace bkit

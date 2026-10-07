@@ -8,11 +8,11 @@
 #include "document.h"
 #include "inline_layout.h"
 
-namespace bkfont {
+namespace bkit {
 
 class RasterCanvas;
 
-} // namespace bkfont
+} // namespace bkit
 
 namespace rich_text {
 
@@ -23,7 +23,7 @@ namespace rich_text {
 class DocumentView {
 public:
   struct NodeMap {
-    bkfont::InlineNodeId id;
+    bkit::InlineNodeId id;
     uint32_t start, length;
   };
   struct Block {
@@ -31,11 +31,11 @@ public:
     float x = 0, y = 0, width = 0, height = 0;
     bool vertical = false, rtl = false;
     std::u16string text;                  // Without the newline.
-    bkfont::Vector<uint32_t> boundaries;  // Grapheme boundaries in `text`, 0 to text.size().
+    bkit::Vector<uint32_t> boundaries;    // Grapheme boundaries in `text`, 0 to text.size().
     size_t words = 0;
-    bkfont::Vector<NodeMap> nodes;
-    std::unique_ptr<bkfont::InlineFormattingContext> context;
-    bkfont::InlinePosition Position(uint32_t offset, bkfont::TextAffinity = bkfont::TextAffinity::kDownstream) const;
+    bkit::Vector<NodeMap> nodes;
+    std::unique_ptr<bkit::InlineFormattingContext> context;
+    bkit::InlinePosition Position(uint32_t offset, bkit::TextAffinity = bkit::TextAffinity::kDownstream) const;
   };
   // Page rows (device pixels from the top of the page) whose pixels may differ
   // from what was painted: rebuilt, moved or removed paragraphs, the page end
@@ -45,16 +45,16 @@ public:
   };
   struct Damage {
     bool full = false;
-    bkfont::Vector<Rows> rows;
+    bkit::Vector<Rows> rows;
   };
   void Update(const Document&, float device_scale, float zoom, bool force = false);
   // Records the highlight that the next Paint() will show.
   void InvalidateSelection(const Document::Selection&);
   Damage TakeDamage();
-  uint32_t Hit(float x, float y, bkfont::TextAffinity* = nullptr);
-  bkfont::PhysicalRect Caret(uint32_t, bkfont::TextAffinity = bkfont::TextAffinity::kDownstream);
+  uint32_t Hit(float x, float y, bkit::TextAffinity* = nullptr);
+  bkit::PhysicalRect Caret(uint32_t, bkit::TextAffinity = bkit::TextAffinity::kDownstream);
   // `marks` paints Word-style paragraph marks (¶) after each paragraph.
-  void Paint(bkfont::RasterCanvas&, float x, float y, float clip_top, float clip_bottom, const Document::Selection&,
+  void Paint(bkit::RasterCanvas&, float x, float y, float clip_top, float clip_bottom, const Document::Selection&,
              bool marks = false);
   uint32_t Move(uint32_t offset, int direction, bool word) const;
   // The UAX #29 word (or run of spaces/punctuation) containing `offset`.
@@ -75,19 +75,19 @@ public:
   }
 
 private:
-  void Build(Block&, const Document&, bkfont::wtf_size_t paragraph, uint32_t start, float device_scale, float zoom);
-  bkfont::wtf_size_t BlockIndex(uint32_t offset) const;
+  void Build(Block&, const Document&, bkit::wtf_size_t paragraph, uint32_t start, float device_scale, float zoom);
+  bkit::wtf_size_t BlockIndex(uint32_t offset) const;
   bool IsSpace(uint32_t offset) const;
   void DamageRows(float top, float bottom);
   void DamageRange(uint32_t start, uint32_t end);
 
-  bkfont::Vector<Block> blocks_;
+  bkit::Vector<Block> blocks_;
   size_t words_ = 0;
   float scale_ = 0;
   float page_width_ = 0, page_height_ = 0;
   uint64_t version_ = 0; // Document::EditVersion() of blocks_.
   Document::Selection painted_selection_;
-  bkfont::Vector<Rows> damage_;
+  bkit::Vector<Rows> damage_;
   bool damage_full_ = true;
 };
 

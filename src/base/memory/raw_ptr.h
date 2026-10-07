@@ -5,7 +5,7 @@
 #pragma once
 #include <cstddef>
 
-namespace bkfont {
+namespace bkit {
 
 template <typename T>
 class raw_ptr {
@@ -43,4 +43,4 @@ private:
   T* value_ = nullptr;
 };
 
-} // namespace bkfont
+} // namespace bkit

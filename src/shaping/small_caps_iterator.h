@@ -11,7 +11,7 @@
 #include "script_run_iterator.h"
 #include "utf16_text_iterator.h"
 
-namespace bkfont {
+namespace bkit {
 
 class SmallCapsIterator {
 
@@ -37,4 +37,4 @@ private:
   SmallCapsBehavior previous_small_caps_behavior_;
 };
 
-} // namespace bkfont
+} // namespace bkit

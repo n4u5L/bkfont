@@ -6,11 +6,11 @@
 
 #include "font_manager.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkFontMgr_New_DirectWrite() with the shared factory, the system collection
 // and the system fallback. DirectWrite only enumerates, matches and falls
 // back; the typefaces it returns rasterize through FreeType.
 std::shared_ptr<FontManager> MakeFontManagerDirectWrite();
 
-} // namespace bkfont
+} // namespace bkit

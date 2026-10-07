@@ -31,7 +31,7 @@
 #include "fixed-dtoa.h"
 #include "ieee.h"
 
-namespace bkfont::double_conversion {
+namespace bkit::double_conversion {
 
 // Represents a 128bit type. This class should be replaced by a native type on
 // platforms that support 128bit integers.
@@ -398,4 +398,4 @@ bool FastFixedDtoa(double v,
   return true;
 }
 
-} // namespace bkfont::double_conversion
+} // namespace bkit::double_conversion

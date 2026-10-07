@@ -27,7 +27,7 @@
 #include "base/text/atomic_string.h"
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 static const char* UILanguage() {
   // Chrome's UI language can be different from the OS UI language on Windows.
@@ -44,4 +44,4 @@ const char* CurrentTextBreakLocaleID() {
   return UILanguage();
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -16,7 +16,7 @@
 #include "style/style_builder_converter.h"
 #include "style/style_resolver_state.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 using enum CSSPropertyID;
@@ -397,4 +397,4 @@ void StyleBuilder::ApplyPhysicalProperty(CSSPropertyID id, StyleResolverState& s
   else ApplyValue(id, state, value);
 }
 
-} // namespace bkfont
+} // namespace bkit

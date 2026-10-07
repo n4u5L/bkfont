@@ -39,7 +39,7 @@
 #include "forward.h"
 #include "vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 template <typename T, wtf_size_t InlineCapacity, typename Allocator>
 class DequeIteratorBase;
@@ -719,4 +719,4 @@ inline void swap(Deque<T, InlineCapacity, Allocator>& a,
   a.Swap(b);
 }
 
-} // namespace bkfont
+} // namespace bkit

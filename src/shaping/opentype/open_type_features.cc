@@ -10,7 +10,7 @@
 #include "shaping/harfbuzz_face.h"
 #include "font/simple_font_data.h"
 
-namespace bkfont {
+namespace bkit {
 
 OpenTypeFeatures::OpenTypeFeatures(const SimpleFontData& font)
     : features_(kInitialSize) {
@@ -34,4 +34,4 @@ OpenTypeFeatures::OpenTypeFeatures(const SimpleFontData& font)
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

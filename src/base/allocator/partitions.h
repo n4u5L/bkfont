@@ -3,7 +3,7 @@
 // Requested capacities are exact; no PartitionAlloc bucket rounding is applied.
 #pragma once
 #include <cstddef>
-namespace bkfont {
+namespace bkit {
 
 class Partitions {
 public:
@@ -25,4 +25,4 @@ public:
   static void FastFree(void*);
 };
 
-} // namespace bkfont
+} // namespace bkit

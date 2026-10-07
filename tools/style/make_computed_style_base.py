@@ -602,7 +602,7 @@ def field_source(field):
 
 def generate_constants(enums):
     lines = HEADER_COMMENT + ['#pragma once', '', '#include <stdint.h>', '']
-    lines += ['namespace bkfont {', '']
+    lines += ['namespace bkit {', '']
     for enum in enums:
         assert enum.set_type in (None, 'multi'), enum.type_name
         underlying = ('unsigned' if enum.set_type or len(enum.values) > 256
@@ -641,7 +641,7 @@ def generate_constants(enums):
             continue
         lines += ['  %s,' % value for value in enum.values]
         lines += ['  kMaxEnumValue = %s,' % enum.values[-1], '};', '']
-    lines += ['} // namespace bkfont', '']
+    lines += ['} // namespace bkit', '']
     return lines
 
 
@@ -667,7 +667,7 @@ def generate_header(root):
     lines += ['#include "%s"' % path for path in includes]
     lines += [
         '',
-        'namespace bkfont {',
+        'namespace bkit {',
         '',
         'class ComputedStyleBuilderBase;',
         '',
@@ -774,13 +774,13 @@ def generate_header(root):
     ]
     body += ['ComputedStyleBase::Data data_;']
     lines += ['  ' + line if line else '' for line in body]
-    lines += ['};', '', '} // namespace bkfont', '']
+    lines += ['};', '', '} // namespace bkit', '']
     return lines
 
 
 def generate_source(root):
     lines = HEADER_COMMENT + ['#include "computed_style_base.h"', '']
-    lines += ['namespace bkfont {', '']
+    lines += ['namespace bkit {', '']
 
     entries = [
         '%s(std::make_shared<%s>())' % (s.member_name, s.type_name)
@@ -823,7 +823,7 @@ def generate_source(root):
     ]
     lines += initializer_list(entries + data[:1])
     lines += data[1:]
-    lines += ['{}', '', '} // namespace bkfont', '']
+    lines += ['{}', '', '} // namespace bkit', '']
     return lines
 
 
@@ -841,7 +841,7 @@ def generate_mappings(mappings):
         '#include "style/computed_style_base.h"',
         '#include "style/css_value_keywords.h"',
         '',
-        'namespace bkfont {',
+        'namespace bkit {',
         'namespace detail {',
         '',
         'template <class T>',
@@ -870,7 +870,7 @@ def generate_mappings(mappings):
         lines += [
             '    default: break;', '  }', '  NOTREACHED();', '}', ''
         ]
-    lines += ['} // namespace detail', '} // namespace bkfont', '']
+    lines += ['} // namespace detail', '} // namespace bkit', '']
     return lines
 
 

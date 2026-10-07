@@ -46,7 +46,7 @@
 #include "platform/platform_font.h"
 #include "paint/geometry.h"
 
-namespace bkfont {
+namespace bkit {
 
 class NGShapeCache;
 
@@ -260,4 +260,4 @@ struct DowncastTraits<SimpleFontData> {
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

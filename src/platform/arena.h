@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-namespace bkfont {
+namespace bkit {
 
 class Arena {
 public:
@@ -55,4 +55,4 @@ private:
   std::vector<std::unique_ptr<std::byte[]>> blocks_;
 };
 
-} // namespace bkfont
+} // namespace bkit

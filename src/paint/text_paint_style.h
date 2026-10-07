@@ -5,7 +5,7 @@
 #include "platform_paint.h"
 #include "style/shadow_list.h"
 
-namespace bkfont {
+namespace bkit {
 class ComputedStyle;
 struct TextPaintStyle {
   Color4f current_color;
@@ -20,4 +20,4 @@ struct TextPaintStyle {
   PlatformPaint FillPaint(bool shadow_phase = false) const;
   PlatformPaint StrokePaint(bool shadow_phase = false) const;
 };
-} // namespace bkfont
+} // namespace bkit

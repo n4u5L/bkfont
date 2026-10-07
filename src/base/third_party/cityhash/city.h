@@ -69,7 +69,7 @@
 // XXX(cavalcantii): Declaring it inside of the 'base' namespace allows to
 // handle linker symbol clash error with deprecated CityHash from
 // third_party/smhasher in a few unit tests.
-namespace bkfont::base {
+namespace bkit::base {
 
 namespace internal {
 
@@ -128,4 +128,4 @@ inline uint64 Hash128to64(const uint128& x) {
 
 } // namespace internal
 
-} // namespace bkfont::base
+} // namespace bkit::base

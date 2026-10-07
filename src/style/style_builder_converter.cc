@@ -55,7 +55,7 @@
 #include "style/font_builder.h"
 #include "style/style_resolver_state.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 const double kFinalStatePercentage2 = 100.0;
@@ -770,4 +770,4 @@ AtomicString StyleBuilderConverter::ConvertStringOrAuto(StyleResolverState&, con
   return AtomicString(To<CSSStringValue>(value).Value());
 }
 
-} // namespace bkfont
+} // namespace bkit

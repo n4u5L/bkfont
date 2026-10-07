@@ -8,7 +8,7 @@
 #include <concepts>
 #include <type_traits>
 
-namespace bkfont {
+namespace bkit {
 
 // Helpers for downcasting in a class hierarchy.
 //
@@ -196,4 +196,4 @@ Derived* UnsafeTo(Base* from) {
   return from ? &UnsafeTo<Derived>(*from) : nullptr;
 }
 
-} // namespace bkfont
+} // namespace bkit

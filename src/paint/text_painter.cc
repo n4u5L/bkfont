@@ -9,7 +9,7 @@
 #include "text_decoration_painter.h"
 #include "text_shadow_painter.h"
 
-namespace bkfont {
+namespace bkit {
 void TextPainter::PaintText(PaintCanvas* canvas, const TextFragmentPaintInfo& text, const Font& font, PointF origin,
                             NodeId node, const TextPaintStyle& style, bool shadow) {
   font.DrawText(canvas, text, origin, node, style.FillPaint(shadow));
@@ -55,4 +55,4 @@ void TextPainter::Paint(PaintCanvas* canvas, const TextFragmentPaintInfo& text, 
     });
   }
 }
-} // namespace bkfont
+} // namespace bkit

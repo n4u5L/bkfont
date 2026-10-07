@@ -16,7 +16,7 @@
 #include "utf16_text_iterator.h"
 #include "text/character.h"
 
-namespace bkfont {
+namespace bkit {
 
 RunSegmenter::RunSegmenter(base::span<const UChar> buffer,
                            FontOrientation run_orientation)
@@ -74,4 +74,4 @@ bool RunSegmenter::Consume(RunSegmenterRange* next_range) {
   return true;
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -14,7 +14,7 @@
 #include <span>
 #include "base/vector.h"
 #include "base/hash_map.h"
-namespace bkfont {
+namespace bkit {
 
 class FontDescription;
 class FontFallbackList;
@@ -98,4 +98,4 @@ private:
   FontFallbackPriority font_fallback_priority_;
 };
 
-} // namespace bkfont
+} // namespace bkit

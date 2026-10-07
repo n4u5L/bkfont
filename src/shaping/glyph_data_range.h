@@ -9,7 +9,7 @@
 #include "base/forward.h"
 #include "glyph_data.h"
 
-namespace bkfont {
+namespace bkit {
 
 struct ShapeResultRun;
 
@@ -57,4 +57,4 @@ private:
   wtf_size_t size_ = 0;
 };
 
-} // namespace bkfont
+} // namespace bkit

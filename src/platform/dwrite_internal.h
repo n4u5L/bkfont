@@ -50,7 +50,7 @@
 #include "base/text/wtf_string.h"
 #include "font_style.h"
 
-namespace bkfont {
+namespace bkit {
 
 using Microsoft::WRL::ComPtr;
 
@@ -79,4 +79,4 @@ String DWriteLocalizedString(IDWriteLocalizedStrings* strings,
 // DWriteFontTypeface::GetStyle.
 FontStyle DWriteFontStyle(IDWriteFont* font, IDWriteFontFace* font_face);
 
-} // namespace bkfont
+} // namespace bkit

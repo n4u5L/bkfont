@@ -13,7 +13,7 @@
 #include "hash_traits.h"
 #include "vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 template <typename ValueArg, typename TraitsArg, typename Allocator>
 class LinkedHashSet;
@@ -711,4 +711,4 @@ void VectorBackedLinkedList<T, Allocator>::Unlink(const Node& node) {
   next_node.prev_index_ = prev_index;
 }
 
-} // namespace bkfont
+} // namespace bkit

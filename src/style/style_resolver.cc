@@ -6,7 +6,7 @@
 #include "style/style_cascade.h"
 #include "style/style_resolver_state.h"
 
-namespace bkfont {
+namespace bkit {
 
 std::shared_ptr<const ComputedStyle> StyleResolver::CreateInitialStyle(const StyleHostContext& host) {
   // StyleResolver::InitialStyleBuilderForElement().
@@ -55,4 +55,4 @@ std::shared_ptr<const ComputedStyle> StyleResolver::Resolve(const StyleHostConte
   return state.TakeStyle();
 }
 
-} // namespace bkfont
+} // namespace bkit

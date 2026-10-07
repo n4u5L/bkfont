@@ -36,13 +36,13 @@
 #include "platform_export.h"
 #include "base/forward.h"
 
-namespace bkfont {
+namespace bkit {
 
 UScriptCode
-LocaleToScriptCodeForFontSelection(const bkfont::String&);
-UScriptCode ScriptNameToCode(const bkfont::String&);
+LocaleToScriptCodeForFontSelection(const bkit::String&);
+UScriptCode ScriptNameToCode(const bkit::String&);
 
-UScriptCode ScriptCodeForHanFromSubtags(const bkfont::String&,
+UScriptCode ScriptCodeForHanFromSubtags(const bkit::String&,
                                         char delimiter = '-');
 
 inline bool IsUnambiguousHanScript(UScriptCode script) {
@@ -51,4 +51,4 @@ inline bool IsUnambiguousHanScript(UScriptCode script) {
   return script == USCRIPT_KATAKANA_OR_HIRAGANA || script == USCRIPT_SIMPLIFIED_HAN || script == USCRIPT_TRADITIONAL_HAN || script == USCRIPT_HANGUL;
 }
 
-} // namespace bkfont
+} // namespace bkit

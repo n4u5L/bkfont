@@ -35,7 +35,7 @@
 #include <span>
 #include "platform/typeface.h"
 
-namespace bkfont {
+namespace bkit {
 
 class WebFontDecoder final {
 
@@ -60,4 +60,4 @@ private:
   size_t decoded_size_ = 0;
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -10,7 +10,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 struct FontMetricsOverride {
   std::optional<float> ascent_override;
@@ -18,4 +18,4 @@ struct FontMetricsOverride {
   std::optional<float> line_gap_override;
 };
 
-} // namespace bkfont
+} // namespace bkit

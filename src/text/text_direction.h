@@ -31,7 +31,7 @@
 #include "base/i18n/rtl.h"
 #include "platform_export.h"
 
-namespace bkfont {
+namespace bkit {
 
 // The direction of text in bidirectional scripts such as Arabic or Hebrew.
 //
@@ -70,4 +70,4 @@ inline base::i18n::TextDirection ToBaseTextDirection(TextDirection direction) {
   };
 }
 
-} // namespace bkfont
+} // namespace bkit

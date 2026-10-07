@@ -22,7 +22,7 @@
 #include "text/text_direction.h"
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 class ShapeResult;
 
@@ -140,10 +140,10 @@ public:
     return static_cast<TextDirection>(direction_);
   }
   bool IsLtr() const {
-    return bkfont::IsLtr(Direction());
+    return bkit::IsLtr(Direction());
   }
   bool IsRtl() const {
-    return bkfont::IsRtl(Direction());
+    return bkit::IsRtl(Direction());
   }
   bool HasVerticalOffsets() const {
     return has_vertical_offsets_;
@@ -372,4 +372,4 @@ private:
                          const RunInfoPart& part) const;
 };
 
-} // namespace bkfont
+} // namespace bkit

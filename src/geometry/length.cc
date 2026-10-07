@@ -39,7 +39,7 @@
 #include "base/wtf.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 DEFINE_GLOBAL(, Length, g_auto_length);
 DEFINE_GLOBAL(, Length, g_fill_available_length);
@@ -160,7 +160,7 @@ Length Length::BlendSameTypes(const Length& from,
     result_type = from.GetType();
 
   float blended_value =
-      bkfont::Blend(from.GetFloatValue(), GetFloatValue(), progress);
+      bkit::Blend(from.GetFloatValue(), GetFloatValue(), progress);
   if (range == ValueRange::kNonNegative)
     blended_value = ClampTo<float>(blended_value, 0);
   return Length(blended_value, result_type);
@@ -366,4 +366,4 @@ struct SameSizeAsLength {
 };
 ;
 
-} // namespace bkfont
+} // namespace bkit

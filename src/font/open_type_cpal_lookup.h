@@ -11,7 +11,7 @@
 #include "base/vector.h"
 
 #include "platform/typeface.h"
-namespace bkfont {
+namespace bkit {
 
 /* Tools for inspecting the font palette of a COLR/CPAL font to find dark/light
  * mode preferred palettes and resolve string-based palette overrides as
@@ -39,4 +39,4 @@ public:
                                             unsigned int palette_index);
 };
 
-} // namespace bkfont
+} // namespace bkit

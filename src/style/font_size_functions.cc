@@ -34,7 +34,7 @@
 #include "style/computed_style_constants.h"
 #include "style/style_host_context.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 const int kFontSizeTableMax = 16;
@@ -192,4 +192,4 @@ std::optional<float> FontSizeFunctions::MetricsMultiplierAdjustedFontSize(const 
   return (size_adjust.Value() / aspect_value) * computed_size;
 }
 
-} // namespace bkfont
+} // namespace bkit

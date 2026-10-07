@@ -13,7 +13,7 @@
 #pragma once
 #include <cstdint>
 
-namespace bkfont {
+namespace bkit {
 
 struct ColorFloat4 {
   float fR, fG, fB, fA;
@@ -42,4 +42,4 @@ struct ColorFloat4 {
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

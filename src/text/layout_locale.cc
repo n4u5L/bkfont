@@ -25,7 +25,7 @@
 #include "base/thread_specific.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -443,4 +443,4 @@ void LayoutLocale::ClearForTesting() {
   GetPerThreadData() = PerThreadData();
 }
 
-} // namespace bkfont
+} // namespace bkit

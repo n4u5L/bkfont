@@ -13,7 +13,7 @@
 #include "font/simple_font_data.h"
 #include "geometry/length_functions.h"
 
-namespace bkfont {
+namespace bkit {
 
 FontBaseline GetFontBaseline(const FontDescription& font_description) {
   // Vertical flow (except 'text-orientation: sideways') uses ideographic
@@ -70,4 +70,4 @@ FontHeight SynthesizeBaselineMetrics(LayoutUnit size, FontBaseline baseline_type
                                               : FontHeight(size - size / 2, size / 2);
 }
 
-} // namespace bkfont
+} // namespace bkit

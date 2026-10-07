@@ -13,7 +13,7 @@
 #include "color_channel_keyword.h"
 #include "layout/layout_unit.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Length;
 
@@ -26,7 +26,7 @@ enum class CalcSizeKeywordBehavior {
 
 struct EvaluationInput {
 
-  using IntrinsicLengthEvaluator = base::FunctionRef<bkfont::LayoutUnit(const bkfont::Length&)>;
+  using IntrinsicLengthEvaluator = base::FunctionRef<bkit::LayoutUnit(const bkit::Length&)>;
 
 public:
   std::optional<float> size_keyword_basis = std::nullopt;
@@ -36,4 +36,4 @@ public:
   base::flat_map<ColorChannelKeyword, float> color_channel_keyword_values;
 };
 
-} // namespace bkfont
+} // namespace bkit

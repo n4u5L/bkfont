@@ -33,7 +33,7 @@
 #include <unicode/char16ptr.h>
 #endif
 
-namespace bkfont {
+namespace bkit {
 
 namespace unicode {
 
@@ -64,4 +64,4 @@ inline base::span<const UChar> ToSpan(const icu::UnicodeString& ustring) {
 
 } // namespace unicode
 
-} // namespace bkfont
+} // namespace bkit

@@ -32,7 +32,7 @@
 #include "allocator/allocator.h"
 #include "type_traits.h"
 
-namespace bkfont {
+namespace bkit {
 
 template <typename KeyTypeArg, typename ValueTypeArg>
 struct KeyValuePair {
@@ -493,4 +493,4 @@ inline bool operator!=(const HashTableValuesIterator<T, U, V>& a,
   return a.impl_ != b.impl_;
 }
 
-} // namespace bkfont
+} // namespace bkit

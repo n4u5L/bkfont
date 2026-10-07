@@ -31,7 +31,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 enum FontSmoothingMode {
   kAutoSmoothing,
@@ -42,4 +42,4 @@ enum FontSmoothingMode {
 
 String ToString(FontSmoothingMode);
 
-} // namespace bkfont
+} // namespace bkit

@@ -17,7 +17,7 @@
 #include "base/numerics/safe_conversions.h"
 #include "base/numerics/safe_math_shared_impl.h" // IWYU pragma: export
 
-namespace bkfont::base {
+namespace bkit::base {
 
 namespace internal {
 
@@ -566,4 +566,4 @@ private:
 
 } // namespace internal
 
-} // namespace bkfont::base
+} // namespace bkit::base

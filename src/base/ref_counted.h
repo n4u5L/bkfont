@@ -24,7 +24,7 @@
 #include "base/memory/ref_counted.h"
 #include "allocator/allocator.h"
 
-namespace bkfont {
+namespace bkit {
 
 template <typename T, typename Traits>
 class RefCounted;
@@ -54,4 +54,4 @@ private:
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

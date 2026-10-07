@@ -40,7 +40,7 @@
 
 #include <span>
 #include <string>
-namespace bkfont {
+namespace bkit {
 
 enum FontFaceCreationType {
   kCreateFontByFamily,
@@ -157,7 +157,7 @@ private:
 #if defined(ADDRESS_SANITIZER) || BUILDFLAG(IS_QTWEBENGINE)
   // We put the `std::string` behind an optional as ASAN counter checks require
   // that we properly call constructors and destructors for all strings. This is
-  // not the case when `FontFaceCreationParams` is used in `bkfont::HashMap` as key
+  // not the case when `FontFaceCreationParams` is used in `bkit::HashMap` as key
   // where we also cosntruct empty and deleted values that are never properly
   // destroyed.
   //
@@ -170,4 +170,4 @@ private:
   int ttc_index_ = 0;
 };
 
-} // namespace bkfont
+} // namespace bkit

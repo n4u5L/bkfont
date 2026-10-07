@@ -9,7 +9,7 @@
 
 #include "text/character.h"
 
-namespace bkfont {
+namespace bkit {
 
 class FontDescription;
 class TextRun;
@@ -117,4 +117,4 @@ template <>
 void ShapeResultSpacing<TextRun>::SetSpacingAndExpansion(
     const FontDescription&);
 
-} // namespace bkfont
+} // namespace bkit

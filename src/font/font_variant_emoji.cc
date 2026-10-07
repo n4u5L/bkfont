@@ -8,7 +8,7 @@
 
 #include <utility>
 
-namespace bkfont {
+namespace bkit {
 
 String ToString(FontVariantEmoji variant_emoji) {
   switch (variant_emoji) {
@@ -24,4 +24,4 @@ String ToString(FontVariantEmoji variant_emoji) {
   NOTREACHED();
 }
 
-} // namespace bkfont
+} // namespace bkit

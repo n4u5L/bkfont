@@ -37,7 +37,7 @@
 #include "base/immediate_crash.h"
 #include "base/numerics/byte_conversions.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -216,4 +216,4 @@ bool ParseVDMX(int* y_max,
   return false;
 }
 
-} // namespace bkfont
+} // namespace bkit

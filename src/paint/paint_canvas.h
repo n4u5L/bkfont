@@ -9,7 +9,7 @@
 #include "platform_paint.h"
 #include "text_blob.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Picture;
 
@@ -83,4 +83,4 @@ private:
   int save_count_ = 0;
 };
 
-} // namespace bkfont
+} // namespace bkit

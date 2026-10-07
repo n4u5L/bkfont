@@ -33,7 +33,7 @@
 #include "length.h"
 #include "base/allocator/allocator.h"
 
-namespace bkfont {
+namespace bkit {
 
 struct LengthPoint {
 
@@ -71,4 +71,4 @@ private:
   Length y_;
 };
 
-} // namespace bkfont
+} // namespace bkit

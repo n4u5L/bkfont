@@ -4,7 +4,7 @@
 
 #include "paint/scalar.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -49,4 +49,4 @@ FontStyle::Width FontStyleWidthForWidthAxisValue(float width) {
   return static_cast<FontStyle::Width>(us_width);
 }
 
-} // namespace bkfont
+} // namespace bkit

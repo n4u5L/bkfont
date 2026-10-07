@@ -12,7 +12,7 @@
 #include "shaping/opentype/open_type_math_support.h"
 #include "text/text_direction.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Font;
 class ShapeResult;
@@ -51,4 +51,4 @@ private:
   const TextDirection direction_;
 };
 
-} // namespace bkfont
+} // namespace bkit

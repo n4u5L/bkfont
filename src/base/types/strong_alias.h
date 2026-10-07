@@ -13,7 +13,7 @@
 
 #include "base/types/supports_ostream_operator.h"
 
-namespace bkfont::base {
+namespace bkit::base {
 
 // A type-safe alternative for a typedef or a 'using' directive.
 //
@@ -148,18 +148,18 @@ protected:
 
 // Stream operator for convenience, streams the UnderlyingType.
 template <typename TagType, typename UnderlyingType>
-  requires(::bkfont::base::internal::SupportsOstreamOperator<UnderlyingType>)
+  requires(::bkit::base::internal::SupportsOstreamOperator<UnderlyingType>)
 std::ostream& operator<<(std::ostream& stream,
                          const StrongAlias<TagType, UnderlyingType>& alias) {
   return stream << alias.value();
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base
 
 template <typename TagType, typename UnderlyingType>
-struct std::hash<bkfont::base::StrongAlias<TagType, UnderlyingType>> {
+struct std::hash<bkit::base::StrongAlias<TagType, UnderlyingType>> {
   size_t operator()(
-      const bkfont::base::StrongAlias<TagType, UnderlyingType>& id) const {
+      const bkit::base::StrongAlias<TagType, UnderlyingType>& id) const {
     return std::hash<UnderlyingType>()(id.value());
   }
 };

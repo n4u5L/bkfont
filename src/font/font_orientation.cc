@@ -7,7 +7,7 @@
 
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 String ToString(FontOrientation orientation) {
   switch (orientation) {
@@ -23,4 +23,4 @@ String ToString(FontOrientation orientation) {
   return "Unknown";
 }
 
-} // namespace bkfont
+} // namespace bkit

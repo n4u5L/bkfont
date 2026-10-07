@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cstdint>
 
-namespace bkfont {
+namespace bkit {
 
 // SkFontStyle.
 class FontStyle {
@@ -81,4 +81,4 @@ private:
   std::int32_t value_;
 };
 
-} // namespace bkfont
+} // namespace bkit

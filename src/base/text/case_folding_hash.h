@@ -33,7 +33,7 @@
 #include "base/text/string_hash.h"
 #include "base/text/unicode.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Sends the input data through the Unicode case-folding table.
 // Unlike normal PlainHashReader, or the ASCII lower-case lookups,
@@ -47,7 +47,7 @@ namespace bkfont {
 // always treat data as UTF-16, expanding Latin1 as we go. This means
 // we also don't bother to try to make tricky SIMD implementations
 // for Latin1; we just use the most straightforward code. (Full lookup
-// into bkfont::unicode::FoldCase is slow enough that it probably dwarfs
+// into bkit::unicode::FoldCase is slow enough that it probably dwarfs
 // all other performance concerns anyway.)
 template <class T>
   requires std::is_same_v<T, LChar> || std::is_same_v<T, UChar>
@@ -81,7 +81,7 @@ private:
     if (std::is_same<T, LChar>::value) {
       return StringImpl::kLatin1CaseFoldTable[ch];
     }
-    // It's possible for bkfont::unicode::FoldCase() to return a 32-bit value
+    // It's possible for bkit::unicode::FoldCase() to return a 32-bit value
     // that's not representable as a UChar.  However, since this is rare and
     // deterministic, and the result of this is merely used for hashing, go
     // ahead and clamp the value.
@@ -129,13 +129,13 @@ public:
     // Save one branch inside each StringView by derefing the StringImpl,
     // and another branch inside the compare function by skipping the null
     // checks.
-    return bkfont::DeprecatedEqualIgnoringCaseAndNullity(*a, *b);
+    return bkit::DeprecatedEqualIgnoringCaseAndNullity(*a, *b);
   }
 
   static inline bool Equal(const char* a, const char* b) {
     ;
     ;
-    return bkfont::DeprecatedEqualIgnoringCaseAndNullity(a, b);
+    return bkit::DeprecatedEqualIgnoringCaseAndNullity(a, b);
   }
 
   static unsigned GetHash(const scoped_refptr<StringImpl>& key) {
@@ -171,4 +171,4 @@ struct CaseFoldingHashTraits : HashTraits<T>, CaseFoldingHash {
   using CaseFoldingHash::kSafeToCompareToEmptyOrDeleted;
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -11,7 +11,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 class FontFeatureSettings;
 using ResolvedFontFeatures = Vector<FontFeatureValue>;
@@ -20,4 +20,4 @@ ResolvedFontFeatures ResolveFontFeatureSettingsDescriptor(
     const FontFeatureSettings* existing_features_settings,
     const FontFeatureSettings* new_settings);
 
-} // namespace bkfont
+} // namespace bkit

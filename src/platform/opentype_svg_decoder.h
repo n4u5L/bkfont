@@ -11,7 +11,7 @@
 
 #include "paint/mask_gamma.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Canvas;
 
@@ -35,4 +35,4 @@ using OpenTypeSVGDecoderFactory = std::unique_ptr<OpenTypeSVGDecoder> (*)(const 
 OpenTypeSVGDecoderFactory SetOpenTypeSVGDecoderFactory(OpenTypeSVGDecoderFactory factory);
 OpenTypeSVGDecoderFactory GetOpenTypeSVGDecoderFactory();
 
-} // namespace bkfont
+} // namespace bkit

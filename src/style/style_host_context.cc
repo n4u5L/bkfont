@@ -6,7 +6,7 @@
 #include "style/computed_style.h"
 #include "style/style_resolver.h"
 
-namespace bkfont {
+namespace bkit {
 
 StyleHostContext::StyleHostContext(Settings settings, std::shared_ptr<FontSelector> font_selector)
     : settings_(std::move(settings)), font_selector_(std::move(font_selector)) {}
@@ -42,4 +42,4 @@ const ComputedStyle& StyleHostContext::InitialStyle() const {
   return *initial_style_;
 }
 
-} // namespace bkfont
+} // namespace bkit

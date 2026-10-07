@@ -11,7 +11,7 @@
 
 #include "text/character.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -360,4 +360,4 @@ bool OffsetMapping::HasBidiControlCharactersOnly(unsigned start, unsigned end) c
   return true;
 }
 
-} // namespace bkfont
+} // namespace bkit

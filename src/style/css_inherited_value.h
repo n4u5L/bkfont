@@ -5,7 +5,7 @@
 
 #include "style/css_value.h"
 
-namespace bkfont {
+namespace bkit {
 
 class CSSInheritedValue : public CSSValue {
 public:
@@ -31,4 +31,4 @@ struct DowncastTraits<CSSInheritedValue> {
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

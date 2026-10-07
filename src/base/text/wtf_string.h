@@ -42,7 +42,7 @@
 #include "base/text/string_view.h"
 #include "base/wtf_size_t.h"
 
-namespace bkfont {
+namespace bkit {
 
 class CodePointIterator;
 
@@ -611,7 +611,7 @@ private:
 
 inline bool operator==(const String& a, const String& b) {
   // We don't use equalStringView here since we want the isAtomic() fast path
-  // inside bkfont::equal.
+  // inside bkit::equal.
   return Equal(a.Impl(), b.Impl());
 }
 inline bool operator==(const String& a, const char* b) {
@@ -748,8 +748,8 @@ struct HashTraits;
 template <>
 struct HashTraits<String>;
 
-} // namespace bkfont
+} // namespace bkit
 
-BASE_ALLOW_MOVE_AND_INIT_WITH_MEM_FUNCTIONS(bkfont::String)
+BASE_ALLOW_MOVE_AND_INIT_WITH_MEM_FUNCTIONS(bkit::String)
 
 #include "base/text/string_operators.h"

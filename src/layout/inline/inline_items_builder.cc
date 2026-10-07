@@ -9,7 +9,7 @@
 #include "base/text/character_names.h"
 #include "text/character.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -664,4 +664,4 @@ void InlineItemsBuilder::ExitBlock() {
   RemoveTrailingCollapsibleSpaceIfExists();
 }
 
-} // namespace bkfont
+} // namespace bkit

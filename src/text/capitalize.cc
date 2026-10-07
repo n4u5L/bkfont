@@ -14,7 +14,7 @@
 #include "base/text/unicode.h"
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 String Capitalize(const String& string, UChar previous_character) {
   if (string.IsNull())
@@ -62,4 +62,4 @@ String Capitalize(const String& string, UChar previous_character) {
   return result.ToString();
 }
 
-}  // namespace bkfont
+}  // namespace bkit

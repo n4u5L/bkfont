@@ -18,7 +18,7 @@
 #include "style/css_numeric_literal_value.h"
 #include "style/css_to_length_conversion_data.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 // CSSValueClampingUtils.
@@ -289,4 +289,4 @@ Length CSSMathFunctionValue::ConvertToLength(const CSSToLengthConversionData& da
                                                          ConversionToLengthValueRange(PermittedValueRange())));
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -2,7 +2,7 @@
 // Copyright The Chromium Authors. BSD-style license, see LICENSE.
 #include "color.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -172,4 +172,4 @@ const NamedColor* FindColor(std::string_view str) {
   return nullptr;
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -5,7 +5,7 @@
 
 #include "layout/inline/inline_formatting_context.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Temporary traversal. A stale cursor becomes null, including after root death.
 // It never owns fragments or keeps removed model objects alive.
@@ -62,4 +62,4 @@ private:
   const InlineObject* culled_inline_ = nullptr;
 };
 
-} // namespace bkfont
+} // namespace bkit

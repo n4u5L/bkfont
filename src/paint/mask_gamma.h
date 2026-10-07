@@ -8,7 +8,7 @@
 #include <memory>
 #include <utility>
 
-namespace bkfont {
+namespace bkit {
 
 // SkColor, unpremultiplied ARGB.
 using ColorARGB = std::uint32_t;
@@ -232,4 +232,4 @@ inline unsigned ApplyLutIf(unsigned component, const std::uint8_t* lut) {
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

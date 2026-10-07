@@ -26,9 +26,9 @@
 // FIXME: Now that this handles locales for ICU, not just for text breaking,
 // this file and the various implementation files should be renamed.
 
-namespace bkfont {
+namespace bkit {
 
 const char* CurrentSearchLocaleID();
 const char* CurrentTextBreakLocaleID();
 
-} // namespace bkfont
+} // namespace bkit

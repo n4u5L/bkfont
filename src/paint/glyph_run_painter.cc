@@ -21,7 +21,7 @@
 #include "platform/strike.h"
 #include "platform/strike_spec.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -402,4 +402,4 @@ void GlyphRunListPainterCPU::DrawForBitmapDevice(Canvas* canvas, BitmapDevicePai
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

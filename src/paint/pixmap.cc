@@ -11,7 +11,7 @@
 
 #include "mask.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -228,4 +228,4 @@ const Mipmap* Image::GetMipmap() const {
   return mipmap_.get();
 }
 
-} // namespace bkfont
+} // namespace bkit

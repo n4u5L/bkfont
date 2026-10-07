@@ -15,7 +15,7 @@
 #include "paint/sin_cos_degrees.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -274,4 +274,4 @@ ValueType EvaluateSignFunction(ValueType v) {
   return (v == 0 || std::isnan(v)) ? v : ((v > 0) ? 1 : -1);
 }
 
-} // namespace bkfont
+} // namespace bkit

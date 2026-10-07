@@ -14,7 +14,7 @@ namespace rich_text {
 class WindowPresenter {
 public:
   struct Scroll {
-    bkfont::IntRect area;
+    bkit::IntRect area;
     int dx = 0, dy = 0;
   };
   struct Statistics {
@@ -30,7 +30,7 @@ public:
   // False means the caller must paint its retained bitmap using GDI.
   // preview_scale animates retained pixels about the window center, without
   // relayout. Normal editing uses 1; layout zoom remains the editor's job.
-  bool Present(const bkfont::Pixmap&, std::span<const bkfont::IntRect> damage, bool full, const Scroll* = nullptr,
+  bool Present(const bkit::Pixmap&, std::span<const bkit::IntRect> damage, bool full, const Scroll* = nullptr,
                float preview_scale = 1);
   bool IsComposed() const;
   Statistics GetStatistics() const;

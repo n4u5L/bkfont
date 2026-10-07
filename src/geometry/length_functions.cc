@@ -31,7 +31,7 @@
 #include "paint/geometry.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 int IntValueForLength(const Length& length, int maximum_value) {
   return ValueForLength(length, LayoutUnit(maximum_value)).ToInt();
@@ -137,4 +137,4 @@ PointF PointForLengthPoint(const LengthPoint& length_point,
                      FloatValueForLength(length_point.Y(), box_size.height()));
 }
 
-} // namespace bkfont
+} // namespace bkit

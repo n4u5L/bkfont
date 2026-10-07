@@ -25,7 +25,7 @@
 #include "platform/platform_glyph.h"
 #include "text_blob.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -972,4 +972,4 @@ void RasterCanvas::CompositeLayer(const Layer& layer, const Clip& clip, Layer* t
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

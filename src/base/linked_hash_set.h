@@ -29,7 +29,7 @@
 #include "type_traits.h"
 #include "vector_backed_linked_list.h"
 
-namespace bkfont {
+namespace bkit {
 
 // LinkedHashSet provides a Set interface like HashSet, but also has a
 // predictable iteration order. It has O(1) insertion, removal, and test for
@@ -449,4 +449,4 @@ LinkedHashSet<T, TraitsArg, Allocator>::InsertOrMoveBefore(
   return AddResult(&*moved_position_iterator, false);
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -180,7 +180,7 @@ def generate_header(longhands, shorthands, aliases):
         '#include <span>',
         '#include <string_view>',
         '',
-        'namespace bkfont {',
+        'namespace bkit {',
         '',
         '// Only ported properties have IDs. Longhands come first (high-priority',
         '// longhands before the others), then shorthands, then aliases, each in',
@@ -251,7 +251,7 @@ def generate_header(longhands, shorthands, aliases):
         '// CSSProperty::IsInSameLogicalPropertyGroupWithDifferentMappingLogic().',
         'bool IsInSameLogicalPropertyGroupWithDifferentMappingLogic(CSSPropertyID, CSSPropertyID);',
         '',
-        '} // namespace bkfont',
+        '} // namespace bkit',
         '',
     ]
     return lines
@@ -263,7 +263,7 @@ def generate_source(longhands, shorthands, aliases):
         '',
         '#include <array>',
         '',
-        'namespace bkfont {',
+        'namespace bkit {',
         'namespace {',
         '',
     ]
@@ -340,7 +340,7 @@ def generate_source(longhands, shorthands, aliases):
         '         a->is_logical != b->is_logical;',
         '}',
         '',
-        '} // namespace bkfont',
+        '} // namespace bkit',
         '',
     ]
     return lines

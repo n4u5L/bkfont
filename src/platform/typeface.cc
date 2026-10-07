@@ -10,7 +10,7 @@
 #include "scaler_context.h"
 #include "typeface_cache.h"
 
-namespace bkfont {
+namespace bkit {
 
 Typeface::Typeface(const FontStyle& style, bool is_fixed_pitch)
     : unique_id_(TypefaceCache::NewTypefaceID()),
@@ -260,4 +260,4 @@ bool Typeface::OnComputeBounds(ScalarRect* bounds) const {
   return true;
 }
 
-} // namespace bkfont
+} // namespace bkit

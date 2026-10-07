@@ -36,7 +36,7 @@
 #include "base/text/unicode.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Pack 8 bits into one byte
 #define B(a, b, c, d, e, f, g, h) \
@@ -472,4 +472,4 @@ std::ostream& operator<<(std::ostream& ostream, BreakSpaceType break_space) {
   NOTREACHED();
 }
 
-} // namespace bkfont
+} // namespace bkit

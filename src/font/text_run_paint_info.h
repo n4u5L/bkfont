@@ -4,7 +4,7 @@
 
 #include "text/text_run.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Container for parameters needed to paint TextRun.
 struct TextRunPaintInfo {
@@ -18,4 +18,4 @@ public:
   unsigned to;
 };
 
-} // namespace bkfont
+} // namespace bkit

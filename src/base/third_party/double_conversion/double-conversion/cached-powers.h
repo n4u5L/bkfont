@@ -30,7 +30,7 @@
 
 #include "diy-fp.h"
 
-namespace bkfont::double_conversion {
+namespace bkit::double_conversion {
 
 namespace PowersOfTenCache {
 
@@ -59,4 +59,4 @@ void GetCachedPowerForDecimalExponent(int requested_exponent,
 
 } // namespace PowersOfTenCache
 
-} // namespace bkfont::double_conversion
+} // namespace bkit::double_conversion

@@ -43,7 +43,7 @@
 #include "font_fallback_priority.h"
 #include "platform/font_manager.h"
 #include "base/hash_map.h"
-namespace bkfont {
+namespace bkit {
 
 class ShapeCache;
 class FontPrewarmer;
@@ -147,7 +147,7 @@ public:
 #elif BUILDFLAG(IS_LINUX)
   static void SetSystemFontFamily(const AtomicString& family_name);
 #endif
-  std::shared_ptr<bkfont::FontManager> GetFontManager() const {
+  std::shared_ptr<bkit::FontManager> GetFontManager() const {
     return font_manager_;
   }
 #if BUILDFLAG(IS_WIN)
@@ -157,14 +157,14 @@ public:
 
 private:
   // Native hooks select a face; CreateFontPlatformData applies common policy.
-  static std::shared_ptr<bkfont::FontManager> CreateFontManager();
+  static std::shared_ptr<bkit::FontManager> CreateFontManager();
   std::shared_ptr<Typeface> MatchTypeface(const FontDescription&, const FontFaceCreationParams&, AlternateFontName, String&);
   std::shared_ptr<Typeface> CreateTypefaceFromUniqueName(const FontFaceCreationParams&);
   bool IsFamilyAvailable(const String&) const;
   std::shared_ptr<const FontPlatformData> PlatformLastResortFont(const FontDescription&);
   std::shared_ptr<const SimpleFontData> FallbackOnStandardFontStyle(const FontDescription&, UChar32);
   std::shared_ptr<const SimpleFontData> PlatformFallbackFontForCharacter(const FontDescription&, UChar32, std::shared_ptr<const SimpleFontData>, FontFallbackPriority);
-  std::shared_ptr<bkfont::FontManager> font_manager_;
+  std::shared_ptr<bkit::FontManager> font_manager_;
   FontPlatformDataCache font_platform_data_cache_;
   FontDataCache font_data_cache_;
   HashMap<FallbackListCompositeKey, std::weak_ptr<ShapeCache>, FallbackListCompositeKeyTraits> fallback_list_shaper_cache_;
@@ -189,4 +189,4 @@ private:
 #endif
 };
 
-} // namespace bkfont
+} // namespace bkit

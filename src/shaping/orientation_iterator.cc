@@ -8,7 +8,7 @@
 
 #include <memory>
 
-namespace bkfont {
+namespace bkit {
 
 OrientationIterator::OrientationIterator(base::span<const UChar> buffer,
                                          FontOrientation run_orientation)
@@ -47,4 +47,4 @@ bool OrientationIterator::Consume(unsigned* orientation_limit,
   return true;
 }
 
-} // namespace bkfont
+} // namespace bkit

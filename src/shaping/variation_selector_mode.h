@@ -7,7 +7,7 @@
 
 #include "font/font_variant_emoji.h"
 
-namespace bkfont {
+namespace bkit {
 
 enum VariationSelectorMode {
   // font-variant-emoji="normal". This value will behave as if
@@ -46,4 +46,4 @@ VariationSelectorMode
 GetVariationSelectorModeFromFontVariantEmoji(
     FontVariantEmoji font_variant_emoji);
 
-} // namespace bkfont
+} // namespace bkit

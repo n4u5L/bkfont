@@ -10,7 +10,7 @@
 
 #include "path.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkPaint::Cap.
 enum class StrokeCap : std::uint8_t {
@@ -135,4 +135,4 @@ private:
   StrokeJoin join_ = StrokeJoin::kMiter;
 };
 
-} // namespace bkfont
+} // namespace bkit

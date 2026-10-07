@@ -48,7 +48,7 @@
 #include <span>
 namespace {
 
-using namespace bkfont;
+using namespace bkit;
 
 constexpr uint32_t kOpszTag = HB_TAG('o', 'p', 's', 'z');
 constexpr uint32_t kSlntTag = HB_TAG('s', 'l', 'n', 't');
@@ -68,7 +68,7 @@ std::optional<FontParameters::Variation::Axis> RetrieveVariationDesignParameters
 
 } // namespace
 
-namespace bkfont {
+namespace bkit {
 
 FontCustomPlatformData::FontCustomPlatformData(std::shared_ptr<Typeface> face, size_t data_size)
     : base_typeface_(std::move(face)),
@@ -290,4 +290,4 @@ std::shared_ptr<FontCustomPlatformData> FontCustomPlatformData::Create(
       data_size);
 }
 
-} // namespace bkfont
+} // namespace bkit

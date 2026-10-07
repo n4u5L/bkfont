@@ -39,7 +39,7 @@
 #include "base/hash_table_deleted_value_type.h"
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 class NGShapeCache {
 public:
@@ -96,4 +96,4 @@ private:
   const SimpleFontData* primary_font_;
 };
 
-} // namespace bkfont
+} // namespace bkit

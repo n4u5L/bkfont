@@ -23,7 +23,7 @@
 #include "base/text/unicode.h"
 #include "paint/geometry.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -209,4 +209,4 @@ std::shared_ptr<const ShapeResult> StretchyOperatorShaper::Shape(const Font* fon
   return shape_result_for_glyph_assembly;
 }
 
-} // namespace bkfont
+} // namespace bkit

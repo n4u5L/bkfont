@@ -30,7 +30,7 @@
 #include "base/text/case_map.h"
 #include "base/text/string_impl.h"
 
-namespace bkfont {
+namespace bkit {
 
 ;
 
@@ -132,4 +132,4 @@ void AtomicString::Show() const {
 }
 #endif
 
-} // namespace bkfont
+} // namespace bkit

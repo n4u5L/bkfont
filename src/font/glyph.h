@@ -36,8 +36,8 @@
 #include <cmath>
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 typedef uint16_t Glyph;
 
-} // namespace bkfont
+} // namespace bkit

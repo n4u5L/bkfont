@@ -7,7 +7,7 @@
 #include "base/immediate_crash.h"
 #include "paint/picture.h"
 
-namespace bkfont {
+namespace bkit {
 
 TypefaceProxy::TypefaceProxy(std::shared_ptr<Typeface> real_typeface,
                              const FontStyle& style, bool is_fixed_pitch)
@@ -118,4 +118,4 @@ void ScalerContextProxy::GenerateFontMetrics(PlatformFontMetrics* metrics) {
   real_scaler_context_->GenerateFontMetrics(metrics);
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -6,7 +6,7 @@
 #include <cstring>
 #include <utility>
 
-namespace bkfont {
+namespace bkit {
 
 MemoryStream::MemoryStream(std::shared_ptr<Data> data)
     : data_(std::move(data)) {
@@ -85,4 +85,4 @@ std::unique_ptr<StreamAsset> Stream::MakeFromFile(const String& path) {
   return nullptr;
 }
 
-} // namespace bkfont
+} // namespace bkit

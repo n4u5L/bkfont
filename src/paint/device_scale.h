@@ -8,7 +8,7 @@
 
 #include "geometry.h"
 
-namespace bkfont {
+namespace bkit {
 
 struct DeviceScale {
   // Chromium's screen device_scale_factor is a scalar, independent of the
@@ -74,4 +74,4 @@ struct DeviceScale {
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

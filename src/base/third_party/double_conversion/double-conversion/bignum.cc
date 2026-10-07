@@ -32,7 +32,7 @@
 #include "bignum.h"
 #include "utils.h"
 
-namespace bkfont::double_conversion {
+namespace bkit::double_conversion {
 
 Bignum::Chunk& Bignum::RawBigit(const int index) {
   (void)0;
@@ -761,4 +761,4 @@ void Bignum::SubtractTimes(const Bignum& other, const int factor) {
   Clamp();
 }
 
-} // namespace bkfont::double_conversion
+} // namespace bkit::double_conversion

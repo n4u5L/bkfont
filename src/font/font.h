@@ -35,7 +35,7 @@
 #include "simple_font_data.h"
 #include "layout/layout_unit.h"
 #include "text/tab_size.h"
-namespace bkfont {
+namespace bkit {
 
 class TextRun;
 struct TextFragmentPaintInfo;
@@ -150,4 +150,4 @@ private:
   mutable std::shared_ptr<FontFallbackList> font_fallback_list_;
 };
 
-} // namespace bkfont
+} // namespace bkit

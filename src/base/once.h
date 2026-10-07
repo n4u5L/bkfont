@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <utility>
 
-namespace bkfont {
+namespace bkit {
 
 class Once {
 public:
@@ -39,4 +39,4 @@ private:
   std::atomic<std::uint8_t> state_{kNotStarted};
 };
 
-} // namespace bkfont
+} // namespace bkit

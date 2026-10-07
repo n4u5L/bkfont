@@ -12,7 +12,7 @@
 #include "mask_gamma.h"
 #include "stroke.h"
 
-namespace bkfont {
+namespace bkit {
 
 class ImageFilter;
 class PathEffect;
@@ -160,4 +160,4 @@ private:
   StrokeJoin stroke_join_ = StrokeJoin::kMiter;
 };
 
-} // namespace bkfont
+} // namespace bkit

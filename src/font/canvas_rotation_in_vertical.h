@@ -9,7 +9,7 @@
 #include <cmath>
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 enum class CanvasRotationInVertical : char {
   kRegular = 0,
@@ -26,4 +26,4 @@ inline bool IsCanvasRotationOblque(CanvasRotationInVertical r) {
   return static_cast<char>(r) & static_cast<char>(CanvasRotationInVertical::kOblique);
 }
 
-} // namespace bkfont
+} // namespace bkit

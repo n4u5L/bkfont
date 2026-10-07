@@ -14,7 +14,7 @@
 #include "stream.h"
 #include "typeface.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkFontStyleSet.
 class FontStyleSet {
@@ -132,4 +132,4 @@ protected:
   virtual std::shared_ptr<Typeface> OnLegacyMakeTypeface(const String& family_name, FontStyle) const = 0;
 };
 
-} // namespace bkfont
+} // namespace bkit

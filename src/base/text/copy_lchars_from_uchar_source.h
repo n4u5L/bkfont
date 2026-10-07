@@ -34,7 +34,7 @@
 #endif
 #endif
 
-namespace bkfont {
+namespace bkit {
 
 inline void CopyLCharsFromUCharSource(base::span<LChar> destination,
                                       base::span<const UChar> source) {
@@ -89,4 +89,4 @@ inline void CopyLCharsFromUCharSource(base::span<LChar> destination,
 #endif
 }
 
-} // namespace bkfont
+} // namespace bkit

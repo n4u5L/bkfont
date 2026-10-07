@@ -1,10 +1,10 @@
 # Ported from: blink/renderer/platform/BUILD.gn
 # Local CMake adaptation of the character_data and character_data_generator targets.
 cmake_minimum_required(VERSION 3.24)
-project(bkfont_character_data LANGUAGES CXX)
+project(bkit_character_data LANGUAGES CXX)
 if(NOT TARGET ICU::i18n)
   if(WIN32)
-    set(BLINK_FONTS_PACKAGES_ROOT "D:/MyPackages" CACHE PATH "Prebuilt MSVC x64 dependencies")
+    set(BKIT_PACKAGES_ROOT "D:/MyPackages" CACHE PATH "Prebuilt MSVC x64 dependencies")
   endif()
   include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/NoExceptions.cmake")
   include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/FontPackages.cmake")

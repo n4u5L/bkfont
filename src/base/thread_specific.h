@@ -39,7 +39,7 @@
 #include "stack_util.h"
 #include "wtf.h"
 
-namespace bkfont {
+namespace bkit {
 
 template <typename T>
 class ThreadSpecific {
@@ -86,7 +86,7 @@ inline void ThreadSpecific<T>::Destroy(void* ptr) {
   // longer has a graceful shutdown sequence. Be careful to call this function
   // (which can be re-entrant) while the pointer is still set, to avoid lazily
   // allocating Threading after it is destroyed.
-  if (bkfont::IsMainThread()) {
+  if (bkit::IsMainThread()) {
     return;
   }
 
@@ -150,4 +150,4 @@ inline T& ThreadSpecific<T>::operator*() {
   return *operator T*();
 }
 
-} // namespace bkfont
+} // namespace bkit

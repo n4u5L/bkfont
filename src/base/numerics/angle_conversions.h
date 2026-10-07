@@ -8,7 +8,7 @@
 #include <concepts>
 #include <numbers>
 
-namespace bkfont::base {
+namespace bkit::base {
 
 template <typename T>
   requires std::floating_point<T>
@@ -22,4 +22,4 @@ constexpr T RadToDeg(T rad) {
   return rad * 180 / std::numbers::pi_v<T>;
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base

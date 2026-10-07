@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 
-namespace bkfont {
+namespace bkit {
 
 static const char kValueListStringPool[] = {
   "inherit\0"
@@ -2243,4 +2243,4 @@ std::string_view GetCSSValueName(CSSValueID id) {
   return std::string_view(kValueListStringPool + start, end - start);
 }
 
-} // namespace bkfont
+} // namespace bkit

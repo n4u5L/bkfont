@@ -21,7 +21,7 @@
 
 struct hb_language_impl_t;
 
-namespace bkfont {
+namespace bkit {
 
 // A Unicode Line Break Style Identifier (key "lb".)
 // https://www.unicode.org/reports/tr35/#UnicodeLineBreakStyleIdentifier
@@ -130,4 +130,4 @@ private:
   mutable unsigned is_macrolanguage_chinese_ : 1 = false;
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -35,7 +35,7 @@
 #include "base/text/string_view.h"
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 class StringBuilder {
 
@@ -156,7 +156,7 @@ public:
 
   void AppendNumber(double, unsigned precision = 6);
 
-  // Like bkfont::String::Format, supports Latin-1 only.
+  // Like bkit::String::Format, supports Latin-1 only.
   PRINTF_FORMAT(2, 3)
   void AppendFormat(const char* format, ...);
 
@@ -325,4 +325,4 @@ inline bool operator!=(const String& a, const StringBuilder& b) {
   return !Equal(b, a);
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -10,7 +10,7 @@
 
 #include "path.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkContourMeasure: the length of one contour, and its pieces.
 class ContourMeasure {
@@ -96,4 +96,4 @@ private:
   std::unique_ptr<ContourMeasure> contour_;
 };
 
-} // namespace bkfont
+} // namespace bkit

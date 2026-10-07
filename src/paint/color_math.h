@@ -12,7 +12,7 @@
  * found in the LICENSE file.
  */
 #pragma once
-namespace bkfont::color_math {
+namespace bkit::color_math {
 
 struct skcms_Matrix3x3 {
   float vals[3][3];
@@ -71,4 +71,4 @@ inline constexpr skcms_Matrix3x3 kRec2020 = {{{0.673459f, 0.165661f, 0.125100f},
 
 } // namespace NamedGamut
 
-} // namespace bkfont::color_math
+} // namespace bkit::color_math

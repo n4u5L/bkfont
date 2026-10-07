@@ -10,7 +10,7 @@
 #include <memory>
 #include <span>
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -74,4 +74,4 @@ bool ColorTableLookup::TypefaceHasAnySupportedColorTable(
   return false;
 }
 
-} // namespace bkfont
+} // namespace bkit

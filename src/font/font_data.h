@@ -34,7 +34,7 @@
 #include <cmath>
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 class SimpleFontData;
 
@@ -55,4 +55,4 @@ public:
   virtual bool ShouldSkipDrawing() const = 0;
 };
 
-} // namespace bkfont
+} // namespace bkit

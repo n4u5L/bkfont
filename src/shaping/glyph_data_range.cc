@@ -10,7 +10,7 @@
 
 #include "shape_result_run.h"
 
-namespace bkfont {
+namespace bkit {
 
 GlyphDataRange::GlyphDataRange(const ShapeResultRun& run)
     : run_(&run),
@@ -91,4 +91,4 @@ GlyphDataRange GlyphDataRange::FindGlyphDataRange(
   return {*this, start_glyph, end_glyph};
 }
 
-} // namespace bkfont
+} // namespace bkit

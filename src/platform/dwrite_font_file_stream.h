@@ -7,7 +7,7 @@
 #include "dwrite_internal.h"
 #include "stream.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkDWriteFontFileStream. An SkStream backed by an IDWriteFontFileStream. This
 // allows Skia code to read an IDWriteFontFileStream.
@@ -35,4 +35,4 @@ private:
   void* fragment_lock_;
 };
 
-} // namespace bkfont
+} // namespace bkit

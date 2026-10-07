@@ -11,7 +11,7 @@
 #include "style/cascade_origin.h"
 #include "style/style_declaration.h"
 
-namespace bkfont {
+namespace bkit {
 
 struct MatchedProperties {
   // Not owned; must outlive the cascade and remain unchanged while it is used.
@@ -44,4 +44,4 @@ inline wtf_size_t DecodeDeclarationIndex(uint32_t position) {
   return position & 0xFFFF;
 }
 
-} // namespace bkfont
+} // namespace bkit

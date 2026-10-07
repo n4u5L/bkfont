@@ -34,7 +34,7 @@
 #include <cmath>
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 class SimpleFontData;
 
@@ -72,4 +72,4 @@ struct DowncastTraits<SegmentedFontData> {
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

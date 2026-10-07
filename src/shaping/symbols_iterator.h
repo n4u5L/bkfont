@@ -10,7 +10,7 @@
 #include "font/font_fallback_priority.h"
 #include "utf16_ragel_iterator.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SymbolsIterator is used to segment text based on emoji presentations (text or
 // emoji) and emoji variation selectors (U+FE0E and U+FE0F) presence. All
@@ -55,4 +55,4 @@ private:
   bool next_token_has_vs_ = false;
 };
 
-} // namespace bkfont
+} // namespace bkit

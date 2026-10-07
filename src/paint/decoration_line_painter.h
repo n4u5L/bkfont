@@ -4,7 +4,7 @@
 #include "paint_canvas.h"
 #include "style/computed_style_base_constants.h"
 
-namespace bkfont {
+namespace bkit {
 struct WaveDefinition {
   float wavelength = 0;
   float control_point_distance = 0;
@@ -27,4 +27,4 @@ public:
   static ScalarRect Bounds(const DecorationGeometry&);
   static void Paint(PaintCanvas*, const DecorationGeometry&, Color4f);
 };
-} // namespace bkfont
+} // namespace bkit

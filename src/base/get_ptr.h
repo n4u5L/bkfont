@@ -21,7 +21,7 @@
 
 #pragma once
 
-namespace bkfont {
+namespace bkit {
 
 template <typename>
 class scoped_refptr;
@@ -41,4 +41,4 @@ inline T* GetPtr(const scoped_refptr<T>& p) {
   return p.get();
 }
 
-} // namespace bkfont
+} // namespace bkit

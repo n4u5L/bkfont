@@ -17,7 +17,7 @@
 #include "style/css_primitive_value.h"
 #include "style/css_value_list.h"
 
-namespace bkfont {
+namespace bkit {
 
 class CSSToLengthConversionData;
 
@@ -185,4 +185,4 @@ struct DowncastTraits<cssvalue::CSSPaletteMixValue> {
   static bool AllowFrom(const CSSValue& value) { return value.IsPaletteMixValue(); }
 };
 
-} // namespace bkfont
+} // namespace bkit

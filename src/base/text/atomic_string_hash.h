@@ -33,7 +33,7 @@
 #include "base/text/atomic_string.h"
 #include "base/text/string_hash.h"
 
-namespace bkfont {
+namespace bkit {
 
 template <>
 struct HashTraits<AtomicString> : SimpleClassHashTraits<AtomicString> {
@@ -67,4 +67,4 @@ struct HashTraits<AtomicString> : SimpleClassHashTraits<AtomicString> {
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

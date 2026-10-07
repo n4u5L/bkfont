@@ -32,7 +32,7 @@
 #include "platform_export.h"
 #include "base/forward.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Font;
 
@@ -50,4 +50,4 @@ public:
                               const Font&);
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -24,7 +24,7 @@
 #include "text/character.h"
 #include "text/text_run.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -640,4 +640,4 @@ void DrawTextBlobs(const ShapeResultBloberizer::BlobBuffer& blobs,
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

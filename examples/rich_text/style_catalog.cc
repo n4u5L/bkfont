@@ -10,7 +10,7 @@
 namespace rich_text {
 namespace {
 
-using namespace bkfont;
+using namespace bkit;
 namespace L = css_longhand;
 using V = CSSValueID;
 using Unit = CSSPrimitiveValue::UnitType;
@@ -42,7 +42,7 @@ struct Token {
   double number = 0;
   bool integer = false;
   Unit unit = Unit::kNumber;
-  bkfont::Color color;
+  bkit::Color color;
 };
 
 // Reads a quoted string at the start of `text`, advancing past it.
@@ -75,7 +75,7 @@ std::optional<Token> ReadToken(std::string_view text) {
     if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size()) return std::nullopt;
     if (text.size() == 7) rgba = (rgba << 8) | 255;
     token.kind = Token::Kind::kColor;
-    token.color = bkfont::Color::FromRGBA(rgba >> 24, (rgba >> 16) & 255, (rgba >> 8) & 255, rgba & 255);
+    token.color = bkit::Color::FromRGBA(rgba >> 24, (rgba >> 16) & 255, (rgba >> 8) & 255, rgba & 255);
     return token;
   }
   double number;
@@ -494,8 +494,8 @@ bool BuildDeclaration(const Properties& properties, StyleDeclaration& out, std::
   error.clear();
   return true;
 }
-bkfont::StyleDeclaration DefaultParagraphStyle() {
-  bkfont::StyleDeclaration result;
+bkit::StyleDeclaration DefaultParagraphStyle() {
+  bkit::StyleDeclaration result;
   std::string error;
   BuildDeclaration({{"font-family", "Microsoft YaHei, Segoe UI, sans-serif"}, {"font-size", "18px"}, {"color", "#243247"}, {"line-height", "1.6"}, {"white-space-collapse", "preserve"}, {"overflow-wrap", "anywhere"}, {"tab-size", "4"}, {"-webkit-locale", "zh-CN"}}, result, error);
   return result;

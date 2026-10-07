@@ -14,7 +14,7 @@
 #include "rect.h"
 #include "text_blob.h"
 
-namespace bkfont {
+namespace bkit {
 
 class PlatformPaint;
 
@@ -218,4 +218,4 @@ ScalarRect GlyphRunSourceBounds(const PlatformFont& font,
                                 std::span<const ScalarPoint> positions,
                                 std::span<const ScalarPoint> scaled_rotations);
 
-} // namespace bkfont
+} // namespace bkit

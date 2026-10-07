@@ -9,7 +9,7 @@
 #include "style/match_result.h"
 #include "style/style_host_context.h"
 
-namespace bkfont {
+namespace bkit {
 
 // The element facts StyleAdjuster::AdjustComputedStyle() reads.
 struct StyleAdjustInput {
@@ -39,4 +39,4 @@ public:
                                                       StyleAdjustInput adjust = {});
 };
 
-} // namespace bkfont
+} // namespace bkit

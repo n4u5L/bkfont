@@ -8,7 +8,7 @@
 #include "layout/layout_unit.h"
 #include "paint/geometry.h"
 
-namespace bkfont {
+namespace bkit {
 
 // PhysicalOffset is the position of a rect (typically a fragment) relative to
 // its parent rect in the physical coordinate system.
@@ -67,4 +67,4 @@ inline Point ToCeiledPoint(const PhysicalOffset& o) {
   return {o.left.Ceil(), o.top.Ceil()};
 }
 
-} // namespace bkfont
+} // namespace bkit

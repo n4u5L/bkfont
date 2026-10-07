@@ -5,7 +5,7 @@
 #include "paint_canvas.h"
 #include "text_paint_style.h"
 
-namespace bkfont {
+namespace bkit {
 class ComputedStyle;
 class Font;
 struct TextFragmentPaintInfo;
@@ -22,4 +22,4 @@ public:
                      const LineRelativeRect&, const ComputedStyle&, NodeId = kInvalidNodeId,
                      std::span<const DecoratingBox> = {});
 };
-} // namespace bkfont
+} // namespace bkit

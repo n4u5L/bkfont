@@ -10,12 +10,12 @@
 
 #include "color_float.h"
 
-// The upstream gfx namespace is flattened into bkfont.
-namespace bkfont {
+// The upstream gfx namespace is flattened into bkit.
+namespace bkit {
 
-using bkfont::ColorFloat4;
+using bkit::ColorFloat4;
 
-// All the methods below are exposed for bkfont::color conversions.
+// All the methods below are exposed for bkit::color conversions.
 
 std::tuple<float, float, float> LabToXYZD50(float l, float a, float b);
 
@@ -101,4 +101,4 @@ ColorFloat4 HSLToColorFloat4(float h, float s, float l, float alpha);
 
 ColorFloat4 HWBToColorFloat4(float h, float w, float b, float alpha);
 
-} // namespace bkfont
+} // namespace bkit

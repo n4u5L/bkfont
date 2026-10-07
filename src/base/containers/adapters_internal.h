@@ -13,28 +13,28 @@
 
 #include "base/compiler_specific.h"
 
-namespace bkfont::base::internal {
+namespace bkit::base::internal {
 
 template <typename Range>
 class RangeOfRvaluesAdapter;
 template <typename Range>
 class ReversedAdapter;
 
-} // namespace bkfont::base::internal
+} // namespace bkit::base::internal
 
 // This is technically correct, but presently always evaluates to false since
 // `RangeAsRvalues()` bans non-borrowed ranges.
 template <typename Range>
 inline constexpr bool std::ranges::enable_borrowed_range<
-    bkfont::base::internal::RangeOfRvaluesAdapter<Range>> =
+    bkit::base::internal::RangeOfRvaluesAdapter<Range>> =
     std::ranges::borrowed_range<Range>;
 
 template <typename Range>
 inline constexpr bool
-    std::ranges::enable_borrowed_range<bkfont::base::internal::ReversedAdapter<Range>> =
+    std::ranges::enable_borrowed_range<bkit::base::internal::ReversedAdapter<Range>> =
         std::ranges::borrowed_range<Range>;
 
-namespace bkfont::base::internal {
+namespace bkit::base::internal {
 
 template <typename Range>
 class RangeOfRvaluesAdapter {
@@ -111,4 +111,4 @@ private:
   Range&& range_;
 };
 
-} // namespace bkfont::base::internal
+} // namespace bkit::base::internal

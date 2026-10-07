@@ -31,7 +31,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 enum TextRenderingMode {
   kAutoTextRendering,
@@ -43,4 +43,4 @@ enum TextRenderingMode {
 String ToString(TextRenderingMode);
 String ToStringForIdl(TextRenderingMode);
 
-} // namespace bkfont
+} // namespace bkit

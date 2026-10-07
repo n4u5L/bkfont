@@ -11,7 +11,7 @@
 #include "base/text/string_view.h"
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 // StrCat is a function to perform concatenation on a sequence of strings.
 // It is preferable to a sequence of "a + b + c" because it is both faster and
@@ -25,4 +25,4 @@ namespace bkfont {
 [[nodiscard]] String
 StrCat(std::initializer_list<StringView> pieces);
 
-} // namespace bkfont
+} // namespace bkit

@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-namespace bkfont {
+namespace bkit {
 
 // SK_GAMMA_EXPONENT and SK_GAMMA_CONTRAST as Chromium's skia/BUILD.gn sets
 // them for Linux, which every platform follows here. SK_GAMMA_APPLY_TO_A8 is
@@ -103,4 +103,4 @@ private:
   float text_gamma_;
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -10,7 +10,7 @@
 #include "shaping/shape_result_view.h"
 #include "text/text_direction.h"
 
-namespace bkfont {
+namespace bkit {
 
 class TextCombine;
 
@@ -156,4 +156,4 @@ private:
   bool soft_wrap_ = false;
 };
 
-} // namespace bkfont
+} // namespace bkit

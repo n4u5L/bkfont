@@ -19,7 +19,7 @@
 #define ASAN_REGION_IS_POISONED(addr, size) \
   __asan_region_is_poisoned(addr, size)
 #define NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
-namespace bkfont {
+namespace bkit {
 
 class AsanUnpoisonScope {
 public:
@@ -43,13 +43,13 @@ private:
   bool was_poisoned_;
 };
 
-} // namespace bkfont
+} // namespace bkit
 
 #else
 #define ASAN_REGION_IS_POISONED(addr, size) \
   ((void)(addr), (void)(size), (void*)nullptr)
 #define NO_SANITIZE_ADDRESS
-namespace bkfont {
+namespace bkit {
 
 class AsanUnpoisonScope {
 public:
@@ -59,7 +59,7 @@ public:
   }
 };
 
-} // namespace bkfont
+} // namespace bkit
 
 #endif
 

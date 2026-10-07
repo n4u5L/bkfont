@@ -13,7 +13,7 @@
 
 struct hb_feature_t;
 
-namespace bkfont {
+namespace bkit {
 
 class FontDescription;
 
@@ -98,4 +98,4 @@ private:
   wtf_size_t num_features_before_;
 };
 
-} // namespace bkfont
+} // namespace bkit

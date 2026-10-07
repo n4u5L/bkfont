@@ -12,14 +12,14 @@
 namespace {
 
 static void DeleteTypefaceStream(void* stream_asset_ptr) {
-  bkfont::StreamAsset* stream_asset =
-      reinterpret_cast<bkfont::StreamAsset*>(stream_asset_ptr);
+  bkit::StreamAsset* stream_asset =
+      reinterpret_cast<bkit::StreamAsset*>(stream_asset_ptr);
   delete stream_asset;
 }
 
 } // namespace
 
-namespace bkfont {
+namespace bkit {
 
 hb::unique_ptr<hb_face_t> HbFaceFromTypeface(std::shared_ptr<Typeface> typeface) {
   hb::unique_ptr<hb_face_t> return_face(nullptr);
@@ -49,4 +49,4 @@ hb::unique_ptr<hb_face_t> HbFaceFromTypeface(std::shared_ptr<Typeface> typeface)
   return return_face;
 }
 
-} // namespace bkfont
+} // namespace bkit

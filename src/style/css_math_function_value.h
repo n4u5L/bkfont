@@ -15,7 +15,7 @@
 #include "base/vector.h"
 #include "style/css_primitive_value.h"
 
-namespace bkfont {
+namespace bkit {
 
 class CSSMathFunctionValue : public CSSPrimitiveValue {
 public:
@@ -79,4 +79,4 @@ struct DowncastTraits<CSSMathFunctionValue> {
   static bool AllowFrom(const CSSValue& value) { return value.IsMathFunctionValue(); }
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -17,7 +17,7 @@
 // Chromium only builds and runs on Little Endian machines.
 ;
 
-namespace bkfont::base {
+namespace bkit::base {
 
 // Returns a value with all bytes in |x| swapped, i.e. reverses the endianness.
 // TODO(pkasting): Once C++23 is available, replace with std::byteswap.
@@ -781,4 +781,4 @@ inline std::array<uint8_t, 8u> DoubleToBigEndian(double val) {
 #endif
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base

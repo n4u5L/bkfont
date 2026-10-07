@@ -5,7 +5,7 @@
 #include <iterator>
 #include <utility>
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -202,4 +202,4 @@ std::shared_ptr<FontManager> MakeFontManagerCustomEmpty() {
   return std::make_shared<FontManagerCustom>(EmptyFontLoader());
 }
 
-} // namespace bkfont
+} // namespace bkit

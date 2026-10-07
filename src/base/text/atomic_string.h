@@ -40,14 +40,14 @@
 
 // `AtomicString` is interned, so it's safe to hash; allow conversion to a byte
 // span to facilitate this.
-namespace bkfont::base {
+namespace bkit::base {
 
 template <>
-inline constexpr bool kCanSafelyConvertToByteSpan<::bkfont::AtomicString> = true;
+inline constexpr bool kCanSafelyConvertToByteSpan<::bkit::AtomicString> = true;
 
-} // namespace bkfont::base
+} // namespace bkit::base
 
-namespace bkfont {
+namespace bkit {
 
 // An AtomicString instance represents a string, and multiple AtomicString
 // instances can share their string storage if the strings are
@@ -298,7 +298,7 @@ inline bool operator==(const AtomicString& a, const AtomicString& b) {
 }
 inline bool operator==(const AtomicString& a, const String& b) {
   // We don't use equalStringView so we get the isAtomic() optimization inside
-  // bkfont::equal.
+  // bkit::equal.
   return Equal(a.Impl(), b.Impl());
 }
 inline bool operator==(const String& a, const AtomicString& b) {
@@ -361,7 +361,7 @@ struct HashTraits;
 template <>
 struct HashTraits<AtomicString>;
 
-} // namespace bkfont
+} // namespace bkit
 
 // Mark `AtomicString` and `const char*` as having a common reference type (the
 // type to which both can be converted or bound) of `String`. This makes them
@@ -374,15 +374,15 @@ struct HashTraits<AtomicString>;
 // Without this, the `find()` call above would fail to compile with a cryptic
 // error about being unable to invoke `std::ranges::equal_to()`.
 template <template <typename> typename TQ, template <typename> typename UQ>
-struct std::basic_common_reference<bkfont::AtomicString, const char*, TQ, UQ> {
-  using type = bkfont::String;
+struct std::basic_common_reference<bkit::AtomicString, const char*, TQ, UQ> {
+  using type = bkit::String;
 };
 
 template <template <typename> typename TQ, template <typename> typename UQ>
-struct std::basic_common_reference<const char*, bkfont::AtomicString, TQ, UQ> {
-  using type = bkfont::String;
+struct std::basic_common_reference<const char*, bkit::AtomicString, TQ, UQ> {
+  using type = bkit::String;
 };
 
-BASE_ALLOW_MOVE_INIT_AND_COMPARE_WITH_MEM_FUNCTIONS(bkfont::AtomicString)
+BASE_ALLOW_MOVE_INIT_AND_COMPARE_WITH_MEM_FUNCTIONS(bkit::AtomicString)
 
 #include "base/text/string_operators_atomic.h"

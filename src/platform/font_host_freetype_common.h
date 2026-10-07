@@ -14,7 +14,7 @@
 #include "platform_glyph.h"
 #include "scaler_context.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Canvas;
 
@@ -62,4 +62,4 @@ private:
   bool GenerateFacePath(FT_Face face, std::uint16_t glyph_id, LoadGlyphFlags load_flags, ScalarPath* path) const;
 };
 
-} // namespace bkfont
+} // namespace bkit

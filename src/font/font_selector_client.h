@@ -9,7 +9,7 @@
 
 #include <memory>
 #include "base/hash_map.h"
-namespace bkfont {
+namespace bkit {
 
 class FontSelector;
 
@@ -20,4 +20,4 @@ public:
   virtual void FontsNeedUpdate(FontSelector*, FontInvalidationReason) = 0;
 };
 
-} // namespace bkfont
+} // namespace bkit

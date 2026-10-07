@@ -8,7 +8,7 @@
 #include "base/forward.h"
 #include "base/text/unicode.h"
 
-namespace bkfont {
+namespace bkit {
 
 class TextOffsetMap;
 
@@ -81,4 +81,4 @@ private:
   const char* case_map_locale_;
 };
 
-} // namespace bkfont
+} // namespace bkit

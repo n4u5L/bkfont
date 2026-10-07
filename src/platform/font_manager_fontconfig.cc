@@ -24,7 +24,7 @@
 #include "typeface_freetype.h"
 #include "typeface_proxy.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -583,4 +583,4 @@ std::shared_ptr<FontManager> MakeFontManagerFontconfig() {
   return manager;
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -46,7 +46,7 @@
 #include "text/character.h"
 #include "font_prewarmer.h"
 #include "base/hash_set.h"
-namespace bkfont {
+namespace bkit {
 
 const char kColorEmojiLocale[] = "und-Zsye";
 const char kMonoEmojiLocale[] = "und-Zsym";
@@ -289,9 +289,9 @@ bool FontCache::IsPlatformFontUniqueNameMatchAvailable(
                                                AlternateFontName::kLocalUniqueFace));
 }
 
-} // namespace bkfont
+} // namespace bkit
 
-namespace bkfont {
+namespace bkit {
 
 void FontCache::PrewarmFamily(const AtomicString& family) {
   if (!prewarmer_) return;
@@ -301,9 +301,9 @@ void FontCache::PrewarmFamily(const AtomicString& family) {
   prewarmer_->PrewarmFamily(family.GetString());
 }
 
-} // namespace bkfont
+} // namespace bkit
 
-namespace bkfont {
+namespace bkit {
 
 // FirstAvailableOrFirst. The source trims only
 // ASCII whitespace and drops empty comma-separated entries before matching.
@@ -330,4 +330,4 @@ String FontCache::FirstAvailableOrFirst(const String& font_name_list) {
   return families[0];
 }
 
-} // namespace bkfont
+} // namespace bkit

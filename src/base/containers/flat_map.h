@@ -13,7 +13,7 @@
 
 #include "base/containers/flat_tree.h"
 
-namespace bkfont::base {
+namespace bkit::base {
 
 namespace internal {
 
@@ -178,10 +178,10 @@ template <class Key,
           class Mapped,
           class Compare = std::less<>,
           class Container = std::vector<std::pair<Key, Mapped>>>
-class flat_map : public ::bkfont::base::internal::
+class flat_map : public ::bkit::base::internal::
                      flat_tree<Key, internal::GetFirst, Compare, Container> {
 private:
-  using tree = typename ::bkfont::base::internal::
+  using tree = typename ::bkit::base::internal::
       flat_tree<Key, internal::GetFirst, Compare, Container>;
 
 public:
@@ -402,4 +402,4 @@ template <
 flat_map(Container&&, Compare comp = {})
     -> flat_map<Key, Mapped, Compare, std::decay_t<Container>>;
 
-} // namespace bkfont::base
+} // namespace bkit::base

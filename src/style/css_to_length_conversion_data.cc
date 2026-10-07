@@ -8,7 +8,7 @@
 #include "font/simple_font_data.h"
 #include "style/computed_style.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 // core/css/css_resolution_units.h
@@ -143,4 +143,4 @@ double CSSToLengthConversionData::ZoomedComputedPixels(double value, CSSPrimitiv
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

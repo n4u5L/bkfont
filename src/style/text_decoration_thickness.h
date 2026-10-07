@@ -9,7 +9,7 @@
 #include "geometry/length.h"
 #include "style/css_value_keywords.h"
 
-namespace bkfont {
+namespace bkit {
 
 class TextDecorationThickness {
 public:
@@ -40,4 +40,4 @@ private:
   bool thickness_from_font_{false};
 };
 
-} // namespace bkfont
+} // namespace bkit

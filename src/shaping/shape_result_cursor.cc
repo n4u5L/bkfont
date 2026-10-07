@@ -5,7 +5,7 @@
 
 #include "shape_result_cursor.h"
 
-namespace bkfont {
+namespace bkit {
 
 void ShapeResultCursor::MoveToStart() {
   if (IsLtr()) {
@@ -128,4 +128,4 @@ void ShapeResultCursor::SetUnsafeToBreakBefore() {
   GlyphData().SetSafeToBreakBefore(SafeToBreak::kUnsafe);
 }
 
-} // namespace bkfont
+} // namespace bkit

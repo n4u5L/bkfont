@@ -5,7 +5,7 @@
 #include "semaphore.h"
 #include "thread_id.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Mutex {
 public:
@@ -49,4 +49,4 @@ private:
   Mutex& mutex_;
 };
 
-} // namespace bkfont
+} // namespace bkit

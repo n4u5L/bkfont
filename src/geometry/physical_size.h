@@ -8,7 +8,7 @@
 #include "layout/layout_unit.h"
 #include "paint/geometry.h"
 
-namespace bkfont {
+namespace bkit {
 
 // PhysicalSize is the size of a rect (typically a fragment) in the physical
 // coordinate system.
@@ -74,4 +74,4 @@ inline Size ToCeiledSize(const PhysicalSize& s) {
   return {s.width.Ceil(), s.height.Ceil()};
 }
 
-} // namespace bkfont
+} // namespace bkit

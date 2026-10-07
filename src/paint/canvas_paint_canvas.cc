@@ -6,7 +6,7 @@
 
 #include "canvas.h"
 
-namespace bkfont {
+namespace bkit {
 
 int CanvasPaintCanvas::SaveLayer(const ScalarRect* bounds, const PlatformPaint* paint) {
   return canvas_->SaveLayer(bounds, paint);
@@ -50,4 +50,4 @@ void CanvasPaintCanvas::DrawTextBlob(const std::shared_ptr<const TextBlob>& blob
   canvas_->DrawTextBlob(blob, x, y, flags);
 }
 
-} // namespace bkfont
+} // namespace bkit

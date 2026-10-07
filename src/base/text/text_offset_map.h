@@ -10,7 +10,7 @@
 #include "base/forward.h"
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 // Represents a mapping of text offset when |CaseMap| changes the length of the
 // input string. Similar to [icu::Edits], but tracks only when the length
@@ -82,4 +82,4 @@ std::ostream& operator<<(
     std::ostream& stream,
     const Vector<TextOffsetMap::Entry>& entries);
 
-} // namespace bkfont
+} // namespace bkit

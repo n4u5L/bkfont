@@ -13,8 +13,8 @@
 
 #include "base/numerics/angle_conversions.h"
 
-// The upstream gfx namespace is flattened into bkfont.
-namespace bkfont {
+// The upstream gfx namespace is flattened into bkit.
+namespace bkit {
 
 struct SinCos {
   double sin;
@@ -111,4 +111,4 @@ inline SinCos SinCosDegrees(double degrees) {
   return SinCos{std::sin(rad), std::cos(rad)};
 }
 
-} // namespace bkfont
+} // namespace bkit

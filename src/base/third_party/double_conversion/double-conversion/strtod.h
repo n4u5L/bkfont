@@ -30,7 +30,7 @@
 
 #include "utils.h"
 
-namespace bkfont::double_conversion {
+namespace bkit::double_conversion {
 
 // The buffer must only contain digits in the range [0-9]. It must not
 // contain a dot or a sign. It must not start with '0', and must not be empty.
@@ -59,4 +59,4 @@ inline Vector<const char> TrimTrailingZeros(Vector<const char> buffer) {
   return Vector<const char>(buffer.start(), 0);
 }
 
-} // namespace bkfont::double_conversion
+} // namespace bkit::double_conversion

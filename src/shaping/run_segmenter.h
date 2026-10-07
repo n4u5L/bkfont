@@ -19,7 +19,7 @@
 #include "symbols_iterator.h"
 #include "utf16_text_iterator.h"
 
-namespace bkfont {
+namespace bkit {
 
 // A tool for segmenting runs prior to shaping, combining ScriptIterator,
 // OrientationIterator and SmallCapsIterator, depending on orientaton and
@@ -63,4 +63,4 @@ private:
   bool at_end_;
 };
 
-} // namespace bkfont
+} // namespace bkit

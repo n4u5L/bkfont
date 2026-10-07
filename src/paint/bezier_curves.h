@@ -8,7 +8,7 @@
 
 #include "rect.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkQuads. Solves quadratics written as A*x^2 - 2*B*x + C (Roots) or
 // A*x^2 + B*x + C (RootsReal).
@@ -109,4 +109,4 @@ bool DoubleNearlyZero(double a);
 // sk_doubles_nearly_equal_ulps.
 bool DoublesNearlyEqualUlps(double a, double b, unsigned max_ulps_diff = 16);
 
-} // namespace bkfont
+} // namespace bkit

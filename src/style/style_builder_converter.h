@@ -19,7 +19,7 @@
 #include "style/text_decoration_thickness.h"
 #include "text/tab_size.h"
 
-namespace bkfont {
+namespace bkit {
 
 class CSSToLengthConversionData;
 class FontBuilder;
@@ -79,4 +79,4 @@ public:
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

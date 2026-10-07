@@ -7,7 +7,7 @@
 
 #include "once.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Semaphore {
 public:
@@ -58,4 +58,4 @@ inline void Semaphore::Wait() {
   }
 }
 
-} // namespace bkfont
+} // namespace bkit

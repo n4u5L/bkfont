@@ -13,7 +13,7 @@
 #include "platform/platform_font.h"
 #include "rect.h"
 
-namespace bkfont {
+namespace bkit {
 
 class PlatformPaint;
 
@@ -246,4 +246,4 @@ ScalarRect GetFontBounds(const PlatformFont& font);
 // SkFontPriv::IsFinite.
 bool FontIsFinite(const PlatformFont& font);
 
-} // namespace bkfont
+} // namespace bkit

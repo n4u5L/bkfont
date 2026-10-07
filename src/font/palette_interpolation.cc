@@ -8,7 +8,7 @@
 #include "open_type_cpal_lookup.h"
 #include "base/math_extras.h"
 
-namespace bkfont {
+namespace bkit {
 
 Vector<FontPalette::FontPaletteOverride> PaletteInterpolation::MixColorRecords(
     Vector<FontPalette::FontPaletteOverride>&& start_color_records,
@@ -125,4 +125,4 @@ PaletteInterpolation::ComputeInterpolableFontPalette(
   return result_color_records;
 }
 
-} // namespace bkfont
+} // namespace bkit

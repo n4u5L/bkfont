@@ -16,7 +16,7 @@
 // unified handling, Chromium instead uses this wrapper, which provides that
 // guarantee. This allows code to use "`to_address()` would be valid here" as a
 // constraint to detect pointer-like types.
-namespace bkfont::base {
+namespace bkit::base {
 
 // Note that calling `std::to_address()` with a function pointer renders the
 // program ill-formed.
@@ -34,4 +34,4 @@ constexpr auto to_address(const P& p) noexcept {
   return std::to_address(p);
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base

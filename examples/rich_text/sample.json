@@ -1,5 +1,5 @@
 {
-  "format": "bkfont-rich-text",
+  "format": "bkit-rich-text",
   "version": 1,
   "styles": [
     {},
@@ -38,7 +38,7 @@
     {"style": 1, "text": "，写"},
     {"style": 3, "text": "成"},
     {"style": 1, "text": "作品。\n"},
-    {"style": 4, "text": "一份可以编辑的排版实验 · bkfont\n"},
+    {"style": 4, "text": "一份可以编辑的排版实验 · bkit\n"},
     {"style": 5, "text": "从这里开始\n"},
     {"style": 0, "text": "点击文字放置光标"},
     {"style": 6, "text": "，拖动"},

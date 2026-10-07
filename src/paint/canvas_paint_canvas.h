@@ -4,7 +4,7 @@
 
 #include "paint_canvas.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Canvas;
 
@@ -36,4 +36,4 @@ private:
   Canvas* const canvas_;
 };
 
-} // namespace bkfont
+} // namespace bkit

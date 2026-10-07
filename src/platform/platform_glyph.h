@@ -12,7 +12,7 @@
 #include "paint/path.h"
 #include "paint/rect.h"
 
-namespace bkfont {
+namespace bkit {
 
 class Arena;
 class Drawable;
@@ -510,4 +510,4 @@ private:
   PackedGlyphID id_;
 };
 
-} // namespace bkfont
+} // namespace bkit

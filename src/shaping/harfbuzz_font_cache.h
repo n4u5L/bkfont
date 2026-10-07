@@ -8,7 +8,7 @@
 #include "base/hash_map.h"
 #include "base/hash_traits.h"
 
-namespace bkfont {
+namespace bkit {
 
 class FontPlatformData;
 struct HarfBuzzFontData;
@@ -27,4 +27,4 @@ private:
       font_map_;
 };
 
-} // namespace bkfont
+} // namespace bkit

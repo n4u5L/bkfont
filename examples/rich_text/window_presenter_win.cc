@@ -16,8 +16,8 @@
 namespace rich_text {
 namespace {
 using Microsoft::WRL::ComPtr;
-using bkfont::IntRect;
-using bkfont::Pixmap;
+using bkit::IntRect;
+using bkit::Pixmap;
 } // namespace
 
 struct WindowPresenter::Impl {
@@ -163,7 +163,7 @@ struct WindowPresenter::Impl {
   }
 
   HRESULT Submit(const Pixmap& pixels, std::span<const IntRect> damage, bool full, const Scroll* scroll, float scale) {
-    if (pixels.GetColorType() != bkfont::ColorType::kN32 || pixels.RowBytes() > std::numeric_limits<UINT>::max())
+    if (pixels.GetColorType() != bkit::ColorType::kN32 || pixels.RowBytes() > std::numeric_limits<UINT>::max())
       return E_INVALIDARG;
     if (width != pixels.Width() || height != pixels.Height()) {
       const HRESULT hr = surface->Resize(pixels.Width(), pixels.Height());

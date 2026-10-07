@@ -19,7 +19,7 @@ uint32_t kCpalTag = HB_TAG('C', 'P', 'A', 'L');
 
 } // namespace
 
-namespace bkfont {
+namespace bkit {
 
 /* static */
 std::optional<uint16_t> OpenTypeCpalLookup::FirstThemedPalette(
@@ -78,4 +78,4 @@ Vector<Color> OpenTypeCpalLookup::RetrieveColorRecords(
   return color_records;
 }
 
-} // namespace bkfont
+} // namespace bkit

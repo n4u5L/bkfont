@@ -16,7 +16,7 @@
 #include "layout/inline/fragment_item.h"
 #include "style/computed_style.h"
 
-namespace bkfont {
+namespace bkit {
 
 class ShapeResultView;
 
@@ -93,4 +93,4 @@ private:
   HeapVector<InlineBoxState, 4> stack_;
 };
 
-} // namespace bkfont
+} // namespace bkit

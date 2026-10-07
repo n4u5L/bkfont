@@ -10,7 +10,7 @@
 #include "color4f.h"
 #include "matrix.h"
 
-namespace bkfont {
+namespace bkit {
 
 struct FilterImage {
   IntRect bounds;
@@ -33,4 +33,4 @@ public:
   static std::shared_ptr<const ImageFilter> Merge(std::span<const std::shared_ptr<const ImageFilter>>);
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -38,7 +38,7 @@
 
 #include <unicode/uscript.h>
 
-namespace bkfont {
+namespace bkit {
 
 class GenericFontFamilySettings {
 
@@ -113,4 +113,4 @@ private:
       first_available_font_for_families_;
 };
 
-} // namespace bkfont
+} // namespace bkit

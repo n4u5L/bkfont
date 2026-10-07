@@ -16,7 +16,7 @@
 #include "path.h"
 #include "stroke.h"
 
-namespace bkfont {
+namespace bkit {
 
 class PlatformPaint;
 
@@ -85,4 +85,4 @@ bool FillPathWithPaint(const ScalarPath& src, const PlatformPaint& paint, Scalar
 // SkMatrixPriv::ComputeResScaleForStroking.
 float ComputeResScaleForStroking(const ScalarMatrix& matrix);
 
-} // namespace bkfont
+} // namespace bkit

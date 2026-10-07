@@ -8,7 +8,7 @@
 #include "base/text/wtf_string.h"
 #include "data.h"
 
-namespace bkfont {
+namespace bkit {
 
 class StreamAsset;
 
@@ -139,4 +139,4 @@ private:
   std::size_t offset_;
 };
 
-} // namespace bkfont
+} // namespace bkit

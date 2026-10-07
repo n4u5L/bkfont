@@ -17,7 +17,7 @@
 #include "text/text_run.h"
 #include "paint/geometry.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -147,4 +147,4 @@ GlyphData ShapeResultBuffer::EmphasisMarkGlyphData(
   return GlyphData();
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -40,7 +40,7 @@
 #include "hash_table_deleted_value_type.h"
 #include "vector_traits.h"
 
-namespace bkfont {
+namespace bkit {
 
 inline constexpr wtf_size_t kInitialVectorSize = 4;
 
@@ -636,7 +636,7 @@ private:
 };
 
 // UncheckedIterator<T> is just a wrapper of a T pointer with no bounds
-// checking, and the default iterator implementation of bkfont::Vector.
+// checking, and the default iterator implementation of bkit::Vector.
 template <typename T>
 class UncheckedIterator {
 public:
@@ -1841,4 +1841,4 @@ auto ToVector(Range&& range, Proj proj = {}) {
   return Vector<ProjectedType>(std::forward<Range>(range), std::move(proj));
 }
 
-} // namespace bkfont
+} // namespace bkit

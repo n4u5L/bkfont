@@ -6,7 +6,7 @@
 #include "style/css_value.h"
 #include "style/css_property_names.h"
 
-namespace bkfont {
+namespace bkit {
 
 class StyleResolverState;
 
@@ -15,4 +15,4 @@ public:
   static void ApplyPhysicalProperty(CSSPropertyID, StyleResolverState&, const CSSValue&);
 };
 
-} // namespace bkfont
+} // namespace bkit

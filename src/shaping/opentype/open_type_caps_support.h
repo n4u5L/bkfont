@@ -13,7 +13,7 @@
 
 #include <hb.h>
 
-namespace bkfont {
+namespace bkit {
 
 class OpenTypeCapsSupport {
 
@@ -70,4 +70,4 @@ private:
   mutable FontFormat font_format_;
 };
 
-} // namespace bkfont
+} // namespace bkit

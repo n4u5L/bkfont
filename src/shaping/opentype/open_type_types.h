@@ -30,7 +30,7 @@
 #include "base/numerics/byte_conversions.h"
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace open_type {
 
@@ -119,4 +119,4 @@ protected:
 
 } // namespace open_type
 
-} // namespace bkfont
+} // namespace bkit

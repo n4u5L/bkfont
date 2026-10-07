@@ -11,7 +11,7 @@
 #include "layout/inline/inline_caret_position.h"
 #include "runtime_enabled_features.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 bool ShouldIgnoreForPositionForPoint(const FragmentItem& item) {
@@ -367,4 +367,4 @@ InlinePosition InlineCursor::PositionForEndOfLine() const {
   return last_leaf.PositionForPointInText(offset);
 }
 
-} // namespace bkfont
+} // namespace bkit

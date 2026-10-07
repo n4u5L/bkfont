@@ -10,7 +10,7 @@
 #include <utility>
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_refptr.h"
-namespace bkfont::base {
+namespace bkit::base {
 
 namespace subtle {
 
@@ -76,7 +76,7 @@ private:
 } // namespace subtle
 
 #define REQUIRE_ADOPTION_FOR_REFCOUNTED_TYPE() \
-  using RefCountPreferenceTag = ::bkfont::base::subtle::StartRefCountFromOneTag
+  using RefCountPreferenceTag = ::bkit::base::subtle::StartRefCountFromOneTag
 
 template <class T, typename Traits>
 class RefCounted;
@@ -234,4 +234,4 @@ bool operator==(const RefCountedData<T>& lhs, const RefCountedData<T>& rhs) {
   return lhs.data == rhs.data;
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base

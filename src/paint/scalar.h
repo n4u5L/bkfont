@@ -8,7 +8,7 @@
 #include <cmath>
 #include <cstdint>
 
-namespace bkfont {
+namespace bkit {
 
 // SK_ScalarNearlyZero.
 inline constexpr float kScalarNearlyZero = 1.0f / (1 << 12);
@@ -59,4 +59,4 @@ constexpr float FDot6ToFloat(T x) {
   return static_cast<float>(x) * 0.015625f;
 }
 
-} // namespace bkfont
+} // namespace bkit

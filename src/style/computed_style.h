@@ -12,7 +12,7 @@
 #include "style/css_to_length_conversion_data.h"
 #include "style/style_difference.h"
 
-namespace bkfont {
+namespace bkit {
 
 class ComputedStyleBuilder;
 
@@ -44,10 +44,10 @@ public:
 
   // Writing modes and direction.
   bool IsLeftToRightDirection() const { return Direction() == TextDirection::kLtr; }
-  bool IsHorizontalWritingMode() const { return bkfont::IsHorizontalWritingMode(GetWritingMode()); }
-  bool IsHorizontalTypographicMode() const { return bkfont::IsHorizontalTypographicMode(GetWritingMode()); }
-  bool IsFlippedLinesWritingMode() const { return bkfont::IsFlippedLinesWritingMode(GetWritingMode()); }
-  bool IsFlippedBlocksWritingMode() const { return bkfont::IsFlippedBlocksWritingMode(GetWritingMode()); }
+  bool IsHorizontalWritingMode() const { return bkit::IsHorizontalWritingMode(GetWritingMode()); }
+  bool IsHorizontalTypographicMode() const { return bkit::IsHorizontalTypographicMode(GetWritingMode()); }
+  bool IsFlippedLinesWritingMode() const { return bkit::IsFlippedLinesWritingMode(GetWritingMode()); }
+  bool IsFlippedBlocksWritingMode() const { return bkit::IsFlippedBlocksWritingMode(GetWritingMode()); }
 
   // Colors. The computed color is the color of the legacy paint; the other
   // colors resolve currentcolor against it (VisitedDependentColor()).
@@ -63,12 +63,12 @@ public:
 
   // White space and wrapping.
   EWhiteSpace WhiteSpace() const { return ToWhiteSpace(GetWhiteSpaceCollapse(), GetTextWrapMode()); }
-  bool ShouldWrapLine() const { return bkfont::ShouldWrapLine(GetTextWrapMode()); }
-  bool ShouldPreserveWhiteSpaces() const { return bkfont::ShouldPreserveWhiteSpaces(GetWhiteSpaceCollapse()); }
-  bool ShouldCollapseWhiteSpaces() const { return bkfont::ShouldCollapseWhiteSpaces(GetWhiteSpaceCollapse()); }
-  bool ShouldPreserveBreaks() const { return bkfont::ShouldPreserveBreaks(GetWhiteSpaceCollapse()); }
-  bool ShouldCollapseBreaks() const { return bkfont::ShouldCollapseBreaks(GetWhiteSpaceCollapse()); }
-  bool ShouldBreakSpaces() const { return bkfont::ShouldBreakSpaces(GetWhiteSpaceCollapse()); }
+  bool ShouldWrapLine() const { return bkit::ShouldWrapLine(GetTextWrapMode()); }
+  bool ShouldPreserveWhiteSpaces() const { return bkit::ShouldPreserveWhiteSpaces(GetWhiteSpaceCollapse()); }
+  bool ShouldCollapseWhiteSpaces() const { return bkit::ShouldCollapseWhiteSpaces(GetWhiteSpaceCollapse()); }
+  bool ShouldPreserveBreaks() const { return bkit::ShouldPreserveBreaks(GetWhiteSpaceCollapse()); }
+  bool ShouldCollapseBreaks() const { return bkit::ShouldCollapseBreaks(GetWhiteSpaceCollapse()); }
+  bool ShouldBreakSpaces() const { return bkit::ShouldBreakSpaces(GetWhiteSpaceCollapse()); }
   // ComputedStyle::BreakOnlyAfterWhiteSpace().
   bool BreakOnlyAfterWhiteSpace() const {
     return ShouldPreserveWhiteSpaces() || GetLineBreak() == LineBreak::kAfterWhiteSpace;
@@ -165,4 +165,4 @@ public:
   void UpdateFontOrientation();
 };
 
-} // namespace bkfont
+} // namespace bkit

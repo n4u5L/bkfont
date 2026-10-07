@@ -18,7 +18,7 @@
 
 #include "base/compiler_specific.h"
 
-namespace bkfont::base {
+namespace bkit::base {
 
 // Tag type that allows skipping the sort_and_unique step when constructing a
 // flat_tree in case the underlying container is already sorted and has no
@@ -1143,4 +1143,4 @@ size_t EraseIf(
   return num_removed;
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base

@@ -28,7 +28,7 @@
 
 #include "base/text/wtf_uchar.h"
 
-namespace bkfont::uchar {
+namespace bkit::uchar {
 
 // Names here are taken from the Unicode standard.
 //
@@ -239,4 +239,4 @@ const UChar32 kCancelTag = 0xE007F;
 
 const UChar32 kMaxCodepoint = 0x10ffff;
 
-} // namespace bkfont::uchar
+} // namespace bkit::uchar

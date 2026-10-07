@@ -21,7 +21,7 @@
 #define BASE_HAS_OPTIMIZED_SAFE_CONVERSIONS (0)
 #endif
 
-namespace bkfont::base {
+namespace bkit::base {
 
 namespace internal {
 
@@ -377,4 +377,4 @@ Dst ClampRound(Src value) {
   return saturated_cast<Dst>(rounded);
 }
 
-} // namespace bkfont::base
+} // namespace bkit::base

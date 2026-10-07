@@ -5,7 +5,7 @@
 
 #include "color4f.h"
 
-namespace bkfont {
+namespace bkit {
 
 // SkBlendMode.
 enum class BlendMode {
@@ -54,4 +54,4 @@ PMColor4f BlendPixel(BlendMode mode, const PMColor4f& src, const PMColor4f& dst)
 // as SkBlendMode_AffectsTransparentBlack.
 bool BlendModeAffectsTransparentBlack(BlendMode mode);
 
-} // namespace bkfont
+} // namespace bkit

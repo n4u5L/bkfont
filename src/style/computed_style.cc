@@ -16,7 +16,7 @@
 #include "geometry/length_functions.h"
 #include "layout/inline_text_metrics.h"
 
-namespace bkfont {
+namespace bkit {
 
 std::shared_ptr<const ComputedStyle> ComputedStyle::CreateInitialStyleSingleton() {
   return std::shared_ptr<const ComputedStyle>(new ComputedStyle());
@@ -49,16 +49,16 @@ float ComputedStyle::ComputedLineHeight(const Length& line_height, const Font& f
 }
 
 LayoutUnit ComputedStyle::ComputedFontSizeAsFixed() const {
-  return bkfont::ComputedFontSizeAsFixed(*GetFont());
+  return bkit::ComputedFontSizeAsFixed(*GetFont());
 }
 
 LayoutUnit ComputedStyle::ComputedLineHeightAsFixed() const {
-  return bkfont::ComputedLineHeightAsFixed(LineHeight(), *GetFont());
+  return bkit::ComputedLineHeightAsFixed(LineHeight(), *GetFont());
 }
 
 FontBaseline ComputedStyle::GetFontBaseline() const {
   // 'dominant-baseline' is always 'auto' for non-SVG elements.
-  return bkfont::GetFontBaseline(GetFontDescription());
+  return bkit::GetFontBaseline(GetFontDescription());
 }
 
 TextEmphasisMark ComputedStyle::GetTextEmphasisMark() const {
@@ -396,4 +396,4 @@ void ComputedStyleBuilder::UpdateFontOrientation() {
   SetFontDescription(font_description);
 }
 
-} // namespace bkfont
+} // namespace bkit

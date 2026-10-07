@@ -12,7 +12,7 @@
 
 #include "blend_mode.h"
 
-namespace bkfont {
+namespace bkit {
 namespace {
 
 PMColor4f Add(PMColor4f a, PMColor4f b) {
@@ -261,4 +261,4 @@ std::shared_ptr<const ImageFilter> ImageFilter::Merge(std::span<const std::share
   if (inputs.size() == 1) return inputs.front();
   return std::make_shared<MergeFilter>(inputs);
 }
-} // namespace bkfont
+} // namespace bkit

@@ -10,7 +10,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 class FontVariantNumeric {
 
@@ -120,4 +120,4 @@ private:
   friend class FontDescription;
 };
 
-} // namespace bkfont
+} // namespace bkit

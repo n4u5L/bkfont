@@ -8,7 +8,7 @@
 #include "character.h"
 #include "emoji_segmentation_category.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -76,4 +76,4 @@ EmojiSegmentationCategory GetEmojiSegmentationCategory(UChar32 codepoint) {
 
 } // namespace
 
-} // namespace bkfont
+} // namespace bkit

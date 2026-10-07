@@ -38,7 +38,7 @@
 #include "ieee.h"
 #include "utils.h"
 
-namespace bkfont::double_conversion {
+namespace bkit::double_conversion {
 
 const DoubleToStringConverter& DoubleToStringConverter::EcmaScriptConverter() {
   int flags = UNIQUE_ZERO | EMIT_POSITIVE_EXPONENT_SIGN;
@@ -413,4 +413,4 @@ void DoubleToStringConverter::DoubleToAscii(double v,
   vector[*length] = '\0';
 }
 
-} // namespace bkfont::double_conversion
+} // namespace bkit::double_conversion

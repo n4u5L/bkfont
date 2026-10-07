@@ -7,11 +7,11 @@
 
 #include "font_cache.h"
 
-namespace bkfont {
+namespace bkit {
 
 FontDataForRangeSet::FontDataForRangeSet(const FontDataForRangeSet& other) {
   font_data_ = other.font_data_;
   range_set_ = other.range_set_;
 }
 
-} // namespace bkfont
+} // namespace bkit

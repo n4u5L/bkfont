@@ -9,7 +9,7 @@
 
 #include "stream.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -92,4 +92,4 @@ std::shared_ptr<Data> Data::MakeFromStream(Stream* stream, std::size_t size) {
   return data;
 }
 
-} // namespace bkfont
+} // namespace bkit

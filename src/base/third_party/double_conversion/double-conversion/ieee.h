@@ -30,7 +30,7 @@
 
 #include "diy-fp.h"
 
-namespace bkfont::double_conversion {
+namespace bkit::double_conversion {
 
 // We assume that doubles and uint64_t have the same endianness.
 static uint64_t double_to_uint64(double d) {
@@ -435,4 +435,4 @@ private:
   DOUBLE_CONVERSION_DISALLOW_COPY_AND_ASSIGN(Single);
 };
 
-} // namespace bkfont::double_conversion
+} // namespace bkit::double_conversion

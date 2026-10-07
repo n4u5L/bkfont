@@ -39,7 +39,7 @@
 #include "type_traits.h"
 #include "wtf_size_t.h"
 
-namespace bkfont {
+namespace bkit {
 
 // A hash traits type is required for a type when the type is used as the key
 // or value of a HashTable-based classes. See documentation in
@@ -191,7 +191,7 @@ template <typename T, auto empty_value, auto deleted_value>
 struct IntOrEnumHashTraits : internal::GenericHashTraitsBase<T> {
   static_assert(std::is_integral_v<T> || std::is_enum_v<T>);
   static unsigned GetHash(T key) {
-    return bkfont::HashInt(key);
+    return bkit::HashInt(key);
   }
   static constexpr bool kEmptyValueIsZero =
       static_cast<int64_t>(empty_value) == 0;
@@ -620,4 +620,4 @@ unsigned GetHash(const T& key) {
   return HashTraits<T>::GetHash(key);
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -8,7 +8,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 // http://unicode.org/reports/tr51/#Presentation_Style discusses the differences
 // between emoji in text and the emoji in emoji presentation. In that sense, the
@@ -49,4 +49,4 @@ inline bool IsTextPresentationEmoji(FontFallbackPriority fallback_priority) {
   return fallback_priority == FontFallbackPriority::kEmojiText || fallback_priority == FontFallbackPriority::kEmojiTextWithVS;
 }
 
-} // namespace bkfont
+} // namespace bkit

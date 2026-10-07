@@ -33,7 +33,7 @@
 #include "han_kerning_char_type.h"
 #include "character_names.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -374,7 +374,7 @@ static void GenerateUTrieSerialized(FILE* fp,
                                     std::span<uint8_t> array) {
   fprintf(fp,
           "#include <cstdint>\n\n"
-          "namespace bkfont {\n\n"
+          "namespace bkit {\n\n"
           "extern const int32_t kSerializedCharacterDataSize = %zu;\n"
           // The utrie2_openFromSerialized function requires character data to
           // be aligned to 4 bytes.
@@ -388,7 +388,7 @@ static void GenerateUTrieSerialized(FILE* fp,
   }
   fprintf(fp,
           "\n};\n\n"
-          "} // namespace bkfont\n");
+          "} // namespace bkit\n");
 }
 
 static void GenerateCharacterPropertyData(FILE* fp) {
@@ -663,11 +663,11 @@ void InvokeGenerator(int index,
 
 } // namespace
 
-} // namespace bkfont
+} // namespace bkit
 
 int main(int argc, char** argv) {
-  bkfont::InitializeIcu(argv[0]);
-  bkfont::InvokeGenerator(1, argc, argv, bkfont::GenerateCharacterPropertyData);
-  bkfont::InvokeGenerator(2, argc, argv, bkfont::LineBreakData::Generate);
+  bkit::InitializeIcu(argv[0]);
+  bkit::InvokeGenerator(1, argc, argv, bkit::GenerateCharacterPropertyData);
+  bkit::InvokeGenerator(2, argc, argv, bkit::LineBreakData::Generate);
   return 0;
 }

@@ -29,7 +29,7 @@
 #include "simple_font_data.h"
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 std::shared_ptr<const SimpleFontData> SegmentedFontData::FontDataForCharacter(UChar32 c) const {
   for (const auto& face : faces_) {
@@ -86,4 +86,4 @@ bool SegmentedFontData::ShouldSkipDrawing() const {
   return false;
 }
 
-} // namespace bkfont
+} // namespace bkit

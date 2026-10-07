@@ -31,7 +31,7 @@
 #include "base/vector.h"
 #include "paint/geometry.h"
 
-namespace bkfont {
+namespace bkit {
 
 struct CharacterRange;
 class Font;
@@ -61,4 +61,4 @@ private:
   const Font& font_;
 };
 
-} // namespace bkfont
+} // namespace bkit

@@ -14,7 +14,7 @@
 #include "font_family.h"
 #include "generic_font_family_settings.h"
 
-namespace bkfont {
+namespace bkit {
 
 FontSelector::FontSelector() = default;
 FontSelector::~FontSelector() = default;
@@ -101,4 +101,4 @@ FontFallbackMap& FontSelector::GetFontFallbackMap() {
   return *font_fallback_map_;
 }
 
-} // namespace bkfont
+} // namespace bkit

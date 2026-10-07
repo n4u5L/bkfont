@@ -52,7 +52,7 @@
 #include "base/text/utf8.h"
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 ;
 
@@ -133,7 +133,7 @@ String String::Substring(unsigned pos, unsigned len) const {
 String String::DeprecatedLower() const {
   if (!impl_)
     return String();
-  return bkfont::CaseMap::FastToLowerInvariant(impl_.get());
+  return bkit::CaseMap::FastToLowerInvariant(impl_.get());
 }
 
 String String::LowerASCII() const {
@@ -470,7 +470,7 @@ String String::FromUTF8(base::span<const uint8_t> bytes) {
   if (!length)
     return g_empty_string;
 
-  bkfont::AsciiStringAttributes attributes = bkfont::CharacterAttributes(bytes);
+  bkit::AsciiStringAttributes attributes = bkit::CharacterAttributes(bytes);
   if (attributes.contains_only_ascii)
     return StringImpl::Create(bytes, attributes);
 
@@ -482,9 +482,9 @@ String String::FromUTF8(base::span<const uint8_t> bytes) {
       heap_buffer ? heap_buffer.get() : stack_buffer.data(),
       length);
 
-  bkfont::unicode::ConversionResult result =
-      bkfont::unicode::ConvertUtf8ToUtf16(bytes, buffer);
-  if (result.status != bkfont::unicode::kConversionOK) {
+  bkit::unicode::ConversionResult result =
+      bkit::unicode::ConvertUtf8ToUtf16(bytes, buffer);
+  if (result.status != bkit::unicode::kConversionOK) {
     return String();
   }
 
@@ -514,4 +514,4 @@ void String::Show() const {
 }
 #endif
 
-} // namespace bkfont
+} // namespace bkit

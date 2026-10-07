@@ -6,7 +6,7 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
-namespace bkfont::base {
+namespace bkit::base {
 
 template <typename Signature>
 class FunctionRef;
@@ -31,4 +31,4 @@ private:
   R (*invoke_)(void*, Args...);
 };
 
-} // namespace bkfont::base
+} // namespace bkit::base

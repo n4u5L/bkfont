@@ -39,12 +39,12 @@
 #endif
 
 #define DEFINE_STATIC_LOCAL_IMPL(Type, Name, Arguments, allow_cross_thread)    \
-  static bkfont::StaticSingleton<Type> s_##Name(                               \
+  static bkit::StaticSingleton<Type> s_##Name(                                 \
       [&]() {                                                                  \
-        return new bkfont::StaticSingleton<Type>::WrapperType Arguments;       \
+        return new bkit::StaticSingleton<Type>::WrapperType Arguments;         \
       },                                                                       \
       [&](void* leaked_ptr) {                                                  \
-        new (leaked_ptr) bkfont::StaticSingleton<Type>::WrapperType Arguments; \
+        new (leaked_ptr) bkit::StaticSingleton<Type>::WrapperType Arguments;   \
       });                                                                      \
   Type& Name = s_##Name.Get(allow_cross_thread)
 
@@ -66,7 +66,7 @@
 #define DEFINE_THREAD_SAFE_STATIC_LOCAL(Type, Name, Arguments) \
   DEFINE_STATIC_LOCAL_IMPL(Type, Name, Arguments, true)
 
-namespace bkfont {
+namespace bkit {
 
 template <typename Type>
 class StaticSingleton final {
@@ -246,4 +246,4 @@ NO_SANITIZE_UNRELATED_CAST
   ;                                      \
   ;
 
-} // namespace bkfont
+} // namespace bkit

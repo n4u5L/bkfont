@@ -20,7 +20,7 @@
 #include "paint/scalar.h"
 #include "paint/shader.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -790,4 +790,4 @@ std::unique_ptr<ScalerContext> ScalerContext::MakeEmpty(std::shared_ptr<Typeface
   return std::make_unique<EmptyScalerContext>(std::move(typeface), rec);
 }
 
-} // namespace bkfont
+} // namespace bkit

@@ -7,7 +7,7 @@
 
 #include <algorithm>
 
-namespace bkfont {
+namespace bkit {
 
 LineRelativeRect LineRelativeRect::EnclosingRect(const RectF& rect) {
   LineRelativeOffset offset{LayoutUnit::FromFloatFloor(rect.x()), LayoutUnit::FromFloatFloor(rect.y())};
@@ -97,4 +97,4 @@ void LineRelativeRect::Unite(const LineRelativeRect& other) {
   offset = {right - size.inline_size, bottom - size.block_size};
 }
 
-} // namespace bkfont
+} // namespace bkit

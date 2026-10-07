@@ -9,7 +9,7 @@
 #include <utility>
 #include "base/functional/callback_forward.h"
 #include "base/immediate_crash.h"
-namespace bkfont::base {
+namespace bkit::base {
 
 template <typename R, typename... Args>
 class RepeatingCallback<R(Args...)> {
@@ -48,4 +48,4 @@ private:
   std::shared_ptr<std::function<R(Args...)>> callable_;
 };
 
-} // namespace bkfont::base
+} // namespace bkit::base

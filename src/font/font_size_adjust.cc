@@ -9,7 +9,7 @@
 #include "base/text/wtf_string.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 unsigned FontSizeAdjust::GetHash() const {
   unsigned computed_hash = 0;
@@ -51,4 +51,4 @@ String FontSizeAdjust::ToString() const {
              : String::Format("%s %s", ToString(metric_).Ascii().c_str(), String::Number(value_).Ascii().c_str());
 }
 
-} // namespace bkfont
+} // namespace bkit

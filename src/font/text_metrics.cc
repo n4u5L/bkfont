@@ -11,7 +11,7 @@
 #include "paint/scalar.h"
 #include "shaping/harfbuzz_face.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -156,4 +156,4 @@ hb_position_t ScalarToHarfBuzzPosition(float value) {
   return ClampTo<int>(value * kHbPosition1);
 }
 
-} // namespace bkfont
+} // namespace bkit

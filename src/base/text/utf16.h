@@ -10,7 +10,7 @@
 #include "base/containers/span.h"
 #include "base/text/wtf_uchar.h"
 
-namespace bkfont {
+namespace bkit {
 
 // U16_GET() for base::span.
 //  - If text[offset] is a leading surrogate and text[offset + 1] is a
@@ -59,4 +59,4 @@ UChar32 CodePointAtAndPrevious(base::span<const UChar> text,
   return code_point;
 }
 
-} // namespace bkfont
+} // namespace bkit

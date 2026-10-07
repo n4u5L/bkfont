@@ -33,7 +33,7 @@
 
 #include "base/vector.h"
 
-namespace bkfont {
+namespace bkit {
 
 class FontCache;
 
@@ -54,4 +54,4 @@ private:
   Vector<FontCache*, 1> font_caches_;
 };
 
-} // namespace bkfont
+} // namespace bkit

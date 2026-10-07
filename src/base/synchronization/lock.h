@@ -3,7 +3,7 @@
 // AtomicStringTable retains its upstream single shared lock and weak entries.
 #pragma once
 #include <mutex>
-namespace bkfont::base {
+namespace bkit::base {
 
 class Lock {
 public:
@@ -33,7 +33,7 @@ private:
   Lock& lock_;
 };
 
-} // namespace bkfont::base
+} // namespace bkit::base
 
 #define GUARDED_BY(...)
 #define EXCLUSIVE_LOCKS_REQUIRED(...)

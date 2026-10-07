@@ -5,7 +5,7 @@
 
 #pragma once
 
-namespace bkfont {
+namespace bkit {
 
 struct GlyphIndexResult {
 
@@ -21,4 +21,4 @@ public:
   float advance = 0;
 };
 
-} // namespace bkfont
+} // namespace bkit

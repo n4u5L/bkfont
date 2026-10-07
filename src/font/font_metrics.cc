@@ -43,7 +43,7 @@
 #include "platform/typeface.h"
 #include "vdmx_parser.h"
 
-namespace bkfont {
+namespace bkit {
 
 // This is the largest VDMX table which we'll try to load and parse.
 static const std::size_t kMaxVDMXTableSize = 1024 * 1024; // 1 MB
@@ -197,4 +197,4 @@ int FontMetrics::IntAscentInternal(
   NOTREACHED();
 }
 
-} // namespace bkfont
+} // namespace bkit

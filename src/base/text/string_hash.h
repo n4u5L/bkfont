@@ -28,7 +28,7 @@
 #include "base/text/string_hasher.h"
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 // The GetHash() functions in below HashTraits do not support null strings.
 // find(), Contains(), and insert() on HashMap<String,...> cause a null-pointer
@@ -80,9 +80,9 @@ struct HashTraits<String> : SimpleClassHashTraits<String> {
     return GetHash(reinterpret_cast<const char*>(key));
   }
   static unsigned GetHash(const UChar* key) {
-    return bkfont::ComputeHashForWideString(
+    return bkit::ComputeHashForWideString(
         // SAFETY: Safe when input is null-terminated string.
-        UNSAFE_BUFFERS({key, bkfont::LengthOfNullTerminatedString(key)}));
+        UNSAFE_BUFFERS({key, bkit::LengthOfNullTerminatedString(key)}));
   }
 
   static bool Equal(const String& a, const char* b) {
@@ -118,14 +118,14 @@ struct HashTraits<String> : SimpleClassHashTraits<String> {
   }
 };
 
-} // namespace bkfont
+} // namespace bkit
 
 namespace std {
 
 template <>
-struct hash<bkfont::String> {
-  size_t operator()(const bkfont::String& string) const {
-    return bkfont::GetHash(string);
+struct hash<bkit::String> {
+  size_t operator()(const bkit::String& string) const {
+    return bkit::GetHash(string);
   }
 };
 

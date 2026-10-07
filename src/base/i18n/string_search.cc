@@ -13,7 +13,7 @@
 
 #include <unicode/usearch.h>
 
-namespace bkfont::base::i18n {
+namespace bkit::base::i18n {
 
 void StringSearchDeleter::operator()(UStringSearch* search) const {
   usearch_close(search);
@@ -158,4 +158,4 @@ bool RepeatingStringSearch::NextMatchResult(int& match_index,
   return true;
 }
 
-} // namespace bkfont::base::i18n
+} // namespace bkit::base::i18n

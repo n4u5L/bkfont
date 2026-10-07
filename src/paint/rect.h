@@ -11,7 +11,7 @@
 #include <span>
 #include <utility>
 
-namespace bkfont {
+namespace bkit {
 
 // SkPoint.
 struct ScalarPoint {
@@ -258,4 +258,4 @@ private:
   }
 };
 
-} // namespace bkfont
+} // namespace bkit

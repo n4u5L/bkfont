@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-namespace bkfont {
+namespace bkit {
 
 // These values are named to match the CSS keywords they correspond to: namely
 // horizontal-tb, vertical-rl and vertical-lr.
@@ -68,4 +68,4 @@ inline bool IsHorizontalTypographicMode(WritingMode writing_mode) {
          writing_mode == WritingMode::kSidewaysRl;
 }
 
-} // namespace bkfont
+} // namespace bkit

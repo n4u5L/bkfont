@@ -8,7 +8,7 @@
 
 #include "scalar.h"
 
-namespace bkfont {
+namespace bkit {
 
 namespace {
 
@@ -266,4 +266,4 @@ void ComputeGivensRotation(const ScalarPoint& h, ScalarMatrix* g) {
   g->SetSinCos(s, c);
 }
 
-} // namespace bkfont
+} // namespace bkit

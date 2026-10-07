@@ -11,7 +11,7 @@
 namespace rich_text {
 namespace {
 
-using namespace bkfont;
+using namespace bkit;
 String ToString(std::u16string_view text) {
   return String(base::span<const UChar>(text.data(), text.size()));
 }
@@ -41,7 +41,7 @@ size_t CountWords(std::u16string_view text) {
 
 } // namespace
 
-bkfont::InlinePosition DocumentView::Block::Position(uint32_t offset, bkfont::TextAffinity affinity) const {
+bkit::InlinePosition DocumentView::Block::Position(uint32_t offset, bkit::TextAffinity affinity) const {
   const uint32_t relative = std::clamp(offset, start, end) - start;
   for (size_t i = 0; i < nodes.size(); ++i) {
     const auto& node = nodes[i];

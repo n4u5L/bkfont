@@ -33,7 +33,7 @@
 #include "type_traits.h"
 #include "wtf_size_t.h"
 
-namespace bkfont {
+namespace bkit {
 
 template <typename KeyTraits, typename MappedTraits>
 struct HashMapValueTraits;
@@ -60,7 +60,7 @@ struct KeyValuePairExtractor {
 // the restriction with a custom key hash traits. See hash_traits.h for how to
 // define hash traits.
 // Commonly used key types define their key hash traits separately from the
-// class itself, so e.g if you want a `bkfont::HashMap<bkfont::String, ...>` you
+// class itself, so e.g if you want a `bkit::HashMap<bkit::String, ...>` you
 // must include `string_hash.h`.
 template <typename KeyArg,
           typename MappedArg,
@@ -181,14 +181,14 @@ public:
   // Erases all elements for which pred(element) returns true.
   //
   // The predicate should have a signature compatible with:
-  //   bool pred(const bkfont::KeyValuePair<KeyType, MappedType>&);
+  //   bool pred(const bkit::KeyValuePair<KeyType, MappedType>&);
   template <typename Pred>
   void erase_if(Pred pred);
 
   void clear();
   template <typename Collection>
   void RemoveAll(const Collection& to_be_removed) {
-    bkfont::RemoveAll(*this, to_be_removed);
+    bkit::RemoveAll(*this, to_be_removed);
   }
 
   MappedType Take(KeyPeekInType); // efficient combination of get with remove
@@ -571,4 +571,4 @@ inline void swap(HashMap<T, U, V, W, X>& a, HashMap<T, U, V, W, X>& b) {
   a.swap(b);
 }
 
-} // namespace bkfont
+} // namespace bkit

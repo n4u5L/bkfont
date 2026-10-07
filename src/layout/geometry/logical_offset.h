@@ -5,7 +5,7 @@
 
 #include "layout/layout_unit.h"
 
-namespace bkfont {
+namespace bkit {
 
 struct LogicalOffset {
   constexpr LogicalOffset() = default;
@@ -18,4 +18,4 @@ struct LogicalOffset {
   constexpr bool operator==(const LogicalOffset&) const = default;
 };
 
-} // namespace bkfont
+} // namespace bkit

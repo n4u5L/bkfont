@@ -10,7 +10,7 @@
 #include <cstdint>
 #include "base/text/wtf_string.h"
 
-namespace bkfont {
+namespace bkit {
 
 enum OpticalSizing {
   kAutoOpticalSizing,
@@ -19,4 +19,4 @@ enum OpticalSizing {
 
 String ToString(OpticalSizing);
 
-} // namespace bkfont
+} // namespace bkit

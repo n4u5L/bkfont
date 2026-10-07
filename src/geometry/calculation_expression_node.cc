@@ -17,7 +17,7 @@
 #include "base/compiler_specific.h"
 #include "base/notreached.h"
 
-namespace bkfont {
+namespace bkit {
 
 // ------ CalculationExpressionNumberNode ------
 
@@ -764,4 +764,4 @@ bool CalculationExpressionOperationNode::HasFitContent() const {
   return basis->HasFitContent();
 }
 
-} // namespace bkfont
+} // namespace bkit

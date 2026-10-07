@@ -128,9 +128,9 @@ uint32_t PieceTree::StyleAt(Offset offset) const {
   return nodes_[Locate(std::min(offset, Length() - 1)).node].piece.style;
 }
 
-bkfont::Vector<PieceTree::Piece> PieceTree::Slice(Offset start, Offset length) const {
+bkit::Vector<PieceTree::Piece> PieceTree::Slice(Offset start, Offset length) const {
   assert(start <= Length() && length <= Length() - start);
-  bkfont::Vector<Piece> result;
+  bkit::Vector<Piece> result;
   Location location = Locate(start);
   while (length && location.node) {
     Piece piece = nodes_[location.node].piece;
@@ -440,7 +440,7 @@ PieceTree::Statistics PieceTree::Stats() const {
 bool PieceTree::Validate() const {
   if (nodes_.empty() || root_ >= nodes_.size() || nodes_[0].red || nodes_[0].live ||
       nodes_[0].units || nodes_[0].breaks || nodes_[root_].parent || nodes_[root_].red) return false;
-  bkfont::Vector<bool> visited(nodes_.size());
+  bkit::Vector<bool> visited(nodes_.size());
   size_t live = 0, free = 0;
   const std::function<int(Index, Index)> visit = [&](Index index, Index parent) -> int {
     if (!index) return 1;

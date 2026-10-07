@@ -13,7 +13,7 @@
 #include "path_effect.h"
 #include "text_blob.h"
 
-namespace bkfont {
+namespace bkit {
 
 struct Picture::Op {
   enum class Type {
@@ -509,4 +509,4 @@ std::shared_ptr<Drawable> PictureRecorder::FinishRecordingAsDrawable() {
   return drawable;
 }
 
-} // namespace bkfont
+} // namespace bkit

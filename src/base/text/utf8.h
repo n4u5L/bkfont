@@ -29,7 +29,7 @@
 #include "base/containers/span.h"
 #include "base/text/wtf_uchar.h"
 
-namespace bkfont::unicode {
+namespace bkit::unicode {
 
 typedef enum {
   kConversionOK,    // conversion successful
@@ -84,4 +84,4 @@ unsigned CalculateStringLengthFromUtf8(
     bool& seen_non_ascii,
     bool& seen_non_latin1);
 
-} // namespace bkfont::unicode
+} // namespace bkit::unicode

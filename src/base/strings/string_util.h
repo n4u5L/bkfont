@@ -32,7 +32,7 @@
 #include "base/types/to_address.h"
 #include "build/build_config.h"
 
-namespace bkfont::base {
+namespace bkit::base {
 
 // C standard-library functions that aren't cross-platform are provided as
 // "base::...", and their prototypes are listed below. These functions are
@@ -640,7 +640,7 @@ std::u16string ReplaceStringPlaceholders(
     std::u16string_view subst,
     size_t* offset);
 
-} // namespace bkfont::base
+} // namespace bkit::base
 
 #if BUILDFLAG(IS_WIN)
 #include "base/strings/string_util_win.h"

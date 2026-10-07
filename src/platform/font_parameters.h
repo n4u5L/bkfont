@@ -4,7 +4,7 @@
 
 #include <cstdint>
 
-namespace bkfont {
+namespace bkit {
 
 // SkFontParameters.
 struct FontParameters {
@@ -54,4 +54,4 @@ struct FontParameters {
   };
 };
 
-} // namespace bkfont
+} // namespace bkit

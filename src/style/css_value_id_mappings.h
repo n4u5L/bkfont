@@ -17,7 +17,7 @@
 #include "style/css_identifier_value.h"
 #include "style/css_value_id_mappings_generated.h"
 
-namespace bkfont {
+namespace bkit {
 
 template <class T>
 inline T CssValueIDToPlatformEnum(CSSValueID v) {
@@ -197,4 +197,4 @@ inline TextSpacingTrim CssValueIDToPlatformEnum(CSSValueID v) {
   NOTREACHED();
 }
 
-} // namespace bkfont
+} // namespace bkit
