@@ -50,6 +50,7 @@ public:
 
   bool HasBidiControls() const { return has_bidi_controls_; }
   bool HasUnicodeBidiPlainText() const { return has_unicode_bidi_plain_text_; }
+  bool HasNonOrc16BitCharacters() const { return has_non_orc_16bit_; }
 
   // Segment Break Transformation Rules define to keep trailing new lines, but
   // they are removed in Phase II. Trailing collapsible spaces are not added in
@@ -95,6 +96,9 @@ private:
   Vector<BidiContext> bidi_context_;
   bool has_bidi_controls_ = false;
   bool has_unicode_bidi_plain_text_ = false;
+  // Preserve collection-time string width; layout later converts to UTF-16.
+  // Atomic U+FFFC placeholders alone do not disable Latin-1 segmentation.
+  bool has_non_orc_16bit_ = false;
   // LayoutText::PreviousCharacter() for text-transform: capitalize, the last
   // character of the previous non-empty text in the formatting context.
   UChar previous_character_ = uchar::kSpace;

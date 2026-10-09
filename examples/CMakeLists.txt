@@ -18,8 +18,8 @@ FetchContent_MakeAvailable(glfw)
 find_package(OpenGL REQUIRED)
 # Multilingual inline layout and the implemented CSS properties. Uses system
 # fonts (DirectWrite/Fontconfig matching with fallback).
-add_executable(bkit_mushoku_tensei_example mushoku_tensei.cc)
-target_link_libraries(bkit_mushoku_tensei_example PRIVATE bkit::bkit glfw OpenGL::GL)
+add_executable(bkit_inline_text_render_example inline_text_render.cc)
+target_link_libraries(bkit_inline_text_render_example PRIVATE bkit::bkit glfw OpenGL::GL)
 
 # Noto Sans Egyptian Hieroglyphs (SIL Open Font License 1.1) for the Ancient
 # Egyptian card, which loads it from file as @font-face would. Downloaded at
@@ -47,7 +47,7 @@ endfunction()
 bkit_download_example_font(NotoSansEgyptianHieroglyphs-Regular.ttf
   b792accc6207ca9caa59fc67f53926b6985a99d255dd432d7c68b68a6dfd62f8)
 bkit_download_example_font(OFL.txt dc8114a49f5bb53bad3d99ee52cbb245e98076438d59428a258720258494de68)
-target_compile_definitions(bkit_mushoku_tensei_example PRIVATE
+target_compile_definitions(bkit_inline_text_render_example PRIVATE
   BKIT_EXAMPLE_FONT_DIR="${BKIT_EXAMPLE_FONT_DIR}")
 
 # Editable Word-style document, using the same bkit layout/paint pipeline.

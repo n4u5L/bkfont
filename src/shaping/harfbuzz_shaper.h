@@ -30,6 +30,8 @@
  */
 #pragma once
 
+#include <span>
+
 #include "font/font_fallback_iterator.h"
 #include "run_segmenter.h"
 #include "shape_options.h"
@@ -75,14 +77,21 @@ public:
                                      unsigned start,
                                      unsigned end) const;
 
-  // Shape a range that has already been pre-segmented. Start and end positions
-  // must match the positions defined by the ranges and must be at valid break
-  // positions.
+  // Shape a range that has already been pre-segmented. The ranges must cover
+  // [start, end); start and end must be valid break positions.
   std::shared_ptr<ShapeResult> Shape(const Font*,
                                      TextDirection,
                                      unsigned start,
                                      unsigned end,
                                      const Vector<RunSegmenter::RunSegmenterRange>&,
+                                     ShapeOptions = ShapeOptions()) const;
+
+  // Shape a view into stored segments, clipping them to [start, end).
+  std::shared_ptr<ShapeResult> Shape(const Font*,
+                                     TextDirection,
+                                     unsigned start,
+                                     unsigned end,
+                                     std::span<const RunSegmenter::RunSegmenterRange>,
                                      ShapeOptions = ShapeOptions()) const;
 
   // Shape a single range. Start and end positions defined by the range.

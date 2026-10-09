@@ -169,6 +169,10 @@ void DecorationLinePainter::Paint(PaintCanvas* canvas, const DecorationGeometry&
     SetupDash(&paint, geometry.style, thickness, length);
     canvas->DrawLine(start, end, paint);
   } else {
+    // DrawLineAsRect() uses GraphicsContext's fill flags, which antialias by
+    // default. Only the y axis is snapped, so the line ends keep their
+    // fractional coverage.
+    paint.SetAntiAlias(true);
     const auto draw_rect = [&](float offset) {
       canvas->DrawRect(ScalarRect::MakeXYWH(geometry.line.left, std::floor(geometry.line.top + offset + 0.5f),
                                            geometry.line.Width(), std::max(std::floor(geometry.Thickness()), 1.0f)), paint);

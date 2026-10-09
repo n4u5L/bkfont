@@ -1077,13 +1077,27 @@ std::shared_ptr<ShapeResult> HarfBuzzShaper::Shape(
     unsigned end,
     const Vector<RunSegmenter::RunSegmenterRange>& ranges,
     ShapeOptions options) const {
+  return Shape(font, direction, start, end,
+               std::span<const RunSegmenter::RunSegmenterRange>(ranges.data(), ranges.size()), options);
+}
+
+std::shared_ptr<ShapeResult> HarfBuzzShaper::Shape(
+    const Font* font,
+    TextDirection direction,
+    unsigned start,
+    unsigned end,
+    std::span<const RunSegmenter::RunSegmenterRange> ranges,
+    ShapeOptions options) const {
 
   const unsigned length = end - start;
   auto result = std::make_shared<ShapeResult>(start, length, direction);
   RangeContext range_data(font, direction, start, end, options);
-  for (const RunSegmenter::RunSegmenterRange& segmented_range : ranges) {
-
-    ShapeSegment(&range_data, segmented_range, result.get());
+  for (RunSegmenter::RunSegmenterRange segment : ranges) {
+    // InlineItemSegments::Ranges() clips before shaping. Do the same for a
+    // borrowed span so fallback, caps and Han kerning only scan this window.
+    segment.start = std::max(start, segment.start);
+    segment.end = std::min(end, segment.end);
+    if (segment.start < segment.end) ShapeSegment(&range_data, segment, result.get());
   }
 
   return result;

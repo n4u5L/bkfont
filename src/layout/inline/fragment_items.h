@@ -14,6 +14,8 @@
 #include "base/vector.h"
 #include "layout/inline/fragment_item.h"
 #include "layout/inline/offset_mapping.h"
+#include "shaping/run_segmenter.h"
+#include "shaping/shape_options.h"
 
 namespace bkit {
 
@@ -65,6 +67,11 @@ struct InlineItemRun {
   const InlineObject* object;
   std::shared_ptr<ShapeResult> shape;
   bool control;
+  // InlineItem::IsUnsafeToReuseShapeResult(): `shape` was changed after
+  // shaping (text-autospace), so a text edit must not reuse it.
+  bool unsafe_to_reuse_shape = false;
+  // Edits can change paragraph-start shaping without changing font or text.
+  ShapeOptions shape_options;
 };
 
 class FragmentItems {
@@ -120,6 +127,9 @@ private:
   // Script/orientation/fallback segmentation is context dependent, even when
   // the text and bidi level before an edit are unchanged.
   Vector<uint32_t> shaping_context_;
+  // InlineItemSegments: shared by initial shaping and line-edge reshaping.
+  // Most paragraphs need only one script/fallback/orientation segment.
+  Vector<RunSegmenter::RunSegmenterRange, 1> segments_;
   // InlineNodeData equivalent. The next layout reuses the collected runs,
   // their shape results and the bidi levels unless NeedsCollectInlines().
   HeapVector<InlineItem> inline_items_;

@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <span>
 #include <unicode/uchar.h>
 
 #include "base/notreached.h"
@@ -19,6 +20,7 @@
 #include "shaping/harfbuzz_shaper.h"
 #include "shaping/shape_result_spacing.h"
 #include "shaping/shaping_line_breaker.h"
+#include "shaping/text_spacing_trim.h"
 #include "text/character.h"
 
 namespace bkit {
@@ -97,30 +99,38 @@ void ConfigureBreakIterator(LazyLineBreakIterator& breaks, const ComputedStyle& 
   breaks.SetBreakSpace(style.ShouldBreakSpaces() ? BreakSpaceType::kAfterEverySpace : BreakSpaceType::kAfterSpaceRun);
 }
 
+using RunSegmenterRange = RunSegmenter::RunSegmenterRange;
+
+// InlineItemSegments::Ranges(): locate a shaping window without scanning the
+// text again or copying the segments. The stored ranges are in logical order.
+std::span<const RunSegmenterRange> SegmentsForRange(std::span<const RunSegmenterRange> segments,
+                                                 unsigned start, unsigned end) {
+  if (start == end) return {};
+  const auto first = std::lower_bound(segments.begin(), segments.end(), start,
+                                     [](const RunSegmenterRange& range, unsigned offset) { return range.end <= offset; });
+  const auto last = std::lower_bound(first, segments.end(), end,
+                                   [](const RunSegmenterRange& range, unsigned offset) { return range.start < offset; });
+  return {first, last};
+}
+
 // LineBreaker::ShapeLineAt's edge reshaping uses the same segmented input and
 // spacing as the initial shape. Keeping this adapter here avoids a second
 // shaper in the editing/painting paths.
 class LineShaper final : public ShapingLineBreaker {
 public:
   LineShaper(const String& text, const Font& font, const ShapeResult& shape,
-             const LazyLineBreakIterator& breaks)
+             const LazyLineBreakIterator& breaks, std::span<const RunSegmenterRange> segments)
       : ShapingLineBreaker(&shape, &breaks, nullptr, &font),
         text_(text),
         font_(font),
-        direction_(shape.Direction()) {
+        direction_(shape.Direction()),
+        segments_(segments) {
   }
 
 private:
   std::shared_ptr<const ShapeResult> Shape(unsigned start, unsigned end, ShapeOptions options) override {
     HarfBuzzShaper shaper(text_);
-    RunSegmenter segmenter(text_.Span16(), font_.GetFontDescription().Orientation());
-    Vector<RunSegmenter::RunSegmenterRange> ranges;
-    RunSegmenter::RunSegmenterRange range;
-    while (segmenter.Consume(&range)) {
-      if (start < range.end && end > range.start) ranges.push_back(range);
-      if (range.end >= end) break;
-    }
-    auto shape = shaper.Shape(&font_, direction_, start, end, ranges, options);
+    auto shape = shaper.Shape(&font_, direction_, start, end, SegmentsForRange(segments_, start, end), options);
     ShapeResultSpacing<String> spacing(text_);
     if (spacing.SetSpacing(font_.GetFontDescription())) shape->ApplySpacing(spacing);
     return shape;
@@ -128,6 +138,7 @@ private:
   const String& text_;
   const Font& font_;
   TextDirection direction_;
+  std::span<const RunSegmenterRange> segments_;
 };
 
 } // namespace
@@ -189,10 +200,243 @@ void InlineLayoutAlgorithm::Collect(const InlineObject& object, InlineItemsBuild
   }
 }
 
-void InlineLayoutAlgorithm::SegmentAndShape() {
+namespace {
+
+// ReusingTextShaper (inline_node.cc): shapes a run, reusing the shape results
+// of the previous layout for the text a text edit left as it was, as
+// InlineNode::SetTextWithOffset() does. The text kept is the common prefix and
+// suffix of the old and new text content (InlineNodeDataEditor's
+// MatchedLengths()). A shape result is cut only at offsets that are safe to
+// break, away from the edit (GetFirstSafeToReuse(), GetLastSafeToReuse()).
+//
+// As upstream, partial reuse is disabled when InlineItemSegments is needed.
+// The remaining candidates must retain their bidi level and shaping context.
+class ReusingTextShaper {
+public:
+  struct Previous {
+    const String& text;
+    std::span<const InlineItemRun> runs;
+    const Vector<UBiDiLevel>& levels;
+    const Vector<uint32_t>& shaping_context;
+  };
+
+  ReusingTextShaper(const HarfBuzzShaper& shaper, const String& text, const Vector<UBiDiLevel>& levels,
+                    const Vector<uint32_t>& shaping_context, std::optional<Previous> previous)
+      : shaper_(shaper), text_(text), levels_(levels), shaping_context_(shaping_context), previous_(previous) {
+    if (!previous_) return;
+    const String& old_text = previous_->text;
+    const unsigned old_length = old_text.length(), new_length = text.length();
+    const unsigned limit = std::min(old_length, new_length);
+    while (prefix_ < limit && old_text[prefix_] == text[prefix_]) ++prefix_;
+    while (suffix_ < limit - prefix_ && old_text[old_length - 1 - suffix_] == text[new_length - 1 - suffix_]) ++suffix_;
+  }
+
+  std::shared_ptr<ShapeResult> Shape(const InlineItemRun& run,
+                                     std::span<const RunSegmenterRange> ranges) const {
+    const Font* font = run.style->GetFont();
+    const TextDirection direction = DirectionFromLevel(run.level);
+    ShapeOptions options = run.shape_options;
+    Vector<Span> spans;
+    if (previous_) {
+      // The prefix keeps its offsets; the suffix moves by the length change.
+      const unsigned new_length = text_.length();
+      const int delta = static_cast<int>(new_length) - static_cast<int>(previous_->text.length());
+      if (run.start < prefix_) CollectSpans(run, *font, run.start, std::min(run.end, prefix_), 0, spans);
+      if (run.end > new_length - suffix_)
+        CollectSpans(run, *font, std::max(run.start, new_length - suffix_), run.end, delta, spans);
+    }
+    if (spans.empty()) return shaper_.Shape(font, direction, run.start, run.end, ranges, options);
+
+    std::shared_ptr<ShapeResult> result = ShapeResult::CreateEmpty(*spans.front().old_run->shape);
+    unsigned offset = run.start;
+    for (const Span& span : spans) {
+      if (offset < span.start) {
+        Append(*Reshape(font, direction, offset, span.start, ranges, options), result.get());
+        options.han_kerning_start = false;
+      }
+      const ShapeResult& shape = *span.old_run->shape;
+      if (span.old_start == span.start) {
+        shape.CopyRange(span.start, span.end, result.get());
+      } else {
+        // InlineNodeDataEditor::ShiftItem().
+        shape.SubRange(span.old_start, span.old_end)->CopyAdjustedOffset(span.start)->CopyRange(span.start, span.end,
+                                                                                              result.get());
+      }
+      offset = span.end;
+    }
+    if (offset < run.end) Append(*Reshape(font, direction, offset, run.end, ranges, options), result.get());
+    return result;
+  }
+
+private:
+  // New offsets [start, end) shaped as [old_start, old_end) of `old_run`.
+  struct Span {
+    unsigned start;
+    unsigned end;
+    const InlineItemRun* old_run;
+    unsigned old_start;
+    unsigned old_end;
+  };
+
+  // The spans of the new offsets [start, end) of `run`, which are the old
+  // offsets less `delta`, that old runs can give.
+  void CollectSpans(const InlineItemRun& run, const Font& font, unsigned start, unsigned end, int delta,
+                    Vector<Span>& spans) const {
+    const unsigned old_start = start - delta, old_end = end - delta;
+    const std::span<const InlineItemRun> old_runs = previous_->runs;
+    auto it = std::lower_bound(old_runs.begin(), old_runs.end(), old_start,
+                               [](const InlineItemRun& old_run, unsigned offset) { return old_run.end <= offset; });
+    for (; it != old_runs.end() && it->start < old_end; ++it) {
+      const InlineItemRun& old_run = *it;
+      // ReusingTextShaper::CollectReusableShapeResults().
+      if (old_run.control || !old_run.shape || old_run.unsafe_to_reuse_shape || old_run.shape->IsAppliedSpacing() ||
+          old_run.level != run.level || !(*old_run.style->GetFont() == font) ||
+          old_run.shape_options.is_line_start != run.shape_options.is_line_start ||
+          old_run.shape_options.han_kerning_start != run.shape_options.han_kerning_start) {
+        continue;
+      }
+      // Split where the bidi level or the run segment differs.
+      unsigned from = std::max(old_start, old_run.start);
+      const unsigned to = std::min(old_end, old_run.end);
+      while (from < to) {
+        while (from < to && !SameShaping(from, delta)) ++from;
+        unsigned until = from;
+        while (until < to && SameShaping(until, delta)) ++until;
+        if (from < until) AddSpan(run, old_run, from, until, delta, spans);
+        from = until;
+      }
+    }
+  }
+
+  bool SameShaping(unsigned old_offset, int delta) const {
+    const unsigned offset = old_offset + delta;
+    return previous_->levels[old_offset] == levels_[offset] &&
+           previous_->shaping_context[old_offset] == shaping_context_[offset];
+  }
+
+  // Cuts the old shape result at offsets safe to break, unless the old and the
+  // new runs both start (or end) there.
+  void AddSpan(const InlineItemRun& run, const InlineItemRun& old_run, unsigned old_start, unsigned old_end, int delta,
+               Vector<Span>& spans) const {
+    const ShapeResult& shape = *old_run.shape;
+    if (old_start != old_run.start || old_start + delta != run.start) {
+      old_start = FirstSafeToReuse(shape, old_start, old_end);
+    }
+    if (old_end != old_run.end || old_end + delta != run.end) {
+      old_end = LastSafeToReuse(shape, old_start, old_end);
+    }
+    if (old_start >= old_end) return;
+    spans.push_back(Span{old_start + delta, old_end + delta, &old_run, old_start, old_end});
+  }
+
+  // InlineNodeDataEditor::GetFirstSafeToReuse(): the first glyph after a cut
+  // may kern or join with the text before it.
+  static unsigned FirstSafeToReuse(const ShapeResult& shape, unsigned start, unsigned end) {
+    // TODO(yosin): It is better to utilize OpenType |usMaxContext|.
+    // For font having "fi", |usMaxContext = 2".
+    constexpr unsigned kSkip = 2 - 1;
+    if (start + kSkip >= end) return end;
+    shape.EnsurePositionData();
+    return std::min(end, shape.CachedNextSafeToBreakOffset(start + kSkip));
+  }
+
+  // InlineNodeDataEditor::GetLastSafeToReuse().
+  unsigned LastSafeToReuse(const ShapeResult& shape, unsigned start, unsigned end) const {
+    // For font having "fi", usMaxContext = 2.
+    // For Emoji with ZWJ, usMaxContext = 10. (http://crbug.com/1213235)
+    const unsigned skip = (text_.Is8Bit() ? 2 : 10) - 1;
+    if (end <= start + skip) return start;
+    shape.EnsurePositionData();
+    return std::max(start, shape.CachedPreviousSafeToBreakOffset(end - skip));
+  }
+
+  std::shared_ptr<ShapeResult> Reshape(const Font* font, TextDirection direction, unsigned start, unsigned end,
+                                       std::span<const RunSegmenterRange> ranges, ShapeOptions options) const {
+    return shaper_.Shape(font, direction, start, end, SegmentsForRange(ranges, start, end), options);
+  }
+
+  // ReusingTextShaper::AppendShapeResult().
+  static void Append(const ShapeResult& shape, ShapeResult* target) {
+    shape.CopyRange(shape.StartIndex(), shape.EndIndex(), target);
+  }
+
+  const HarfBuzzShaper& shaper_;
+  const String& text_;
+  const Vector<UBiDiLevel>& levels_;
+  const Vector<uint32_t>& shaping_context_;
+  const std::optional<Previous> previous_;
+  unsigned prefix_ = 0;
+  unsigned suffix_ = 0;
+};
+
+} // namespace
+
+// InlineNode::SegmentScriptRuns()/SegmentFontOrientation(): script and emoji
+// segmentation needs the whole text, while mixed orientation is item-local.
+bool InlineLayoutAlgorithm::SegmentText(bool use_latin1_script) {
+  const String& text = result_->TextContent();
+  auto& segments = result_->segments_;
+  assert(segments.empty());
+  std::optional<RunSegmenter> segmenter;
+  RunSegmenterRange script_segment{0, text.length(), USCRIPT_LATIN,
+                                  OrientationIterator::kOrientationKeep, FontFallbackPriority::kText};
+  if (!use_latin1_script) {
+    segmenter.emplace(text.Span16(), FontOrientation::kHorizontal);
+    if (!segmenter->Consume(&script_segment)) NOTREACHED();
+  }
+  bool has_segmented_text = script_segment.end < text.length();
+  unsigned offset = 0;
+  const auto append_until = [&](unsigned end, OrientationIterator::RenderOrientation orientation) {
+    while (offset < end) {
+      if (offset == script_segment.end && !segmenter->Consume(&script_segment)) NOTREACHED();
+      RunSegmenterRange segment = script_segment;
+      segment.start = offset;
+      segment.end = std::min(end, script_segment.end);
+      segment.render_orientation = orientation;
+      // PopulateItemsFromFontOrientation() preserves every mixed item's
+      // start/end boundary, even when the adjacent segment has the same data.
+      segments.push_back(segment);
+      offset = segment.end;
+    }
+  };
+  if (context_.root_->Style().IsHorizontalTypographicMode()) {
+    append_until(text.length(), OrientationIterator::kOrientationKeep);
+    return has_segmented_text;
+  }
+  const auto& items = result_->inline_items_;
+  for (size_t i = 0; i < items.size(); ++i) {
+    const InlineItem& item = items[i];
+    if (item.type != InlineItem::kText || item.start == item.end ||
+        styles_[i]->GetFontDescription().Orientation() != FontOrientation::kVerticalMixed) {
+      continue;
+    }
+    // SegmentFontOrientation() creates InlineItemSegments even when the
+    // entire mixed-vertical item has one script and one orientation.
+    has_segmented_text = true;
+    append_until(item.start, OrientationIterator::kOrientationKeep);
+    // Upstream splits items in SegmentBidiRuns() before orientation. Our
+    // collected items stay intact, so reproduce those boundaries here.
+    for (unsigned start = item.start; start < item.end;) {
+      unsigned end = start + 1;
+      while (end < item.end && levels_[end] == levels_[start]) ++end;
+      OrientationIterator orientation_iterator(text.Span16().subspan(start, end - start),
+                                               FontOrientation::kVerticalMixed);
+      unsigned orientation_end;
+      OrientationIterator::RenderOrientation orientation;
+      while (orientation_iterator.Consume(&orientation_end, &orientation)) {
+        append_until(start + orientation_end, orientation);
+      }
+      start = end;
+    }
+  }
+  append_until(text.length(), OrientationIterator::kOrientationKeep);
+  return has_segmented_text;
+}
+
+void InlineLayoutAlgorithm::SegmentAndShape(bool use_latin1_script, bool is_bidi_enabled) {
   const String& text = result_->TextContent();
   const ComputedStyle& block_style = context_.root_->Style();
-  levels_ = Vector<UBiDiLevel>(text.length(), IsLtr(block_style.Direction()) ? 0 : 1);
+  levels_ = Vector<UBiDiLevel>(text.length(), 0);
   result_->shaping_context_.resize(text.length());
   if (text.empty()) return;
   BidiParagraph bidi;
@@ -201,12 +445,18 @@ void InlineLayoutAlgorithm::SegmentAndShape() {
   const std::optional<TextDirection> base_direction =
       block_style.GetUnicodeBidi() == UnicodeBidi::kPlaintext ? std::nullopt
                                                               : std::optional(block_style.Direction());
-  if (bidi.SetParagraph(text, base_direction)) {
-    for (unsigned start = 0; start < text.length();) {
-      UBiDiLevel level;
-      const unsigned end = bidi.GetLogicalRun(start, &level);
-      std::fill(levels_.begin() + start, levels_.begin() + end, level);
-      start = end;
+  if (is_bidi_enabled) {
+    if (!bidi.SetParagraph(text, base_direction) || (bidi.IsUnidirectional() && IsLtr(bidi.BaseDirection()))) {
+      // InlineNode::SegmentBidiRuns(): failure or entirely LTR text disables
+      // bidi and permits the Latin-1 script fast path.
+      is_bidi_enabled = false;
+    } else {
+      for (unsigned start = 0; start < text.length();) {
+        UBiDiLevel level;
+        const unsigned end = bidi.GetLogicalRun(start, &level);
+        std::fill(levels_.begin() + start, levels_.begin() + end, level);
+        start = end;
+      }
     }
   }
   const auto& units = result_->inline_items_;
@@ -230,24 +480,46 @@ void InlineLayoutAlgorithm::SegmentAndShape() {
       start = end;
     }
   }
+  const bool has_segmented_text = SegmentText(use_latin1_script && !is_bidi_enabled);
   HarfBuzzShaper shaper(text);
+  std::optional<ReusingTextShaper::Previous> previous;
+  if (!has_segmented_text && context_.reuse_shape_results_ && context_.fragments_) {
+    const FragmentItems& old = *context_.fragments_;
+    previous.emplace(ReusingTextShaper::Previous{old.TextContent(), {old.runs_.data(), old.runs_.size()}, old.levels_,
+                                                 old.shaping_context_});
+  }
+  const ReusingTextShaper reusing_shaper(shaper, text, levels_, result_->shaping_context_, previous);
+  const std::span<const RunSegmenterRange> segments(result_->segments_.data(), result_->segments_.size());
+  size_t segment_index = 0;
+  bool is_next_start_of_paragraph = true;
   for (Run& run : runs_) {
-    if (run.control) continue;
-    RunSegmenter segmenter(text.Span16(), run.style->GetFont()->GetFontDescription().Orientation());
-    Vector<RunSegmenter::RunSegmenterRange> ranges;
-    RunSegmenter::RunSegmenterRange segment;
-    while (segmenter.Consume(&segment)) {
-      if (run.start < segment.end && run.end > segment.start) {
-        ranges.push_back(segment);
-        const uint32_t key = static_cast<uint32_t>(segment.script) |
-                             (static_cast<uint32_t>(segment.render_orientation) << 16) |
-                             (static_cast<uint32_t>(segment.font_fallback_priority) << 24);
-        std::fill(result_->shaping_context_.begin() + std::max(run.start, segment.start),
-                  result_->shaping_context_.begin() + std::min(run.end, segment.end), key);
-      }
-      if (segment.end >= run.end) break;
+    if (run.control) {
+      // Empty items are opaque to text processing and have no runs. Every
+      // nonempty non-text item resets this state, including bidi controls.
+      is_next_start_of_paragraph = IsForcedBreak(text[run.start]);
+      continue;
     }
-    run.shape = shaper.Shape(run.style->GetFont(), DirectionFromLevel(run.level), run.start, run.end, ranges);
+    const FontDescription& font_description = run.style->GetFontDescription();
+    run.shape_options = {
+        .is_line_start = is_next_start_of_paragraph,
+        .han_kerning_start = is_next_start_of_paragraph &&
+                             ShouldTrimStartOfParagraph(font_description.GetTextSpacingTrim()) &&
+                             Character::MaybeHanKerningOpen(text[run.start]),
+    };
+    is_next_start_of_paragraph = false;
+    // Runs and segments are ordered, so initial shaping needs only one walk.
+    while (segments[segment_index].end <= run.start) ++segment_index;
+    const size_t first_segment = segment_index;
+    while (segments[segment_index].end < run.end) ++segment_index;
+    const auto ranges = segments.subspan(first_segment, segment_index - first_segment + 1);
+    for (const auto& segment : ranges) {
+      const uint32_t key = static_cast<uint32_t>(segment.script) |
+                           (static_cast<uint32_t>(segment.render_orientation) << 16) |
+                           (static_cast<uint32_t>(segment.font_fallback_priority) << 24);
+      std::fill(result_->shaping_context_.begin() + std::max(run.start, segment.start),
+                result_->shaping_context_.begin() + std::min(run.end, segment.end), key);
+    }
+    run.shape = reusing_shaper.Shape(run, ranges);
     ShapeResultSpacing<String> spacing(text);
     if (spacing.SetSpacing(run.style->GetFont()->GetFontDescription())) run.shape->ApplySpacing(spacing);
   }
@@ -391,7 +663,10 @@ void InlineLayoutAlgorithm::ApplyTextAutoSpace() {
       if (!offsets.empty() && offsets.back().offset == opportunity.offset) continue;
       offsets.push_back(OffsetWithSpacing{opportunity.offset, spacing});
     }
-    if (!offsets.empty()) run.shape->ApplyTextAutoSpacing(offsets);
+    if (!offsets.empty()) {
+      run.shape->ApplyTextAutoSpacing(offsets);
+      run.unsafe_to_reuse_shape = true;
+    }
   }
 }
 
@@ -404,6 +679,7 @@ void InlineLayoutAlgorithm::ReuseCollectedItems(const FragmentItems& old) {
   result_->inline_items_ = old.inline_items_;
   result_->text_combines_ = old.text_combines_;
   result_->shaping_context_ = old.shaping_context_;
+  result_->segments_ = old.segments_;
   levels_ = old.levels_;
   runs_ = old.runs_;
   for (const auto& item : result_->inline_items_) styles_.push_back(item.object->LayoutStyle());
@@ -447,7 +723,8 @@ HeapVector<FragmentItem> InlineLayoutAlgorithm::ShapeLine(unsigned start, unsign
     if (run.shape) {
       LazyLineBreakIterator breaks(text, run.style->GetFont()->GetFontDescription().Locale(),
                                    LineBreakTypeFor(*run.style));
-      LineShaper shaper(text, *run.style->GetFont(), *run.shape, breaks);
+      LineShaper shaper(text, *run.style->GetFont(), *run.shape, breaks,
+                        {result_->segments_.data(), result_->segments_.size()});
       shaper.SetLineStart(start);
       shaper.SetIsAfterForcedBreak(start && IsForcedBreak(text[start - 1]));
       shaper.SetTextSpacingTrim(run.style->GetFont()->GetFontDescription().GetTextSpacingTrim());
@@ -1435,11 +1712,18 @@ std::unique_ptr<FragmentItems> InlineLayoutAlgorithm::Layout() {
     Collect(*context_.root_, builder);
     builder.ExitBlock();
     String text = builder.ToString();
+    // InlineItemsBuilder::DidFinishCollectInlines(): retain these flags before
+    // normalizing the local layout buffer to UTF-16.
+    const bool is_bidi_enabled = builder.HasBidiControls() ||
+                                (builder.HasNonOrc16BitCharacters() && Character::MaybeBidiRtl(text));
+    // Upstream's bidi analysis itself widens the buffer before script
+    // segmentation, even if it subsequently disables bidi for all-LTR text.
+    const bool use_latin1_script = (!is_bidi_enabled && text.Is8Bit()) || !builder.HasNonOrc16BitCharacters();
     text.Ensure16Bit();
     if (!mapping_builder_.SetDestinationString(text)) NOTREACHED();
     result_->mapping_ = mapping_builder_.Build(*context_.root_);
     for (const auto& item : result_->inline_items_) styles_.push_back(item.object->LayoutStyle());
-    SegmentAndShape();
+    SegmentAndShape(use_latin1_script, is_bidi_enabled);
     ApplyTextAutoSpace();
   } else {
     ReuseCollectedItems(*context_.fragments_);

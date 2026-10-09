@@ -40,8 +40,10 @@ font or string.
 
 ## Examples
 
-- `bkit_mushoku_tensei_example`: multilingual cards covering the supported
-  CSS text properties, vertical text and `@font-face` loading.
+- `bkit_inline_text_render_example`: multilingual cards covering the
+  supported CSS text properties, vertical text and `@font-face` loading. Each
+  card shows the equivalent HTML above its rendering; select it with the mouse
+  and press Ctrl+C to compare in a browser.
 - `bkit_rich_text_example`: a Word-style rich text editor built on the inline
   layout and paint pipeline.
 

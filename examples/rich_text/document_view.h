@@ -1,9 +1,11 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
 
+#include "../damage.h"
 #include "base/vector.h"
 #include "document.h"
 #include "inline_layout.h"
@@ -22,14 +24,20 @@ namespace rich_text {
 // touched and moves the rest, without rescanning the text.
 class DocumentView {
 public:
+  // One text node per run of pieces with the same character style, so that
+  // an edit inside a run keeps the paragraph's tree.
   struct NodeMap {
+    static constexpr uint32_t kNoStyle = UINT32_MAX; // The empty paragraph's placeholder.
     bkit::InlineNodeId id;
-    uint32_t start, length;
+    uint32_t start, length, style;
   };
   struct Block {
     uint32_t start = 0, end = 0, style = 0;
     float x = 0, y = 0, width = 0, height = 0;
     bool vertical = false, rtl = false;
+    // An edit changed the paragraph; Update() refreshes it in place or
+    // rebuilds it.
+    bool stale = false;
     std::u16string text;                  // Without the newline.
     bkit::Vector<uint32_t> boundaries;    // Grapheme boundaries in `text`, 0 to text.size().
     size_t words = 0;
@@ -40,9 +48,7 @@ public:
   // Page rows (device pixels from the top of the page) whose pixels may differ
   // from what was painted: rebuilt, moved or removed paragraphs, the page end
   // and selection highlight changes. `full` invalidates the whole page.
-  struct Rows {
-    float top, bottom;
-  };
+  using Rows = bkit::example::RowDamage::Rows;
   struct Damage {
     bool full = false;
     bkit::Vector<Rows> rows;
@@ -76,6 +82,11 @@ public:
 
 private:
   void Build(Block&, const Document&, bkit::wtf_size_t paragraph, uint32_t start, float device_scale, float zoom);
+  // Edits the text of a built paragraph in place when its paragraph style
+  // and the styles of its runs are unchanged, so that layout reshapes only
+  // the changed text. Returns false when the paragraph needs Build().
+  bool Refresh(Block&, const Document&, bkit::wtf_size_t paragraph, uint32_t start);
+  void Measure(Block&);
   bkit::wtf_size_t BlockIndex(uint32_t offset) const;
   bool IsSpace(uint32_t offset) const;
   void DamageRows(float top, float bottom);
@@ -87,7 +98,7 @@ private:
   float page_width_ = 0, page_height_ = 0;
   uint64_t version_ = 0; // Document::EditVersion() of blocks_.
   Document::Selection painted_selection_;
-  bkit::Vector<Rows> damage_;
+  bkit::example::RowDamage damage_;
   bool damage_full_ = true;
 };
 

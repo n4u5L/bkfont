@@ -41,6 +41,7 @@ InlineFormattingContext::~InlineFormattingContext() {
 }
 
 void InlineFormattingContext::FontCacheInvalidated() {
+  reuse_shape_results_ = false;
   // Device-scale changes may change hinting and advances even when the
   // logical viewport and styles are unchanged. No old line can be reused.
   MarkDirty(*root_);
@@ -186,12 +187,14 @@ void InlineFormattingContext::SetRules(const InlineObject& object, Vector<Atomic
 void InlineFormattingContext::SetSettings(const Settings& settings) {
   Validate(*root_);
   style_host_.SetSettings(settings);
+  reuse_shape_results_ = false;
   SetNeedsStyleRecalc(*root_, StyleChangeType::kSubtreeStyleChange);
 }
 
 void InlineFormattingContext::SetFontSelector(std::shared_ptr<FontSelector> font_selector) {
   Validate(*root_);
   style_host_.SetFontSelector(std::move(font_selector));
+  reuse_shape_results_ = false;
   SetNeedsStyleRecalc(*root_, StyleChangeType::kSubtreeStyleChange);
 }
 
@@ -249,7 +252,10 @@ void InlineFormattingContext::RecalcStyle(InlineObject& object, const ComputedSt
     // Descendants resolve rem/rlh against the document element's style.
     if (!parent) style_host_.SetRootElementStyle(object.computed_style_);
     invalidation_.Merge(diff);
-    if (diff.NeedsReshape()) needs_collect_inlines_ = true;
+    if (diff.NeedsReshape()) {
+      needs_collect_inlines_ = true;
+      reuse_shape_results_ = false;
+    }
     if (diff.NeedsLayout()) {
       if (fragments_) {
         // Leading spaces and new break opportunities can change the preceding
@@ -354,6 +360,7 @@ bool InlineFormattingContext::SetZoomFactors(float device_scale_factor, float pa
   // Font render-style selection uses DSF alone, not page zoom. The computed
   // font size uses their product, as in WebFrameWidget/LocalFrame/FontBuilder.
   const bool fonts_changed = FontCache::UpdateDeviceScaleFactor(device_scale_factor);
+  if (changed || fonts_changed) reuse_shape_results_ = false;
   if (changed) {
     MarkDirty(*root_);
     if (fragments_) fragments_->DirtyFirstItem();
@@ -376,6 +383,7 @@ void InlineFormattingContext::UpdateLayout() {
   fragments_ = std::move(next);
   retired_.clear();
   needs_collect_inlines_ = false;
+  reuse_shape_results_ = true;
   ++epoch_->generation;
   ++layout_generation_;
   epoch_->state = InlineLayoutState::kClean;
@@ -640,13 +648,15 @@ void InlineFormattingContext::Paint(PaintCanvas* canvas, const PhysicalOffset& o
                                      item.IsGeneratedText() ? 0 : range.start, item.IsGeneratedText() ? item.GeneratedText().length() : range.end, item.TextShapeResult()};
     Vector<DecoratingBox> decorating_boxes;
     if (IsHorizontalWritingMode(fragments.GetWritingMode()) && item.Style().HasAppliedTextDecorations()) {
-      const float paint_top = box.offset.top.ToFloat() - item.BlockOffset().ToFloat();
+      // TextDecorationInfo::OffsetFromDecoratingBox() adds the unrounded
+      // paint offset (InlinePaintContext::ScopedPaintOffset), not the
+      // rounded line top of PhysicalBoxRect().
       for (const auto& paint_box : item.PaintBoxes()) {
         const ComputedStyle& decorating_style = paint_box.object->Style();
         const auto count = decorating_style.AppliedTextDecorations().size();
         if (count < decorating_boxes.size()) decorating_boxes.resize(count);
         while (decorating_boxes.size() < count) {
-          decorating_boxes.push_back(DecoratingBox{&decorating_style, paint_box.block_offset.ToFloat() + paint_top});
+          decorating_boxes.push_back(DecoratingBox{&decorating_style, (paint_box.block_offset + offset.top).ToFloat()});
         }
       }
     }

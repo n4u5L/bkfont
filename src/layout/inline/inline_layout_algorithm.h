@@ -36,7 +36,10 @@ private:
   void Collect(const InlineObject&, InlineItemsBuilder&);
   LayoutUnit HangingTrailingSpaceWidth(const HeapVector<FragmentItem>&, LayoutUnit width, bool is_last_line) const;
   void RemoveTrailingCollapsibleSpace(HeapVector<FragmentItem>&, unsigned start, unsigned end) const;
-  void SegmentAndShape();
+  void SegmentAndShape(bool use_latin1_script, bool is_bidi_enabled);
+  // Returns whether Blink would allocate InlineItemSegments, including a
+  // single mixed-vertical segment. Such text is not eligible for partial reuse.
+  bool SegmentText(bool use_latin1_script);
   void ApplyTextAutoSpace();
   void ReuseCollectedItems(const FragmentItems&);
   HeapVector<FragmentItem> ShapeLine(unsigned start, unsigned end, bool hyphenated = false);

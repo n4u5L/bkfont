@@ -2162,11 +2162,15 @@ public:
   }
   Rect CaretBounds() {
     if (backstage || !caret_on || !document.GetSelection().Empty() || Modal()) return {};
-    const auto caret = view.Caret(document.GetSelection().focus, affinity);
-    const float left = PageX() + caret.X().ToFloat() / scale, top = PageY() + caret.Y().ToFloat() / scale;
+    // CaretDisplayItemClient::PaintCaret() fills the pixel-snapped caret rect
+    // at its paint offset, the page origin in framebuffer pixels.
+    PhysicalRect caret = view.Caret(document.GetSelection().focus, affinity);
+    caret.Move({LayoutUnit(PageX() * scale), LayoutUnit(PageY() * scale)});
+    const bkit::Rect snapped = ToPixelSnappedRect(caret);
+    const float left = snapped.x() / scale, top = snapped.y() / scale;
     const float x = std::max(0.0f, left), y = std::max(BodyTop(), top);
-    const float right = std::min(ContentWidth() - kScrollbar, left + std::max(1.3f, caret.Width().ToFloat() / scale));
-    const float bottom = std::min(height - kStatusHeight, top + std::max(1.3f, caret.Height().ToFloat() / scale));
+    const float right = std::min(ContentWidth() - kScrollbar, snapped.right() / scale);
+    const float bottom = std::min(height - kStatusHeight, snapped.bottom() / scale);
     return right > x && bottom > y ? Rect{x, y, right - x, bottom - y} : Rect{};
   }
   // Word-style ScreenTips appear after the pointer rests on a control.

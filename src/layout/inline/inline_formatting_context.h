@@ -177,6 +177,11 @@ private:
   // InlineNode::NeedsCollectInlines(): text, tree, base direction, wrapping,
   // zoom, font data or a reshaping style change. Otherwise reuse shape results.
   bool needs_collect_inlines_ = true;
+  // The previous layout's shape results stay valid for the text an edit left
+  // unchanged (ReusingTextShaper). Zoom, font data, settings and any style
+  // change that needs reshaping, including the style of a new object, clear
+  // it; a layout sets it.
+  bool reuse_shape_results_ = false;
   uint64_t layout_generation_ = 0;
   InlineNodeId next_id_ = 1;
 };

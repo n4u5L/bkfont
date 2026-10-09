@@ -1,6 +1,8 @@
 #include "document_view.h"
 
 #include <cmath>
+#include <string_view>
+#include <vector>
 
 #include "fonts.h"
 #include "text/character_break_iterator.h"
@@ -17,6 +19,38 @@ String ToString(std::u16string_view text) {
 }
 PhysicalOffset Offset(float x, float y) {
   return {LayoutUnit(x), LayoutUnit(y)};
+}
+// PaintRect() in highlight_painter.cc: fills the pixel-snapped rect, unless
+// the rect or its snapped rect is empty.
+void FillPixelSnapped(RasterCanvas& raster, const PhysicalRect& rect, const PlatformPaint& paint) {
+  if (rect.size.IsEmpty()) return;
+  const Rect snapped = ToPixelSnappedRect(rect);
+  if (snapped.IsEmpty()) return;
+  raster.DrawRect(ScalarRect::MakeXYWH(static_cast<float>(snapped.x()), static_cast<float>(snapped.y()),
+                                       static_cast<float>(snapped.width()), static_cast<float>(snapped.height())),
+                  paint);
+}
+
+// Pieces of one paragraph, joined while they have the same character style.
+struct StyleRun {
+  uint32_t style;
+  std::u16string text;
+};
+
+std::vector<StyleRun> StyleRuns(const Document& document, uint32_t start, uint32_t end) {
+  const auto& tree = document.Tree();
+  std::vector<StyleRun> runs;
+  for (const auto& piece : tree.Slice(start, end - start)) {
+    if (runs.empty() || runs.back().style != piece.style) runs.push_back(StyleRun{piece.style, {}});
+    runs.back().text.append(tree.View(piece));
+  }
+  return runs;
+}
+
+// The offset after the last character of `paragraph`, before its newline.
+uint32_t ParagraphEnd(const Document& document, wtf_size_t paragraph) {
+  const auto& tree = document.Tree();
+  return paragraph + 1 < document.Paragraphs().size() ? tree.LineStart(paragraph + 1) - 1 : tree.Length();
 }
 
 size_t CountWords(std::u16string_view text) {
@@ -66,20 +100,24 @@ void DocumentView::Update(const Document& document, float device_scale, float zo
   scale_ = scale;
   page_width_ = 794 * scale;
   if (incremental) {
-    // Replay the edits on the paragraph list: removed paragraphs leave
-    // damage where they were, inserted ones start empty and are built below.
+    // Replay the edits on the paragraph list. The first new paragraphs of an
+    // edit keep the old ones' layouts, stale, so that Refresh() can edit them
+    // in place; the other removed paragraphs leave damage where they were,
+    // the other inserted ones start empty and are built below.
     for (const auto& edit : edits) {
       if (edit.paragraph + edit.removed > blocks_.size()) {
         blocks_.clear(); // Out of step with the document; rebuilt below.
         break;
       }
-      for (wtf_size_t i = edit.paragraph; i < edit.paragraph + edit.removed; ++i)
+      const wtf_size_t kept = std::min(edit.removed, edit.inserted), first = edit.paragraph + kept;
+      for (wtf_size_t i = edit.paragraph; i < first; ++i) blocks_[i].stale = true;
+      for (wtf_size_t i = first; i < edit.paragraph + edit.removed; ++i)
         if (blocks_[i].context) DamageRows(blocks_[i].y, blocks_[i].y + blocks_[i].height);
-      blocks_.EraseAt(edit.paragraph, edit.removed);
+      blocks_.EraseAt(first, edit.removed - kept);
       const wtf_size_t size = blocks_.size();
-      blocks_.Grow(size + edit.inserted);
-      std::move_backward(blocks_.begin() + edit.paragraph, blocks_.begin() + size, blocks_.end());
-      for (wtf_size_t i = edit.paragraph; i < edit.paragraph + edit.inserted; ++i) blocks_[i] = Block{};
+      blocks_.Grow(size + edit.inserted - kept);
+      std::move_backward(blocks_.begin() + first, blocks_.begin() + size, blocks_.end());
+      for (wtf_size_t i = first; i < edit.paragraph + edit.inserted; ++i) blocks_[i] = Block{};
     }
   }
   if (!incremental || blocks_.size() != document.Paragraphs().size()) {
@@ -96,8 +134,13 @@ void DocumentView::Update(const Document& document, float device_scale, float zo
   words_ = 0;
   for (wtf_size_t i = 0; i < blocks_.size(); ++i) {
     Block& block = blocks_[i];
-    const bool built = !block.context;
-    if (built) Build(block, document, i, start, device_scale, zoom);
+    const bool built = !block.context || block.stale;
+    if (block.stale) {
+      if (block.context) DamageRows(block.y, block.y + block.height); // Where it was painted.
+      block.stale = false;
+      if (!Refresh(block, document, i, start)) block = Block{};
+    }
+    if (!block.context) Build(block, document, i, start, device_scale, zoom);
     const float old_x = block.x, old_y = block.y;
     block.start = start;
     block.end = start + static_cast<uint32_t>(block.text.size());
@@ -122,8 +165,7 @@ void DocumentView::Update(const Document& document, float device_scale, float zo
 
 void DocumentView::Build(Block& block, const Document& document, wtf_size_t paragraph, uint32_t start, float device_scale,
                          float zoom) {
-  const auto& tree = document.Tree();
-  const uint32_t end = paragraph + 1 < document.Paragraphs().size() ? tree.LineStart(paragraph + 1) - 1 : tree.Length();
+  const uint32_t end = ParagraphEnd(document, paragraph);
   const uint32_t style = document.Paragraphs()[paragraph];
   block.style = style;
   block.context = std::make_unique<InlineFormattingContext>(Settings(), nullptr);
@@ -139,18 +181,53 @@ void DocumentView::Build(Block& block, const Document& document, wtf_size_t para
   block.context->SetOptions(options);
   block.text.clear();
   block.text.reserve(end - start);
-  for (const auto& piece : tree.Slice(start, end - start)) {
-    const auto view = tree.View(piece);
+  for (const auto& run : StyleRuns(document, start, end)) {
     const auto& span = block.context->AppendInline(block.context->RootObject());
-    block.context->SetInlineStyle(span, document.GetStyle(piece.style).declaration);
-    const auto& node = block.context->AppendText(span, ToString(view));
-    block.nodes.push_back(NodeMap{node.Id(), static_cast<uint32_t>(block.text.size()), piece.length});
-    block.text.append(view);
+    block.context->SetInlineStyle(span, document.GetStyle(run.style).declaration);
+    const auto& node = block.context->AppendText(span, ToString(run.text));
+    block.nodes.push_back(
+        NodeMap{node.Id(), static_cast<uint32_t>(block.text.size()), static_cast<uint32_t>(run.text.size()), run.style});
+    block.text += run.text;
   }
   if (block.nodes.empty()) {
     const auto& node = block.context->AppendText(block.context->RootObject(), String(u"\u200b"));
-    block.nodes.push_back(NodeMap{node.Id(), 0, 0});
+    block.nodes.push_back(NodeMap{node.Id(), 0, 0, NodeMap::kNoStyle});
   }
+  Measure(block);
+}
+
+bool DocumentView::Refresh(Block& block, const Document& document, wtf_size_t paragraph, uint32_t start) {
+  if (!block.context || block.style != document.Paragraphs()[paragraph]) return false;
+  const std::vector<StyleRun> runs = StyleRuns(document, start, ParagraphEnd(document, paragraph));
+  if (runs.empty() || runs.size() != block.nodes.size()) return false;
+  for (size_t i = 0; i < runs.size(); ++i)
+    if (runs[i].style != block.nodes[static_cast<wtf_size_t>(i)].style) return false;
+  std::u16string text;
+  text.reserve(block.text.size());
+  for (size_t i = 0; i < runs.size(); ++i) {
+    NodeMap& node = block.nodes[static_cast<wtf_size_t>(i)];
+    const std::u16string_view before = std::u16string_view(block.text).substr(node.start, node.length);
+    const std::u16string_view after = runs[i].text;
+    if (before != after) {
+      // Replace only the changed middle of the node's text.
+      size_t prefix = 0, suffix = 0;
+      const size_t limit = std::min(before.size(), after.size());
+      while (prefix < limit && before[prefix] == after[prefix]) ++prefix;
+      while (suffix < limit - prefix && before[before.size() - 1 - suffix] == after[after.size() - 1 - suffix]) ++suffix;
+      block.context->ReplaceText(*block.context->Find(node.id), static_cast<unsigned>(prefix),
+                                 static_cast<unsigned>(before.size() - prefix - suffix),
+                                 ToString(after.substr(prefix, after.size() - prefix - suffix)));
+    }
+    node.start = static_cast<uint32_t>(text.size());
+    node.length = static_cast<uint32_t>(after.size());
+    text += after;
+  }
+  block.text = std::move(text);
+  Measure(block);
+  return true;
+}
+
+void DocumentView::Measure(Block& block) {
   block.context->UpdateLayout();
   const auto size = block.context->Fragments().SizeInPhysicalCoordinates();
   block.width = std::max(scale_, size.width.ToFloat());
@@ -177,36 +254,22 @@ size_t DocumentView::Words(uint32_t start, uint32_t end) const {
 
 void DocumentView::InvalidateSelection(const Document::Selection& selection) {
   const Document::Selection& painted = painted_selection_;
-  if (painted.Empty() != selection.Empty()) {
-    const auto& highlighted = painted.Empty() ? selection : painted;
-    DamageRange(highlighted.Start(), highlighted.End());
-  } else if (!selection.Empty()) {
-    // Only offsets between the old and the new ends change highlight.
-    if (painted.Start() != selection.Start())
-      DamageRange(std::min(painted.Start(), selection.Start()), std::max(painted.Start(), selection.Start()));
-    if (painted.End() != selection.End())
-      DamageRange(std::min(painted.End(), selection.End()), std::max(painted.End(), selection.End()));
-  }
+  example::ForChangedHighlight(painted.Start(), painted.End(), selection.Start(), selection.End(),
+                               [this](uint32_t start, uint32_t end) { DamageRange(start, end); });
   painted_selection_ = selection;
 }
 
 DocumentView::Damage DocumentView::TakeDamage() {
   Damage damage;
   damage.full = damage_full_;
-  damage.rows.swap(damage_);
+  damage.rows = damage_.Take();
   damage_full_ = false;
   return damage;
 }
 
 void DocumentView::DamageRows(float top, float bottom) {
   // Ink may overflow a paragraph by as much as Paint() allows when culling.
-  top -= 32 * scale_;
-  bottom += 32 * scale_;
-  if (!damage_.empty() && top <= damage_.back().bottom && bottom >= damage_.back().top) {
-    damage_.back() = {std::min(top, damage_.back().top), std::max(bottom, damage_.back().bottom)};
-    return;
-  }
-  damage_.push_back(Rows{top, bottom});
+  damage_.Add(top - 32 * scale_, bottom + 32 * scale_);
 }
 
 // The paragraphs meeting offsets [start, end]. A paragraph's end offset is
@@ -267,14 +330,13 @@ void DocumentView::Paint(RasterCanvas& raster, float x, float y, float clip_top,
     if (!selection.Empty() && start < end) {
       const InlineSelection local{block.Position(start), block.Position(end, TextAffinity::kUpstream)};
       for (const auto& rect : block.context->SelectionRectsForPaint(local, origin))
-        raster.DrawRect(ScalarRect::MakeXYWH(rect.X().ToFloat(), rect.Y().ToFloat(), rect.Width().ToFloat(), rect.Height().ToFloat()),
-                        PlatformPaint(0xffc9ddfa));
+        FillPixelSnapped(raster, rect, PlatformPaint(0xffc9ddfa));
     }
     if (!selection.Empty() && selection.Start() <= block.end && selection.End() > block.end) {
       const auto caret = block.context->CaretRect(block.Position(block.end, TextAffinity::kUpstream));
-      raster.DrawRect(ScalarRect::MakeXYWH(x + block.x + caret.X().ToFloat(), y + block.y + caret.Y().ToFloat(),
-                                           6 * scale_, std::max(24 * scale_, caret.Height().ToFloat())),
-                      PlatformPaint(0xffc9ddfa));
+      const PhysicalRect mark(origin + caret.offset,
+                              {LayoutUnit(6 * scale_), LayoutUnit(std::max(24 * scale_, caret.Height().ToFloat()))});
+      FillPixelSnapped(raster, mark, PlatformPaint(0xffc9ddfa));
     }
     block.context->Paint(&canvas, origin);
     if (marks) {

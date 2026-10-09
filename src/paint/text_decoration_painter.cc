@@ -33,6 +33,11 @@ void PaintTextDecorations(PaintCanvas* canvas, const TextFragmentPaintInfo& text
                            const PointF& origin, const LineRelativeRect& frame, const ComputedStyle& style,
                            const TextPaintStyle& text_style, bool line_through, bool shadow_phase,
                            std::span<const DecoratingBox> decorating_boxes) {
+  // PaintExceptLineThrough() and PaintOnlyLineThrough() save the context once
+  // for the whole pass, so ink-skipping clips accumulate across lines and
+  // decorations. The shadow phase records to its own canvas, as Blink's
+  // shadow layer restores its clips.
+  PaintCanvasAutoRestore restore(canvas, true);
   size_t index = 0;
   for (const auto& decoration : style.AppliedTextDecorations()) {
     TextDecorationInfo info({frame.LineLeft().ToFloat(), frame.LineOver().ToFloat()}, frame.InlineSize().ToFloat(),
@@ -40,7 +45,6 @@ void PaintTextDecorations(PaintCanvas* canvas, const TextFragmentPaintInfo& text
     ++index;
     const Color4f color = shadow_phase ? kBlackColor4f : info.Color();
     const auto paint = [&](const DecorationGeometry& geometry, bool skip_ink) {
-      PaintCanvasAutoRestore restore(canvas, true);
       if (skip_ink && style.TextDecorationSkipInk() == ETextDecorationSkipInk::kAuto) {
         ClipDecorationLine(canvas, geometry, info.Baseline(), origin, font, text, text_style.FillPaint());
       }

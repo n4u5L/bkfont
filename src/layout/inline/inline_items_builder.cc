@@ -107,6 +107,7 @@ void InlineItemsBuilder::AppendGeneratedBreakOpportunity(const InlineObject& lay
 }
 
 void InlineItemsBuilder::AppendTransformedString(const TransformedString& transformed) {
+  has_non_orc_16bit_ = has_non_orc_16bit_ || !transformed.View().Is8Bit();
   text_.Append(transformed.View());
   if (!transformed.HasLengthMap()) {
     mapping_builder_->AppendIdentityMapping(transformed.View().length());
@@ -474,6 +475,7 @@ InlineItem& InlineItemsBuilder::AppendBreakOpportunity(const InlineObject& layou
 
 InlineItem& InlineItemsBuilder::Append(InlineItem::InlineItemType type, UChar character,
                                        const InlineObject& layout_object) {
+  has_non_orc_16bit_ = has_non_orc_16bit_ || (character >= 0x100 && character != uchar::kObjectReplacementCharacter);
   text_.Append(character);
   mapping_builder_->AppendIdentityMapping(1);
   unsigned end_offset = text_.length();
