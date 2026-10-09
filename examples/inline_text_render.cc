@@ -15,8 +15,9 @@
 //
 // Above its rendering, each card shows the HTML that renders the same in a
 // browser, serialized from the same typed inputs while the blocks are built.
-// Drag over it to select; Ctrl+C copies the selection, or the whole snippet
-// when the selection is collapsed, and Ctrl+A selects the snippet.
+// Drag over the HTML or rendered text to select within that part of a card.
+// Ctrl+C copies the selection (or that whole part when collapsed), and Ctrl+A
+// selects all of it. Rendered selections can span paragraphs.
 #include <GLFW/glfw3.h>
 
 #include <algorithm>
@@ -39,12 +40,15 @@
 #include <vector>
 
 #include "base/hash_map.h"
+#include "base/text/character_names.h"
+#include "base/text/string_builder.h"
 #include "damage.h"
 #include "font/custom_font_data.h"
 #include "font/simple_font_data.h"
 #include "fonts.h"
 #include "frame_benchmark.h"
 #include "inline_layout.h"
+#include "layout/text_combine.h"
 #include "paint/path.h"
 #include "paint/picture.h"
 #include "raster_tiles.h"
@@ -562,7 +566,7 @@ struct Card {
   const InlineObject* source_text = nullptr;
   Vector<Block> blocks;
   // DrawingRecorder-style cache of the static text, in page coordinates.
-  // The source selection is painted separately and does not invalidate it.
+  // Selection highlights are painted separately and do not invalidate it.
   std::shared_ptr<const Picture> text_paint;
   float top = 0;
   float height = 0;
@@ -1078,13 +1082,68 @@ bool UpdateSource(Card& card, double width) {
   return true;
 }
 
-// A selection in one card's HTML, as offsets in its text.
-struct SourceSelection {
+// A selection in one card's HTML or rendered content. Rendered offsets count
+// each block's layout text, with one paragraph separator between blocks.
+struct TextSelection {
   int card = -1;
   unsigned anchor = 0;
   unsigned focus = 0;
-  bool operator==(const SourceSelection&) const = default;
+  bool rendered = false;
+  bool operator==(const TextSelection&) const = default;
 };
+
+unsigned SelectionLength(const Card& card, bool rendered) {
+  if (!rendered) return card.source_text->Text().length();
+  unsigned length = 0;
+  for (wtf_size_t i = 0; i < card.blocks.size(); ++i) {
+    if (i) ++length;
+    length += card.blocks[i].context->Fragments().TextContent().length();
+  }
+  return length;
+}
+
+// Visit selected block ranges in logical order, independently of visual bidi
+// order or writing mode. Paragraph separators are not part of a block's IFC.
+template <typename Visitor>
+void ForSelectedBlocks(const Card& card, bool rendered, unsigned start, unsigned end, const Visitor& visit) {
+  if (start >= end) return;
+  if (!rendered) {
+    visit(card.source, start, end, false);
+    return;
+  }
+  unsigned base = 0;
+  for (wtf_size_t i = 0; i < card.blocks.size(); ++i) {
+    const Block& block = card.blocks[i];
+    const unsigned limit = base + block.context->Fragments().TextContent().length();
+    const bool newline = i + 1 < card.blocks.size() && start <= limit && end > limit;
+    if ((start < limit && end > base) || newline)
+      visit(block, std::clamp(start, base, limit) - base, std::clamp(end, base, limit) - base, newline);
+    base = limit + 1;
+    if (base >= end) break;
+  }
+}
+
+Vector<PhysicalRect> SelectionRects(const Card& card, bool rendered, unsigned start, unsigned end) {
+  Vector<PhysicalRect> rects;
+  ForSelectedBlocks(card, rendered, start, end, [&](const Block& block, unsigned from, unsigned to, bool) {
+    InlineSelection range;
+    if (rendered) {
+      const auto& mapping = block.context->Fragments().Mapping();
+      const auto& units = mapping.GetUnits();
+      if (units.empty()) return;
+      // Layout-inserted bidi controls have no model position. Trim endpoints
+      // to mapped text before converting the range back to InlinePositions.
+      from = std::max(from, units.front().TextContentStart());
+      to = std::min(to, units.back().TextContentEnd());
+      if (from >= to) return;
+      range = {mapping.GetFirstPosition(from), mapping.GetFirstPosition(to)};
+    } else {
+      range = {{card.source_text->Id(), from}, {card.source_text->Id(), to}};
+    }
+    for (const auto& rect : block.context->SelectionRectsForPaint(range, block.offset)) rects.push_back(rect);
+  });
+  return rects;
+}
 
 struct Page {
   std::shared_ptr<FontSelector> fonts = LoadExampleFonts();
@@ -1096,7 +1155,7 @@ struct Page {
   bool dirty = true;
   int render_divisor = 1;
   bool linear_filter = false;
-  SourceSelection selection;
+  TextSelection selection;
   bool selecting = false;
 
   Page() {
@@ -1112,7 +1171,7 @@ struct Page {
     for (Card& card : cards) BuildSource(card);
   }
 
-  void Select(const SourceSelection& next) {
+  void Select(const TextSelection& next) {
     if (next == selection) return;
     selection = next;
     dirty = true;
@@ -1147,7 +1206,11 @@ void LayoutPage(Page& page, int width, float scale) {
   for (Card& card : page.cards) {
     card.text_paint.reset(); // Width/DPI changes can also move the card.
     // The blocks are laid out for std::floor(inner) framebuffer pixels.
-    if (UpdateSource(card, std::floor(inner) / scale)) page.selection = {};
+    if (UpdateSource(card, std::floor(inner) / scale) && !page.selection.rendered && page.selection.card >= 0 &&
+        &card == &page.cards[static_cast<wtf_size_t>(page.selection.card)]) {
+      page.selection = {};
+      page.selecting = false;
+    }
     card.top = y;
     float cursor = y + padding;
     const PhysicalSize source = LayoutBlock(card.source, scale, inner);
@@ -1265,9 +1328,9 @@ void PaintPage(Page& page, RasterCanvas& raster, const RasterView& view, const V
     raster.ClipRect(ScalarRect::MakeXYWH(margin, top, accent, card.height), true);
     raster.DrawPath(bar, accent_paint);
     raster.Restore();
-    // The HTML panel, its selection, then its text.
+    // Backgrounds, the active HTML/rendered selection, then cached text.
     FillRoundedBackground(raster, SourcePanel(card, scale), 6 * scale, kSourceColor);
-    const SourceSelection& selection = page.selection;
+    const TextSelection& selection = page.selection;
     if (selection.card >= 0 && &card == &page.cards[static_cast<wtf_size_t>(selection.card)]) {
       for (const PhysicalRect& rect : selection_rects)
         FillPixelSnapped(raster, rect, PlatformPaint(kSelectionColor));
@@ -1289,26 +1352,24 @@ void PaintPage(Page& page, RasterCanvas& raster, const RasterView& view, const V
 
 // The page rows whose highlight differs between the painted selection and
 // the page's, as rich_text's DocumentView finds them.
-example::RowDamage HighlightDamage(Page& page, const SourceSelection& painted) {
+example::RowDamage HighlightDamage(Page& page, const TextSelection& painted) {
   example::RowDamage damage;
-  const auto changes = [&](int index, unsigned painted_start, unsigned painted_end, unsigned next_start,
-                           unsigned next_end) {
-    Card& card = page.cards[static_cast<wtf_size_t>(index)];
-    const InlineNodeId text = card.source_text->Id();
+  const auto changes = [&](const TextSelection& selection, unsigned painted_start, unsigned painted_end,
+                            unsigned next_start, unsigned next_end) {
+    const Card& card = page.cards[static_cast<wtf_size_t>(selection.card)];
     example::ForChangedHighlight(painted_start, painted_end, next_start, next_end, [&](uint32_t start, uint32_t end) {
-      const InlineSelection range{{text, start}, {text, end}};
-      for (const PhysicalRect& rect : card.source.context->SelectionRectsForPaint(range, card.source.offset))
+      for (const PhysicalRect& rect : SelectionRects(card, selection.rendered, start, end))
         damage.Add(std::floor(rect.Y().ToFloat()), std::ceil(rect.Bottom().ToFloat()));
     });
   };
-  const SourceSelection& next = page.selection;
+  const TextSelection& next = page.selection;
   const unsigned painted_start = std::min(painted.anchor, painted.focus), painted_end = std::max(painted.anchor, painted.focus);
   const unsigned next_start = std::min(next.anchor, next.focus), next_end = std::max(next.anchor, next.focus);
-  if (painted.card == next.card) {
-    if (next.card >= 0) changes(next.card, painted_start, painted_end, next_start, next_end);
+  if (painted.card == next.card && painted.rendered == next.rendered) {
+    if (next.card >= 0) changes(next, painted_start, painted_end, next_start, next_end);
   } else {
-    if (painted.card >= 0) changes(painted.card, painted_start, painted_end, 0, 0);
-    if (next.card >= 0) changes(next.card, 0, 0, next_start, next_end);
+    if (painted.card >= 0) changes(painted, painted_start, painted_end, 0, 0);
+    if (next.card >= 0) changes(next, 0, 0, next_start, next_end);
   }
   return damage;
 }
@@ -1339,12 +1400,11 @@ public:
     // changes; only the selection or layout can change them.
     if (layout_changed || page.selection != painted_) {
       selection_rects_.clear();
-      const SourceSelection& selection = page.selection;
+      const TextSelection& selection = page.selection;
       if (selection.card >= 0 && selection.anchor != selection.focus) {
-        Card& card = page.cards[static_cast<wtf_size_t>(selection.card)];
-        const InlineNodeId text = card.source_text->Id();
-        const InlineSelection range{{text, selection.anchor}, {text, selection.focus}};
-        selection_rects_ = card.source.context->SelectionRectsForPaint(range, card.source.offset);
+        const Card& card = page.cards[static_cast<wtf_size_t>(selection.card)];
+        selection_rects_ = SelectionRects(card, selection.rendered, std::min(selection.anchor, selection.focus),
+                                          std::max(selection.anchor, selection.focus));
       }
     }
     const Pixmap& pixels = bitmap_.GetPixmap();
@@ -1410,7 +1470,7 @@ private:
   Vector<PhysicalRect> selection_rects_;
   IntRect upload_;
   // The selection the pixels show.
-  SourceSelection painted_;
+  TextSelection painted_;
   int scroll_ = 0;
   bool valid_ = false;
 };
@@ -1667,34 +1727,104 @@ PhysicalOffset CursorInPage(GLFWwindow* window) {
   return {LayoutUnit(static_cast<float>(x * scale_x)), LayoutUnit(static_cast<float>(y * scale_y + Get(window).scroll))};
 }
 
-// The card whose HTML panel contains `point`, or -1.
-int SourceAt(const Page& page, const PhysicalOffset& point) {
+// The logical text offset nearest to a page-space point. Blocks are ordered
+// vertically on the page even when their own lines use vertical writing.
+unsigned SelectionOffsetAt(const Card& card, bool rendered, const PhysicalOffset& point) {
+  if (!rendered) {
+    const InlinePosition position = card.source.context->HitTest(point - card.source.offset);
+    return position.node == card.source_text->Id() ? position.offset : 0;
+  }
+  if (card.blocks.empty()) return 0;
+  // In vertical text, physical top/bottom are inline edges, not paragraph
+  // boundaries. Preserve x so HitTest can choose the column and its endpoint.
+  if (!card.vertical) {
+    if (point.top < card.blocks.front().offset.top) return 0;
+    const Block& last = card.blocks.back();
+    if (point.top >= last.offset.top + last.size.height) return SelectionLength(card, true);
+  }
+  const Block* nearest = nullptr;
+  LayoutUnit nearest_distance;
+  unsigned base = 0, nearest_base = 0;
+  for (const Block& block : card.blocks) {
+    const LayoutUnit distance = std::max({block.offset.top - point.top,
+                                         point.top - block.offset.top - block.size.height, LayoutUnit()});
+    if (!nearest || distance < nearest_distance) {
+      nearest = &block;
+      nearest_distance = distance;
+      nearest_base = base;
+    }
+    base += block.context->Fragments().TextContent().length() + 1;
+  }
+  const InlinePosition position = nearest->context->HitTest(point - nearest->offset);
+  return nearest_base + nearest->context->Fragments().Mapping().GetTextContentOffset(position).value_or(0);
+}
+
+TextSelection SelectionAt(const Page& page, const PhysicalOffset& point) {
   const float x = point.left.ToFloat(), y = point.top.ToFloat();
   for (wtf_size_t i = 0; i < page.cards.size(); ++i) {
-    const ScalarRect panel = SourcePanel(page.cards[i], page.scale);
-    if (x >= panel.left && x < panel.right && y >= panel.top && y < panel.bottom) return static_cast<int>(i);
+    const Card& card = page.cards[i];
+    const ScalarRect panel = SourcePanel(card, page.scale);
+    bool rendered = false;
+    if (!(x >= panel.left && x < panel.right && y >= panel.top && y < panel.bottom)) {
+      if (card.blocks.empty()) continue;
+      const float margin = std::round(kPageMargin * page.scale);
+      // The rendered area includes the whitespace after the HTML panel and
+      // the card's bottom padding, so a drag can start beyond the glyphs.
+      if (x < margin || x >= page.width - margin || y < panel.bottom || y >= card.top + card.height) continue;
+      rendered = true;
+    }
+    const unsigned offset = SelectionOffsetAt(card, rendered, point);
+    return {static_cast<int>(i), offset, offset, rendered};
   }
-  return -1;
+  return {};
 }
 
-// The offset in the card's HTML nearest to `point`.
-unsigned SourceOffsetAt(Card& card, const PhysicalOffset& point) {
-  const InlinePosition position = card.source.context->HitTest(point - card.source.offset);
-  return position.node == card.source_text->Id() ? position.offset : 0;
+void ExtendSelection(Page& page, const PhysicalOffset& point) {
+  if (!page.selecting || page.selection.card < 0) return;
+  TextSelection selection = page.selection;
+  selection.focus = SelectionOffsetAt(page.cards[static_cast<wtf_size_t>(selection.card)], selection.rendered, point);
+  page.Select(selection);
 }
 
-// Copies the selected HTML, or all of the card's HTML when the selection is
-// collapsed.
+// Copy mapped, transformed text in logical order. Mapping units exclude bidi
+// controls inserted by layout; combined text is copied instead of its U+FFFC
+// placeholder. Paragraph boundaries become newlines, while soft wraps do not.
+void AppendRenderedText(const Block& block, unsigned start, unsigned end, StringBuilder& text) {
+  const auto& fragments = block.context->Fragments();
+  for (const auto& unit : fragments.Mapping().GetUnits()) {
+    const unsigned from = std::max(start, unit.TextContentStart());
+    const unsigned to = std::min(end, unit.TextContentEnd());
+    if (from >= to || unit.GetOwner().Style().Visibility() != EVisibility::kVisible) continue;
+    const size_t first = fragments.FirstInlineFragmentItemIndex(unit.GetOwner());
+    if (first) {
+      if (const TextCombine* combine = fragments[first - 1].GetTextCombine()) {
+        text.Append(combine->GetTextContent());
+        continue;
+      }
+    }
+    text.Append(fragments.TextContent().Substring(from, to - from));
+  }
+}
+
+// A collapsed selection copies the active part of the card in full, matching
+// the existing HTML-panel behavior.
 void CopySelection(GLFWwindow* window, const Page& page) {
-  if (page.selection.card < 0) return;
-  const Card& card = page.cards[static_cast<wtf_size_t>(page.selection.card)];
-  unsigned start = std::min(page.selection.anchor, page.selection.focus);
-  unsigned end = std::max(page.selection.anchor, page.selection.focus);
+  const TextSelection& selection = page.selection;
+  if (selection.card < 0) return;
+  const Card& card = page.cards[static_cast<wtf_size_t>(selection.card)];
+  unsigned start = std::min(selection.anchor, selection.focus);
+  unsigned end = std::max(selection.anchor, selection.focus);
   if (start == end) {
     start = 0;
-    end = card.source_text->Text().length();
+    end = SelectionLength(card, selection.rendered);
   }
-  glfwSetClipboardString(window, card.source_text->Text().Substring(start, end - start).Utf8().c_str());
+  StringBuilder text;
+  ForSelectedBlocks(card, selection.rendered, start, end, [&](const Block& block, unsigned from, unsigned to, bool newline) {
+    if (selection.rendered) AppendRenderedText(block, from, to, text);
+    else text.Append(card.source_text->Text().Substring(from, to - from));
+    if (newline) text.Append(uchar::kLineFeed);
+  });
+  glfwSetClipboardString(window, text.ToString().Utf8().c_str());
 }
 
 } // namespace
@@ -1718,8 +1848,8 @@ int main(int argc, char** argv) {
               "    First frame is reported separately; use a fresh process per scenario for cold caches.\n"
 #endif
               "Keys: 1 = 100%, 2 = 50%, 3 = 25%, F = nearest/linear magnification, Esc = close.\n"
-              "Drag over a card's HTML to select it; Ctrl+C copies the selection, or the whole HTML\n"
-              "when nothing is selected, and Ctrl+A selects all of it.\n"
+              "Drag over a card's HTML or rendered text to select it, including across paragraphs.\n"
+              "Ctrl+C copies the selection (or the whole active part when collapsed); Ctrl+A selects all.\n"
               "Snapshots store the selected render resolution, before magnification.");
   };
   for (int i = 1; i < argc; ++i) {
@@ -1801,8 +1931,12 @@ int main(int argc, char** argv) {
     else if (key == GLFW_KEY_C && (mods & GLFW_MOD_CONTROL)) {
       CopySelection(w, page);
     } else if (key == GLFW_KEY_A && (mods & GLFW_MOD_CONTROL) && page.width > 0) {
-      const int card = page.selection.card >= 0 ? page.selection.card : SourceAt(page, CursorInPage(w));
-      if (card >= 0) page.Select({card, 0, page.cards[static_cast<wtf_size_t>(card)].source_text->Text().length()});
+      TextSelection selection = page.selection.card >= 0 ? page.selection : SelectionAt(page, CursorInPage(w));
+      if (selection.card >= 0) {
+        selection.anchor = 0;
+        selection.focus = SelectionLength(page.cards[static_cast<wtf_size_t>(selection.card)], selection.rendered);
+        page.Select(selection);
+      }
     } else if (key >= GLFW_KEY_1 && key <= GLFW_KEY_3) {
       Get(w).render_divisor = 1 << (key - GLFW_KEY_1);
       Get(w).dirty = true;
@@ -1811,31 +1945,35 @@ int main(int argc, char** argv) {
       Get(w).dirty = true;
     }
   });
-  glfwSetMouseButtonCallback(window, [](GLFWwindow* w, int button, int action, int) {
+  glfwSetMouseButtonCallback(window, [](GLFWwindow* w, int button, int action, int mods) {
     if (button != GLFW_MOUSE_BUTTON_LEFT) return;
     Page& page = Get(w);
-    if (action == GLFW_RELEASE) page.selecting = false;
-    if (action != GLFW_PRESS || page.width == 0) return;
-    const PhysicalOffset point = CursorInPage(w);
-    const int card = SourceAt(page, point);
-    SourceSelection selection;
-    if (card >= 0) {
-      const unsigned offset = SourceOffsetAt(page.cards[static_cast<wtf_size_t>(card)], point);
-      selection = {card, offset, offset};
+    if (action == GLFW_RELEASE) {
+      ExtendSelection(page, CursorInPage(w));
+      page.selecting = false;
+      return;
     }
-    page.selecting = card >= 0;
+    if (action != GLFW_PRESS || page.width == 0) return;
+    TextSelection selection = SelectionAt(page, CursorInPage(w));
+    if ((mods & GLFW_MOD_SHIFT) && selection.card >= 0 && selection.card == page.selection.card &&
+        selection.rendered == page.selection.rendered) selection.anchor = page.selection.anchor;
+    page.selecting = selection.card >= 0;
     page.Select(selection);
   });
   glfwSetCursorPosCallback(window, [](GLFWwindow* w, double, double) {
-    Page& page = Get(w);
-    if (!page.selecting || page.selection.card < 0) return;
-    SourceSelection selection = page.selection;
-    selection.focus = SourceOffsetAt(page.cards[static_cast<wtf_size_t>(selection.card)], CursorInPage(w));
-    page.Select(selection);
+    ExtendSelection(Get(w), CursorInPage(w));
   });
   glfwSetScrollCallback(window, [](GLFWwindow* w, double, double y) {
-    Get(w).scroll -= static_cast<float>(y) * 60 * Get(w).scale;
-    Get(w).dirty = true;
+    Page& page = Get(w);
+    int width, height;
+    glfwGetFramebufferSize(w, &width, &height);
+    page.scroll = std::clamp(page.scroll - static_cast<float>(y) * 60 * page.scale, 0.0f,
+                             std::max(0.0f, page.height - height));
+    ExtendSelection(page, CursorInPage(w));
+    page.dirty = true;
+  });
+  glfwSetWindowFocusCallback(window, [](GLFWwindow* w, int focused) {
+    if (!focused) Get(w).selecting = false;
   });
   glfwSetFramebufferSizeCallback(window, [](GLFWwindow* w, int, int) { Get(w).dirty = true; });
   glfwSetWindowContentScaleCallback(window, [](GLFWwindow* w, float, float) { Get(w).dirty = true; });

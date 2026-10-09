@@ -211,16 +211,31 @@ static bool HasTextCombine(const ComputedStyle& style) {
   return style.TextCombine() != ETextCombine::kNone && !IsHorizontalWritingMode(style.GetWritingMode());
 }
 
-static void AppendTextContent(const InlineObject& object, StringBuilder& builder) {
-  if (object.IsText()) builder.Append(object.Text());
-  for (const auto& child : object.Children()) AppendTextContent(*child, builder);
+static void AppendTransformedTextContent(const InlineObject& object, StringBuilder& builder,
+                                         UChar& previous_character) {
+  if (object.IsText() && !object.Text().empty()) {
+    // LayoutText::TransformAndSecureText() runs before LayoutTextCombine
+    // collects text. Apply each text object's own style and locale, retaining
+    // the last transformed character for text-transform: capitalize.
+    const String transformed = object.Style().ApplyTextTransform(object.Text(), previous_character, nullptr);
+    if (!transformed.empty()) {
+      builder.Append(transformed);
+      previous_character = transformed[transformed.length() - 1];
+    }
+  } else if (object.IsAtomicInline()) {
+    previous_character = uchar::kSpace;
+  }
+  for (const auto& child : object.Children()) AppendTransformedTextContent(*child, builder, previous_character);
 }
 
 void InlineLayoutAlgorithm::Collect(const InlineObject& object, InlineItemsBuilder& builder) {
   if (object.Parent() && !object.IsAtomicInline() && HasTextCombine(object.Style()) &&
       (!object.Parent()->Parent() || !HasTextCombine(object.Parent()->Style()))) {
     StringBuilder text;
-    AppendTextContent(object, text);
+    // LayoutText::PreviousCharacter() stops at the containing
+    // LayoutTextCombine block for the first text child.
+    UChar previous_character = uchar::kSpace;
+    AppendTransformedTextContent(object, text, previous_character);
     if (text.empty()) return;
     const ComputedStyle& style = object.Style();
     const TextDecorationLine decorations = style.TextDecorationsInEffect();

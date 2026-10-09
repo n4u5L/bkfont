@@ -376,12 +376,12 @@ void RasterizeAliased(const std::vector<Edge>& edges, const IntRect& bounds, boo
   coverage->assign(static_cast<std::size_t>(width) * static_cast<std::size_t>(height), 0.0f);
 
   struct Crossing {
-    float x;
+    double x;
     int winding;
   };
   std::vector<Crossing> crossings;
   for (int y = 0; y < height; ++y) {
-    const float yc = static_cast<float>(bounds.top + y) + 0.5f;
+    const double yc = static_cast<double>(bounds.top) + y + 0.5;
     crossings.clear();
     for (const Edge& edge : edges) {
       const float y_min = std::min(edge.p0.y, edge.p1.y);
@@ -389,8 +389,19 @@ void RasterizeAliased(const std::vector<Edge>& edges, const IntRect& bounds, boo
       if (yc < y_min || yc >= y_max) {
         continue;
       }
-      const float t = (yc - edge.p0.y) / (edge.p1.y - edge.p0.y);
-      crossings.push_back({edge.p0.x + (edge.p1.x - edge.p0.x) * t, edge.p1.y > edge.p0.y ? 1 : -1});
+      // SkLineClipper::sect_with_horizontal uses double precision and pins
+      // the intersection to its endpoints to avoid overflow and overshoot.
+      const double x0 = edge.p0.x;
+      const double x1 = edge.p1.x;
+      const double y0 = edge.p0.y;
+      const double y1 = edge.p1.y;
+      const double x = std::clamp(x0 + (yc - y0) * (x1 - x0) / (y1 - y0),
+                                  std::min(x0, x1), std::max(x0, x1));
+      // SkLineClipper::ClipLine projects portions outside the horizontal
+      // clip onto its sides, preserving their winding. Clamp the crossings
+      // equivalently before sorting and before any integer conversion.
+      crossings.push_back({std::clamp(x, static_cast<double>(bounds.left), static_cast<double>(bounds.right)),
+                           edge.p1.y > edge.p0.y ? 1 : -1});
     }
     std::sort(crossings.begin(), crossings.end(), [](const Crossing& a, const Crossing& b) {
       return a.x < b.x;
@@ -405,10 +416,10 @@ void RasterizeAliased(const std::vector<Edge>& edges, const IntRect& bounds, boo
         continue;
       }
       // Pixels whose centers are in [left, right).
-      const float left = crossings[i].x - static_cast<float>(bounds.left);
-      const float right = crossings[i + 1].x - static_cast<float>(bounds.left);
-      const int first = std::max(0, static_cast<int>(std::ceil(left - 0.5f)));
-      const int last = std::min(width, static_cast<int>(std::ceil(right - 0.5f)));
+      const double left = crossings[i].x - bounds.left;
+      const double right = crossings[i + 1].x - bounds.left;
+      const int first = static_cast<int>(std::ceil(left - 0.5));
+      const int last = static_cast<int>(std::ceil(right - 0.5));
       for (int x = first; x < last; ++x) {
         row[x] = 1.0f;
       }

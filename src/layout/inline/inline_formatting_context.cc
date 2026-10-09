@@ -6,6 +6,7 @@
 #include <cmath>
 #include <utility>
 
+#include "base/notreached.h"
 #include "base/text/string_builder.h"
 #include "font/font_cache.h"
 #include "font/font_selector.h"
@@ -453,6 +454,25 @@ std::pair<LayoutUnit, LayoutUnit> LineLeftAndRightForPositions(float unrounded_s
 }
 
 // From caret_rect.cc.
+bool ShouldAlignCaretRight(ETextAlign text_align, TextDirection direction) {
+  switch (text_align) {
+    case ETextAlign::kRight:
+    case ETextAlign::kWebkitRight:
+      return true;
+    case ETextAlign::kLeft:
+    case ETextAlign::kWebkitLeft:
+    case ETextAlign::kCenter:
+    case ETextAlign::kWebkitCenter:
+      return false;
+    case ETextAlign::kJustify:
+    case ETextAlign::kStart:
+      return IsRtl(direction);
+    case ETextAlign::kEnd:
+      return IsLtr(direction);
+  }
+  NOTREACHED();
+}
+
 LayoutUnit ClampAndRound(LayoutUnit value, LayoutUnit min, LayoutUnit max) {
   LayoutUnit min_ceil = LayoutUnit(min.Ceil());
   LayoutUnit max_floor = LayoutUnit(max.Floor());
@@ -505,8 +525,10 @@ PhysicalRect InlineFormattingContext::CaretRect(InlinePosition position, LayoutU
   const PhysicalRect& line_box_rect = line.RectInContainerFragment();
   const PhysicalSize fragment_size = fragments_->SizeInPhysicalCoordinates();
   if (IsHorizontalWritingMode(fragments_->GetWritingMode())) {
-    // ShouldAlignCaretRight() for text-align: start.
-    if (IsRtl(line.ResolvedDirection())) {
+    // A forced break or the end of the content uses text-align-last, as in
+    // caret_rect.cc's absent/forced InlineBreakToken check.
+    const bool is_last_line = !line.HasSoftWrapToNextLine();
+    if (ShouldAlignCaretRight(line.Style().GetTextAlign(is_last_line), line.ResolvedDirection())) {
       const LayoutUnit left_edge = std::min(LayoutUnit(), line_box_rect.X());
       const LayoutUnit right_limit = line_box_rect.Right() - caret_width;
       rect.offset.left = ClampAndRound(rect.offset.left, left_edge, right_limit);

@@ -133,6 +133,7 @@ public:
     TextSpacingTrimFallback_ = value;
   }
   static bool TextSpacingTrimFallback2Enabled() {
+    if (!TextSpacingTrimFallbackEnabled()) return false;
     return TextSpacingTrimFallback2_;
   }
   static void SetTextSpacingTrimFallback2Enabled(bool value) {
