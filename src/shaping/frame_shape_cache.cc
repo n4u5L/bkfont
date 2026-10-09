@@ -164,7 +164,7 @@ FrameShapeCache::ShapeEntry* FrameShapeCache::FindOrCreateShapeEntry(
 
 void FrameShapeCache::RegisterShapeEntry(const PlainTextItem& item,
                                          ShapeEntry* entry) {
-  entry->shape_result = item.GetShapeResult()->shared_from_this();
+  entry->shape_result = item.shape_result_;
   entry->ink_bounds = item.InkBounds();
   entry->list_index =
       ListIndexForNewEntry(item.Text(), item.Direction(), shape_lru_list_);

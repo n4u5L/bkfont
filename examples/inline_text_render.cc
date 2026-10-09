@@ -20,6 +20,8 @@
 #include <GLFW/glfw3.h>
 
 #include <algorithm>
+#include <array>
+#include <bit>
 #include <charconv>
 #include <chrono>
 #include <cmath>
@@ -41,13 +43,19 @@
 #include "font/custom_font_data.h"
 #include "font/simple_font_data.h"
 #include "fonts.h"
+#include "frame_benchmark.h"
 #include "inline_layout.h"
 #include "paint/path.h"
+#include "paint/picture.h"
 #include "raster_tiles.h"
 #include "style/css_identifier_value.h"
 #include "style/css_numeric_literal_value.h"
 #include "style/css_string_value.h"
 #include "style/css_value_list.h"
+#include "text/character_break_iterator.h"
+#ifdef _WIN32
+#include <dwmapi.h>
+#endif
 
 namespace {
 
@@ -553,6 +561,9 @@ struct Card {
   Block source;
   const InlineObject* source_text = nullptr;
   Vector<Block> blocks;
+  // DrawingRecorder-style cache of the static text, in page coordinates.
+  // The source selection is painted separately and does not invalidate it.
+  std::shared_ptr<const Picture> text_paint;
   float top = 0;
   float height = 0;
 };
@@ -1134,6 +1145,7 @@ void LayoutPage(Page& page, int width, float scale) {
   const float inner = std::max(1.0f, width - 2 * margin - accent - 2 * padding);
   float y = margin;
   for (Card& card : page.cards) {
+    card.text_paint.reset(); // Width/DPI changes can also move the card.
     // The blocks are laid out for std::floor(inner) framebuffer pixels.
     if (UpdateSource(card, std::floor(inner) / scale)) page.selection = {};
     card.top = y;
@@ -1189,9 +1201,46 @@ struct RasterView {
   int scroll = 0; // Integer pixels in the render target.
 };
 
+// Only the boundary of these solid backgrounds needs path coverage. Split
+// at device-pixel boundaries so the rectangle and the AA strips never overlap,
+// including at reduced render density and non-integral DPI scales.
+void FillRoundedBackground(RasterCanvas& raster, const ScalarRect& bounds, float radius, ColorARGB color) {
+  ScalarPath path;
+  path.AddRRect(bounds, radius, radius);
+  PlatformPaint paint(color);
+  paint.SetAntiAlias(true);
+  const ScalarMatrix& matrix = raster.GetTotalMatrix();
+  ScalarRect device = bounds;
+  matrix.MapRect(&device);
+  ScalarMatrix inverse;
+  const float ry = std::min(radius, bounds.Height() / 2) * matrix.GetScaleY();
+  const ScalarRect inside = ScalarRect::MakeLTRB(std::ceil(device.left), std::ceil(device.top + ry),
+                                                 std::floor(device.right), std::floor(device.bottom - ry));
+  if (inside.IsEmpty() || !matrix.Invert(&inverse)) {
+    raster.DrawPath(path, paint);
+    return;
+  }
+  const auto local = [&](ScalarRect rect) {
+    inverse.MapRect(&rect);
+    return rect;
+  };
+  PlatformPaint solid(color);
+  raster.DrawRect(local(inside), solid);
+  const auto edge = [&](const ScalarRect& strip) {
+    if (strip.IsEmpty()) return;
+    AutoCanvasRestore restore(&raster, true);
+    raster.ClipRect(local(strip), false);
+    raster.DrawPath(path, paint);
+  };
+  edge(ScalarRect::MakeLTRB(std::floor(device.left), std::floor(device.top), std::ceil(device.right), inside.top));
+  edge(ScalarRect::MakeLTRB(std::floor(device.left), inside.bottom, std::ceil(device.right), std::ceil(device.bottom)));
+  edge(ScalarRect::MakeLTRB(std::floor(device.left), inside.top, inside.left, inside.bottom));
+  edge(ScalarRect::MakeLTRB(inside.right, inside.top, std::ceil(device.right), inside.bottom));
+}
+
 // Paints the page into `raster`, a tile in render-target coordinates already
 // cleared to the page color.
-void PaintPage(Page& page, RasterCanvas& raster, const RasterView& view) {
+void PaintPage(Page& page, RasterCanvas& raster, const RasterView& view, const Vector<PhysicalRect>& selection_rects) {
   const float scale = page.scale;
   const float margin = std::round(kPageMargin * scale);
   const float accent = std::round(kAccentWidth * scale);
@@ -1200,7 +1249,6 @@ void PaintPage(Page& page, RasterCanvas& raster, const RasterView& view) {
   // render-target pixels. This also makes cached rows reusable at low density.
   raster.Translate(0, -static_cast<float>(view.scroll));
   raster.Scale(view.scale_x, view.scale_y);
-  CanvasPaintCanvas canvas(&raster);
   for (Card& card : page.cards) {
     const float top = card.top;
     // Keep the full viewport's card set when repainting a scroll strip, so
@@ -1208,11 +1256,7 @@ void PaintPage(Page& page, RasterCanvas& raster, const RasterView& view) {
     const float viewport_top = card.top - viewport_scroll;
     if (viewport_top > view.viewport_height || viewport_top + card.height < 0) continue;
     const ScalarRect bounds = ScalarRect::MakeXYWH(margin, top, page.width - 2 * margin, card.height);
-    ScalarPath background;
-    background.AddRRect(bounds, 10 * scale, 10 * scale);
-    PlatformPaint fill(kCardColor);
-    fill.SetAntiAlias(true);
-    raster.DrawPath(background, fill);
+    FillRoundedBackground(raster, bounds, 10 * scale, kCardColor);
     ScalarPath bar;
     bar.AddRRect(ScalarRect::MakeXYWH(margin, top, accent * 2, card.height), accent, accent);
     PlatformPaint accent_paint(card.accent);
@@ -1222,21 +1266,24 @@ void PaintPage(Page& page, RasterCanvas& raster, const RasterView& view) {
     raster.DrawPath(bar, accent_paint);
     raster.Restore();
     // The HTML panel, its selection, then its text.
-    ScalarPath panel;
-    panel.AddRRect(SourcePanel(card, scale), 6 * scale, 6 * scale);
-    PlatformPaint panel_paint(kSourceColor);
-    panel_paint.SetAntiAlias(true);
-    raster.DrawPath(panel, panel_paint);
+    FillRoundedBackground(raster, SourcePanel(card, scale), 6 * scale, kSourceColor);
     const SourceSelection& selection = page.selection;
-    if (selection.card >= 0 && &card == &page.cards[static_cast<wtf_size_t>(selection.card)] &&
-        selection.anchor != selection.focus) {
-      const InlineNodeId text = card.source_text->Id();
-      const InlineSelection range{{text, selection.anchor}, {text, selection.focus}};
-      for (const PhysicalRect& rect : card.source.context->SelectionRectsForPaint(range, card.source.offset))
+    if (selection.card >= 0 && &card == &page.cards[static_cast<wtf_size_t>(selection.card)]) {
+      for (const PhysicalRect& rect : selection_rects)
         FillPixelSnapped(raster, rect, PlatformPaint(kSelectionColor));
     }
-    card.source.context->Paint(&canvas, card.source.offset);
-    for (Block& block : card.blocks) block.context->Paint(&canvas, block.offset);
+    if (!card.text_paint) {
+      // TextFragmentPainter uses DrawingRecorder to avoid rebuilding glyph
+      // blobs and decorations. Record on first visibility, then replay across
+      // tiles and scrolls. Keep overflow and filter inputs outside the tile.
+      PictureRecorder recorder;
+      constexpr float limit = static_cast<float>(1 << 29);
+      CanvasPaintCanvas recording(recorder.BeginRecording({-limit, -limit, limit, limit}));
+      card.source.context->Paint(&recording, card.source.offset);
+      for (Block& block : card.blocks) block.context->Paint(&recording, block.offset);
+      card.text_paint = recorder.FinishRecordingAsPicture();
+    }
+    raster.DrawPicture(*card.text_paint);
   }
 }
 
@@ -1287,14 +1334,28 @@ public:
     return resized;
   }
   bool Paint(Page& page, bool layout_changed) {
+    // SelectionPaintState::ComputeSelectionRectIfNeeded caches geometry.
+    // Here the page-space rectangles also survive scrolls and raster-scale
+    // changes; only the selection or layout can change them.
+    if (layout_changed || page.selection != painted_) {
+      selection_rects_.clear();
+      const SourceSelection& selection = page.selection;
+      if (selection.card >= 0 && selection.anchor != selection.focus) {
+        Card& card = page.cards[static_cast<wtf_size_t>(selection.card)];
+        const InlineNodeId text = card.source_text->Id();
+        const InlineSelection range{{text, selection.anchor}, {text, selection.focus}};
+        selection_rects_ = card.source.context->SelectionRectsForPaint(range, card.source.offset);
+      }
+    }
     const Pixmap& pixels = bitmap_.GetPixmap();
     const int scroll = static_cast<int>(std::round(page.scroll * view_.scale_y));
     view_.scroll = scroll;
     const int delta = scroll - scroll_;
     const int height = pixels.Height();
-    bool painted = false;
+    upload_ = {};
+    Vector<IntRect, 4> damage;
     if (!valid_ || layout_changed || delta <= -height || delta >= height) {
-      painted = PaintRows(page, 0, height);
+      damage.push_back(pixels.Bounds());
     } else {
       if (delta != 0) {
         const int exposed = std::abs(delta);
@@ -1302,36 +1363,52 @@ public:
         const int destination_top = delta > 0 ? 0 : exposed;
         std::memmove(pixels.WritableAddr8(0, destination_top), pixels.WritableAddr8(0, source_top),
                      static_cast<std::size_t>(height - exposed) * pixels.RowBytes());
+        // The CPU copy moved every retained row; the texture still has the
+        // previous scroll position, so this frame needs a full upload.
+        upload_ = pixels.Bounds();
         const int strip_top = delta > 0 ? height - exposed : 0;
-        painted = PaintRows(page, strip_top, strip_top + exposed);
+        damage.push_back(IntRect::MakeLTRB(0, strip_top, pixels.Width(), strip_top + exposed));
       }
       for (const auto& rows : HighlightDamage(page, painted_).Take()) {
-        const int top = static_cast<int>(std::floor(rows.top * view_.scale_y)) - scroll;
-        const int bottom = static_cast<int>(std::ceil(rows.bottom * view_.scale_y)) - scroll;
-        painted |= PaintRows(page, std::max(0, top), std::min(height, bottom));
+        const int top = std::max(0, static_cast<int>(std::floor(rows.top * view_.scale_y)) - scroll);
+        const int bottom = std::min(height, static_cast<int>(std::ceil(rows.bottom * view_.scale_y)) - scroll);
+        if (top < bottom) damage.push_back(IntRect::MakeLTRB(0, top, pixels.Width(), bottom));
       }
+    }
+    // Scroll exposure and highlight damage may overlap or arrive out of
+    // order. Raster each row once, after converting to render-target pixels.
+    std::sort(damage.begin(), damage.end(), [](const IntRect& a, const IntRect& b) { return a.top < b.top; });
+    for (wtf_size_t i = 0; i < damage.size();) {
+      const int top = damage[i].top;
+      int bottom = damage[i++].bottom;
+      while (i < damage.size() && damage[i].top <= bottom) bottom = std::max(bottom, damage[i++].bottom);
+      PaintRows(page, top, bottom);
     }
     painted_ = page.selection;
     scroll_ = scroll;
     valid_ = true;
-    return painted; // Otherwise window exposure can present the existing texture.
+    return !upload_.IsEmpty(); // Otherwise window exposure can present the existing texture.
   }
   const Pixmap& Pixels() const { return bitmap_.GetPixmap(); }
+  const IntRect& UploadRect() const { return upload_; }
 
 private:
   // Repaints render-target rows [top, bottom) in bounded tiles, as rich_text
   // repaints its damage.
-  bool PaintRows(Page& page, int top, int bottom) {
-    if (top >= bottom) return false;
+  void PaintRows(Page& page, int top, int bottom) {
+    if (top >= bottom) return;
     const Pixmap& pixels = bitmap_.GetPixmap();
     example::PaintTiles(pixels, IntRect::MakeLTRB(0, top, pixels.Width(), bottom), scratch_, kPageColor,
-                        [&](RasterCanvas& raster, IntRect) { PaintPage(page, raster, view_); });
-    return true;
+                        [&](RasterCanvas& raster, IntRect) { PaintPage(page, raster, view_, selection_rects_); });
+    upload_ = IntRect::MakeLTRB(0, upload_.IsEmpty() ? top : std::min(upload_.top, top), pixels.Width(),
+                               std::max(upload_.bottom, bottom));
   }
 
   Bitmap bitmap_;
   RasterView view_;
   RasterCanvas::ScratchBuffer scratch_;
+  Vector<PhysicalRect> selection_rects_;
+  IntRect upload_;
   // The selection the pixels show.
   SourceSelection painted_;
   int scroll_ = 0;
@@ -1357,36 +1434,222 @@ bool WriteBitmap(const Pixmap& pixels, const char* path) {
   return ok;
 }
 
-void Present(const Pixmap& pixels, GLuint texture, int viewport_width, int viewport_height,
-               bool resized, bool updated, bool linear_filter) {
+constexpr GLenum kTextureRectangle = 0x84f5; // GL_TEXTURE_RECTANGLE_ARB.
+
+// Construct with the window's OpenGL context current.
+struct PageTexture {
+  GLuint id = 0;
+  GLenum target = glfwExtensionSupported("GL_ARB_texture_rectangle") ? kTextureRectangle : GL_TEXTURE_2D;
+  int width = 0, height = 0;
+  int maximum_size = 0;
+  bool linear_filter = false;
+};
+
+void Present(const Pixmap& pixels, PageTexture& texture, int viewport_width, int viewport_height,
+             bool resized, const IntRect& upload, bool linear_filter) {
   glViewport(0, 0, viewport_width, viewport_height);
-  glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, texture);
-  const GLint filter = linear_filter ? GL_LINEAR : GL_NEAREST;
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-  // GL_BGRA: kN32 pixels.
-  if (resized) {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, pixels.Width(), pixels.Height(), 0, 0x80e1, GL_UNSIGNED_BYTE, pixels.Addr());
-  } else if (updated) {
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, pixels.Width(), pixels.Height(), 0x80e1, GL_UNSIGNED_BYTE, pixels.Addr());
+  const bool rectangle = texture.target == kTextureRectangle;
+  if (rectangle) glDisable(GL_TEXTURE_2D);
+  glEnable(texture.target);
+  glBindTexture(texture.target, texture.id);
+  if (!texture.width || texture.linear_filter != linear_filter) {
+    const GLint filter = linear_filter ? GL_LINEAR : GL_NEAREST;
+    glTexParameteri(texture.target, GL_TEXTURE_MIN_FILTER, filter);
+    glTexParameteri(texture.target, GL_TEXTURE_MAG_FILTER, filter);
   }
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+  if (!texture.maximum_size)
+    glGetIntegerv(rectangle ? 0x84f8 : GL_MAX_TEXTURE_SIZE, &texture.maximum_size); // GL_MAX_RECTANGLE_TEXTURE_SIZE_ARB.
+  // Rectangle textures use pixel coordinates, so retaining a larger allocation
+  // does not affect sampling. The normalized-coordinate fallback uses powers of
+  // two to keep image coordinates exact, including nearest-neighbor ties.
+  const int guard = linear_filter ? 1 : 0;
+  const int needed_width = std::min(pixels.Width() + guard, texture.maximum_size);
+  const int needed_height = std::min(pixels.Height() + guard, texture.maximum_size);
+  const int64_t budget = 4 * static_cast<int64_t>(needed_width) * needed_height;
+  const bool allocated = texture.width < needed_width || texture.height < needed_height ||
+                         static_cast<int64_t>(texture.width) * texture.height > budget;
+  if (allocated) {
+    const auto grow = [&](int size, int capacity) {
+      if (rectangle)
+        return std::min(texture.maximum_size, std::max(size, capacity + (size > capacity ? std::min(128, capacity / 4) : 0)));
+      return static_cast<int>(std::min(static_cast<unsigned>(texture.maximum_size), std::bit_ceil(static_cast<unsigned>(std::max(size, capacity)))));
+    };
+    int width = grow(needed_width, texture.width);
+    int height = grow(needed_height, texture.height);
+    if (static_cast<int64_t>(width) * height > budget) {
+      width = grow(needed_width, 0);
+      height = grow(needed_height, 0);
+    }
+    texture.width = width;
+    texture.height = height;
+    glTexImage2D(texture.target, 0, GL_RGBA8, width, height, 0, 0x80e1, GL_UNSIGNED_BYTE, nullptr);
+  }
+  // GL_BGRA: kN32 pixels. Preserve unchanged rows in the retained texture.
+  const IntRect rows = allocated || resized ? pixels.Bounds() : upload;
+  // Nearest filtering never reads outside the image. Fill its guard texels on
+  // switching to linear, even when this frame otherwise reuses all pixels.
+  const IntRect edges = linear_filter ? (texture.linear_filter ? rows : pixels.Bounds()) : IntRect{};
+  if (!rows.IsEmpty() || !edges.IsEmpty()) {
+    if (!rows.IsEmpty()) {
+      // Zero is the tightly packed upload path; guard columns need the full
+      // source stride even though their upload width is just one texel.
+      glPixelStorei(GL_UNPACK_ROW_LENGTH, pixels.RowBytes() == static_cast<std::size_t>(pixels.Width()) * 4
+                                              ? 0
+                                              : static_cast<GLint>(pixels.RowBytes() / 4));
+      glTexSubImage2D(texture.target, 0, 0, rows.top, pixels.Width(), rows.Height(), 0x80e1, GL_UNSIGNED_BYTE,
+                      pixels.WritableAddr8(0, rows.top));
+    }
+    // The image can end inside the allocation. Duplicate its outer texels so
+    // GL_LINEAR sees the same clamped edge as an exactly sized texture.
+    if (!edges.IsEmpty()) glPixelStorei(GL_UNPACK_ROW_LENGTH, static_cast<GLint>(pixels.RowBytes() / 4));
+    if (!edges.IsEmpty() && texture.width > pixels.Width())
+      glTexSubImage2D(texture.target, 0, pixels.Width(), edges.top, 1, edges.Height(), 0x80e1, GL_UNSIGNED_BYTE,
+                      pixels.WritableAddr8(pixels.Width() - 1, edges.top));
+    if (texture.height > pixels.Height() && edges.bottom == pixels.Height()) {
+      glTexSubImage2D(texture.target, 0, 0, pixels.Height(), pixels.Width(), 1, 0x80e1, GL_UNSIGNED_BYTE,
+                      pixels.WritableAddr8(0, pixels.Height() - 1));
+      if (texture.width > pixels.Width())
+        glTexSubImage2D(texture.target, 0, pixels.Width(), pixels.Height(), 1, 1, 0x80e1, GL_UNSIGNED_BYTE,
+                        pixels.WritableAddr8(pixels.Width() - 1, pixels.Height() - 1));
+    }
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+  }
+  texture.linear_filter = linear_filter;
+  const float right = rectangle ? static_cast<float>(pixels.Width()) : static_cast<float>(pixels.Width()) / texture.width;
+  const float bottom = rectangle ? static_cast<float>(pixels.Height()) : static_cast<float>(pixels.Height()) / texture.height;
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glBegin(GL_TRIANGLE_STRIP);
-  glTexCoord2f(0, 1);
+  glTexCoord2f(0, bottom);
   glVertex2f(-1, -1);
-  glTexCoord2f(1, 1);
+  glTexCoord2f(right, bottom);
   glVertex2f(1, -1);
   glTexCoord2f(0, 0);
   glVertex2f(-1, 1);
-  glTexCoord2f(1, 0);
+  glTexCoord2f(right, 0);
   glVertex2f(1, 1);
   glEnd();
 }
+
+// Shared by interactive rendering and benchmarks: layout, raster and upload
+// are all part of a frame. Swapping/presentation stays with the caller.
+bool RenderPageFrame(Page& page, PageRaster& raster, GLFWwindow* window, PageTexture& texture, double* raster_ms = nullptr) {
+  int width, height;
+  float scale_x, scale_y;
+  glfwGetFramebufferSize(window, &width, &height);
+  glfwGetWindowContentScale(window, &scale_x, &scale_y);
+  if (width <= 0 || height <= 0) return false;
+  const float scale = scale_x > 0 ? scale_x : 1;
+  const bool layout_changed = page.width != width || page.scale != scale;
+  LayoutPage(page, width, scale);
+  page.scroll = std::clamp(page.scroll, 0.0f, std::max(0.0f, page.height - height));
+  const bool resized = raster.Resize(width, height, page.render_divisor);
+  const auto start = std::chrono::steady_clock::now();
+  const bool updated = raster.Paint(page, layout_changed);
+  if (raster_ms && updated)
+    *raster_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+  Present(raster.Pixels(), texture, width, height, resized, raster.UploadRect(), page.linear_filter);
+  return true;
+}
+
+#ifdef _WIN32
+constexpr std::array<std::string_view, 5> kPresentationScenarios{"expose", "scroll", "selection", "resize", "density"};
+
+int RunPresentationScenario(Page& page, GLFWwindow* window, PageTexture& texture, const example::BenchmarkOptions& options) {
+  int original_width, original_height;
+  glfwGetWindowSize(window, &original_width, &original_height);
+  const int original_divisor = page.render_divisor;
+  example::BenchmarkMemorySampler memory;
+  glfwSetKeyCallback(window, nullptr);
+  glfwSetMouseButtonCallback(window, nullptr);
+  glfwSetCursorPosCallback(window, nullptr);
+  glfwSetScrollCallback(window, nullptr);
+  const auto finish = [&] {
+    glfwSwapBuffers(window);
+    // Swap without vsync, then wait for GPU completion and DWM. This avoids
+    // counting asynchronous submissions as frames or waiting two refreshes.
+    glFinish();
+    const GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+      std::fprintf(stderr, "benchmark: OpenGL error 0x%x\n", error);
+      return false;
+    }
+    const HRESULT result = DwmFlush();
+    if (FAILED(result)) std::fprintf(stderr, "benchmark: DwmFlush failed 0x%lx\n", static_cast<unsigned long>(result));
+    return SUCCEEDED(result);
+  };
+  for (const auto scenario : kPresentationScenarios) {
+    if (options.scenario != "all" && options.scenario != scenario) continue;
+    glfwSetWindowSize(window, original_width, original_height);
+    glfwPollEvents();
+    if (glfwWindowShouldClose(window) || glfwGetWindowAttrib(window, GLFW_ICONIFIED) ||
+        !glfwGetWindowAttrib(window, GLFW_VISIBLE)) return 1;
+    page.scroll = 0;
+    page.selection = {};
+    page.selecting = false;
+    page.render_divisor = original_divisor;
+    PageRaster raster;
+    example::FrameBenchmark first_frame(1);
+    if (!first_frame.SampleMemory(memory)) return 1;
+    const auto first_start = std::chrono::steady_clock::now();
+    if (!RenderPageFrame(page, raster, window, texture) || !finish()) return 1;
+    first_frame.AddFrame(std::chrono::duration<double>(std::chrono::steady_clock::now() - first_start).count());
+    if (!first_frame.SampleMemory(memory)) return 1;
+    Vector<unsigned> selection_offsets{0};
+    CharacterBreakIterator breaks{StringView(page.cards.front().source_text->Text())};
+    for (int next = breaks.Next(); next != kTextBreakDone && selection_offsets.size() <= 160; next = breaks.Next())
+      selection_offsets.push_back(static_cast<unsigned>(next));
+    if (scenario == "selection" && selection_offsets.size() < 2) return 1;
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+    const example::BenchmarkContext context{"inline_text", scenario, "opengl", width, height, page.scale, original_divisor};
+    first_frame.Report(context, "first_frame", 0);
+    if (!example::RunFrameBenchmark(options, context, memory, [&](int i) {
+          if (glfwWindowShouldClose(window) || glfwGetWindowAttrib(window, GLFW_ICONIFIED) ||
+              !glfwGetWindowAttrib(window, GLFW_VISIBLE)) {
+            std::fputs("benchmark: window closed, minimized, or hidden\n", stderr);
+            return false;
+          }
+          if (scenario == "scroll") {
+            const float distance = std::max(0.0f, page.height - height);
+            if (distance <= 0) return false;
+            const float phase = static_cast<float>((i + 1) % 480) / 240;
+            page.scroll = distance * std::min(phase, 2 - phase);
+          } else if (scenario == "selection") {
+            const unsigned count = selection_offsets.size() - 1;
+            const unsigned phase = (i + 1) % (2 * count);
+            page.Select({0, 0, selection_offsets[std::min(phase, 2 * count - phase)]});
+          } else if (scenario == "resize") {
+            const int phase = (i + 1) % 48;
+            const int inset = std::min(phase, 48 - phase);
+            glfwSetWindowSize(window, original_width - inset * 8, original_height - inset * 4);
+          } else if (scenario == "density") {
+            const int initial = original_divisor == 4 ? 2 : original_divisor == 2 ? 1 : 0;
+            page.render_divisor = 1 << ((initial + i / 60) % 3);
+          }
+          glfwPollEvents();
+          if (!RenderPageFrame(page, raster, window, texture)) {
+            std::fputs("benchmark: framebuffer unavailable\n", stderr);
+            return false;
+          }
+          if (!finish()) return false;
+          int current_width, current_height;
+          glfwGetFramebufferSize(window, &current_width, &current_height);
+          const bool valid = page.scale == context.scale && !glfwWindowShouldClose(window) &&
+                             !glfwGetWindowAttrib(window, GLFW_ICONIFIED) && glfwGetWindowAttrib(window, GLFW_VISIBLE) &&
+                             (scenario == "resize" || (current_width == width && current_height == height));
+          if (!valid)
+            std::fprintf(stderr, "benchmark: window/DPI changed (scale %.3f -> %.3f, framebuffer %dx%d)\n",
+                         context.scale, page.scale, current_width, current_height);
+          return valid;
+        })) return 1;
+  }
+  return 0;
+}
+#endif
 
 Page& Get(GLFWwindow* window) {
   return *static_cast<Page*>(glfwGetWindowUserPointer(window));
@@ -1440,8 +1703,20 @@ int main(int argc, char** argv) {
   int render_divisor = 1;
   bool linear_filter = false;
   const char* snapshot_path = nullptr;
+#ifdef _WIN32
+  example::BenchmarkOptions benchmark;
+  bool benchmark_options = false;
+#endif
   const auto usage = [] {
     std::puts("Usage: bkit_inline_text_render_example [--render-scale 1|0.5|0.25] [--linear] [--snapshot file.bmp]\n"
+#ifdef _WIN32
+              "  [--present-scenario expose|scroll|selection|resize|density|all]\n"
+              "    Emit JSON lines with compositor-paced FPS (average/1% low) and memory MiB only.\n"
+              "  [--frames 1..36000] Frames per measured round (default 300).\n"
+              "  [--warmup 0..3600] Warmup frames (default 60), reported separately.\n"
+              "  [--repeat 1..20] Measured rounds without clearing caches (default 3).\n"
+              "    First frame is reported separately; use a fresh process per scenario for cold caches.\n"
+#endif
               "Keys: 1 = 100%, 2 = 50%, 3 = 25%, F = nearest/linear magnification, Esc = close.\n"
               "Drag over a card's HTML to select it; Ctrl+C copies the selection, or the whole HTML\n"
               "when nothing is selected, and Ctrl+A selects all of it.\n"
@@ -1458,6 +1733,25 @@ int main(int argc, char** argv) {
       linear_filter = true;
     } else if (std::strcmp(argv[i], "--snapshot") == 0 && i + 1 < argc) {
       snapshot_path = argv[++i];
+#ifdef _WIN32
+    } else if (std::strcmp(argv[i], "--present-scenario") == 0 && i + 1 < argc) {
+      benchmark.scenario = argv[++i];
+      if (benchmark.scenario != "all" &&
+          std::find(kPresentationScenarios.begin(), kPresentationScenarios.end(), benchmark.scenario) == kPresentationScenarios.end()) {
+        usage();
+        return 2;
+      }
+    } else if ((std::strcmp(argv[i], "--frames") == 0 || std::strcmp(argv[i], "--warmup") == 0 ||
+                std::strcmp(argv[i], "--repeat") == 0) && i + 1 < argc) {
+      benchmark_options = true;
+      const std::string_view arg = argv[i];
+      int& value = arg == "--frames" ? benchmark.frames : arg == "--warmup" ? benchmark.warmup : benchmark.repeats;
+      if (!example::ParseBenchmarkCount(argv[++i], arg == "--warmup" ? 0 : 1,
+                                        arg == "--frames" ? 36000 : arg == "--warmup" ? 3600 : 20, value)) {
+        usage();
+        return 2;
+      }
+#endif
     } else if (std::strcmp(argv[i], "--help") == 0) {
       usage();
       return 0;
@@ -1466,6 +1760,12 @@ int main(int argc, char** argv) {
       return 2;
     }
   }
+#ifdef _WIN32
+  if ((benchmark_options && benchmark.scenario.empty()) || (snapshot_path && !benchmark.scenario.empty())) {
+    usage();
+    return 2;
+  }
+#endif
   InitializeFonts();
   Page page;
   page.render_divisor = render_divisor;
@@ -1488,7 +1788,11 @@ int main(int argc, char** argv) {
     return 1;
   }
   glfwMakeContextCurrent(window);
+#ifdef _WIN32
+  glfwSwapInterval(benchmark.scenario.empty() ? 1 : 0);
+#else
   glfwSwapInterval(1);
+#endif
   glfwSetWindowUserPointer(window, &page);
   glfwSetKeyCallback(window, [](GLFWwindow* w, int key, int, int action, int mods) {
     if (action != GLFW_PRESS) return;
@@ -1536,34 +1840,32 @@ int main(int argc, char** argv) {
   glfwSetFramebufferSizeCallback(window, [](GLFWwindow* w, int, int) { Get(w).dirty = true; });
   glfwSetWindowContentScaleCallback(window, [](GLFWwindow* w, float, float) { Get(w).dirty = true; });
   glfwSetWindowRefreshCallback(window, [](GLFWwindow* w) { Get(w).dirty = true; });
-  GLuint texture;
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  PageTexture texture;
+  glGenTextures(1, &texture.id);
+  glBindTexture(texture.target, texture.id);
+  glTexParameteri(texture.target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(texture.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   // GL_CLAMP_TO_EDGE: linear magnification must not sample the opposite edge
   // of the scrollable page. Available in the requested OpenGL 2.1 context.
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812f);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812f);
+  glTexParameteri(texture.target, GL_TEXTURE_WRAP_S, 0x812f);
+  glTexParameteri(texture.target, GL_TEXTURE_WRAP_T, 0x812f);
+#ifdef _WIN32
+  if (!benchmark.scenario.empty()) {
+    const int result = RunPresentationScenario(page, window, texture, benchmark);
+    glDeleteTextures(1, &texture.id);
+    glfwDestroyWindow(window);
+    glfwTerminate();
+    return result;
+  }
+#endif
   PageRaster raster;
   double raster_ms = 0;
   while (!glfwWindowShouldClose(window)) {
     if (page.dirty) {
       page.dirty = false;
       int width, height;
-      float scale_x, scale_y;
       glfwGetFramebufferSize(window, &width, &height);
-      glfwGetWindowContentScale(window, &scale_x, &scale_y);
-      if (width > 0 && height > 0) {
-        const float scale = scale_x > 0 ? scale_x : 1;
-        const bool layout_changed = page.width != width || page.scale != scale;
-        LayoutPage(page, width, scale);
-        page.scroll = std::clamp(page.scroll, 0.0f, std::max(0.0f, page.height - height));
-        const bool resized = raster.Resize(width, height, page.render_divisor);
-        const auto start = std::chrono::steady_clock::now();
-        const bool updated = raster.Paint(page, layout_changed);
-        if (updated) raster_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
-        Present(raster.Pixels(), texture, width, height, resized, updated, page.linear_filter);
+      if (RenderPageFrame(page, raster, window, texture, &raster_ms)) {
         char title[256];
         std::snprintf(title, sizeof(title),
                         "bkit | %d%% %dx%d -> %dx%d | %s | 1:100%% 2:50%% 3:25%% F:filter | Last raster %.1f ms",
@@ -1575,7 +1877,7 @@ int main(int argc, char** argv) {
     }
     glfwWaitEvents();
   }
-  glDeleteTextures(1, &texture);
+  glDeleteTextures(1, &texture.id);
   glfwDestroyWindow(window);
   glfwTerminate();
 }

@@ -1,5 +1,6 @@
 #include "document_view.h"
 
+#include <cassert>
 #include <cmath>
 #include <string_view>
 #include <vector>
@@ -99,6 +100,7 @@ void DocumentView::Update(const Document& document, float device_scale, float zo
   version_ = document.EditVersion();
   scale_ = scale;
   page_width_ = 794 * scale;
+  wtf_size_t first_dirty = blocks_.size(), dirty_end = 0;
   if (incremental) {
     // Replay the edits on the paragraph list. The first new paragraphs of an
     // edit keep the old ones' layouts, stale, so that Refresh() can edit them
@@ -109,15 +111,24 @@ void DocumentView::Update(const Document& document, float device_scale, float zo
         blocks_.clear(); // Out of step with the document; rebuilt below.
         break;
       }
+      first_dirty = std::min(first_dirty, static_cast<wtf_size_t>(edit.paragraph));
+      // Translate the dirty range through each splice. Later edits can move
+      // or remove paragraphs dirtied by an earlier edit in the same update.
+      dirty_end = std::max(static_cast<wtf_size_t>(edit.paragraph + edit.inserted),
+                           dirty_end > edit.paragraph + edit.removed ? dirty_end - edit.removed + edit.inserted : 0);
       const wtf_size_t kept = std::min(edit.removed, edit.inserted), first = edit.paragraph + kept;
       for (wtf_size_t i = edit.paragraph; i < first; ++i) blocks_[i].stale = true;
-      for (wtf_size_t i = first; i < edit.paragraph + edit.removed; ++i)
+      for (wtf_size_t i = first; i < edit.paragraph + edit.removed; ++i) {
         if (blocks_[i].context) DamageRows(blocks_[i].y, blocks_[i].y + blocks_[i].height);
+        words_ -= blocks_[i].words;
+      }
       blocks_.EraseAt(first, edit.removed - kept);
-      const wtf_size_t size = blocks_.size();
-      blocks_.Grow(size + edit.inserted - kept);
-      std::move_backward(blocks_.begin() + first, blocks_.begin() + size, blocks_.end());
-      for (wtf_size_t i = first; i < edit.paragraph + edit.inserted; ++i) blocks_[i] = Block{};
+      if (edit.inserted > kept) {
+        const wtf_size_t size = blocks_.size();
+        blocks_.Grow(size + edit.inserted - kept);
+        std::move_backward(blocks_.begin() + first, blocks_.begin() + size, blocks_.end());
+        for (wtf_size_t i = first; i < edit.paragraph + edit.inserted; ++i) blocks_[i] = Block{};
+      }
     }
   }
   if (!incremental || blocks_.size() != document.Paragraphs().size()) {
@@ -125,16 +136,21 @@ void DocumentView::Update(const Document& document, float device_scale, float zo
     damage_full_ = true;
     blocks_.clear();
     blocks_.Grow(document.Paragraphs().size());
+    first_dirty = 0;
+    dirty_end = blocks_.size();
+    words_ = 0;
   }
-  // Built paragraphs keep their layout and only move. This pass is a few
-  // additions per paragraph; text is read only for the rebuilt ones.
-  const float margin = 64 * scale, content_width = page_width_ - 2 * margin;
-  uint32_t start = 0;
-  float y = margin;
-  words_ = 0;
-  for (wtf_size_t i = 0; i < blocks_.size(); ++i) {
+  // As with BlockNode's cached layout results, unchanged paragraphs keep
+  // their layout. Start at the first edit and stop once the remaining suffix
+  // has both its old text offsets and its old position.
+  const float margin = 64 * scale, content_width = page_width_ - 2 * margin, gap = 14 * scale;
+  uint32_t start = first_dirty ? blocks_[first_dirty - 1].end + 1 : 0;
+  float y = first_dirty ? blocks_[first_dirty - 1].y + (blocks_[first_dirty - 1].height + gap) : margin;
+  for (wtf_size_t i = first_dirty; i < blocks_.size(); ++i) {
     Block& block = blocks_[i];
     const bool built = !block.context || block.stale;
+    if (i >= dirty_end && !built && block.start == start && block.y == y) break;
+    const size_t old_words = block.words;
     if (block.stale) {
       if (block.context) DamageRows(block.y, block.y + block.height); // Where it was painted.
       block.stale = false;
@@ -152,33 +168,39 @@ void DocumentView::Update(const Document& document, float device_scale, float zo
       DamageRows(old_y, old_y + block.height);
       DamageRows(block.y, block.y + block.height);
     }
+    words_ -= old_words;
     words_ += block.words;
-    y += block.height + 14 * scale;
+    y += block.height + gap;
     start = block.end + 1;
   }
-  const float page_height = std::max(1123 * scale, y + margin);
+  const float content_end = blocks_.empty() ? margin : blocks_.back().y + (blocks_.back().height + gap);
+  const float page_height = std::max(1123 * scale, content_end + margin);
   // The page end, with the crop marks in its bottom margin.
   if (page_height != page_height_)
     DamageRows(std::min(page_height, page_height_) - margin - 12 * scale, std::max(page_height, page_height_));
   page_height_ = page_height;
 }
 
-void DocumentView::Build(Block& block, const Document& document, wtf_size_t paragraph, uint32_t start, float device_scale,
-                         float zoom) {
-  const uint32_t end = ParagraphEnd(document, paragraph);
+void DocumentView::SetParagraphStyle(Block& block, const Document& document, wtf_size_t paragraph) {
   const uint32_t style = document.Paragraphs()[paragraph];
   block.style = style;
-  block.context = std::make_unique<InlineFormattingContext>(Settings(), nullptr);
   auto declaration = DefaultParagraphStyle();
   declaration.Merge(document.GetStyle(style).declaration);
   block.context->SetInlineStyle(block.context->RootObject(), declaration);
-  block.context->SetZoomFactors(device_scale, zoom);
   const auto mode = PropertyValue(document.GetStyle(style).properties, "writing-mode", "horizontal-tb");
   block.vertical = mode == "vertical-rl" || mode == "vertical-lr";
   block.rtl = PropertyValue(document.GetStyle(style).properties, "direction", "ltr") == "rtl";
   auto options = block.context->Options();
   options.available_inline_size = LayoutUnit(block.vertical ? 240 * scale_ : page_width_ - 128 * scale_);
   block.context->SetOptions(options);
+}
+
+void DocumentView::Build(Block& block, const Document& document, wtf_size_t paragraph, uint32_t start, float device_scale,
+                         float zoom) {
+  const uint32_t end = ParagraphEnd(document, paragraph);
+  block.context = std::make_unique<InlineFormattingContext>(Settings(), nullptr);
+  block.context->SetZoomFactors(device_scale, zoom);
+  SetParagraphStyle(block, document, paragraph);
   block.text.clear();
   block.text.reserve(end - start);
   for (const auto& run : StyleRuns(document, start, end)) {
@@ -193,45 +215,109 @@ void DocumentView::Build(Block& block, const Document& document, wtf_size_t para
     const auto& node = block.context->AppendText(block.context->RootObject(), String(u"\u200b"));
     block.nodes.push_back(NodeMap{node.Id(), 0, 0, NodeMap::kNoStyle});
   }
-  Measure(block);
+  Measure(block, /*text_changed=*/true);
 }
 
 bool DocumentView::Refresh(Block& block, const Document& document, wtf_size_t paragraph, uint32_t start) {
-  if (!block.context || block.style != document.Paragraphs()[paragraph]) return false;
+  if (!block.context) return false;
   const std::vector<StyleRun> runs = StyleRuns(document, start, ParagraphEnd(document, paragraph));
-  if (runs.empty() || runs.size() != block.nodes.size()) return false;
-  for (size_t i = 0; i < runs.size(); ++i)
-    if (runs[i].style != block.nodes[static_cast<wtf_size_t>(i)].style) return false;
+  auto& context = *block.context;
+  if (block.style != document.Paragraphs()[paragraph]) SetParagraphStyle(block, document, paragraph);
+  const bool placeholder = block.nodes.size() == 1 && block.nodes.front().style == NodeMap::kNoStyle;
+  if (runs.empty()) {
+    if (!placeholder) {
+      for (const auto& node : block.nodes) context.Remove(*context.Find(node.id)->Parent());
+      block.nodes.clear();
+      const auto& node = context.AppendText(context.RootObject(), String(u"\u200b"));
+      block.nodes.push_back(NodeMap{node.Id(), 0, 0, NodeMap::kNoStyle});
+    }
+    const bool text_changed = !block.text.empty();
+    block.text.clear();
+    Measure(block, text_changed);
+    return true;
+  }
+  if (placeholder) {
+    context.Remove(*context.Find(block.nodes.front().id));
+    block.nodes.clear();
+  }
+
+  // Reconcile style runs with the existing tree. A local format operation
+  // splits/merges runs without discarding the paragraph or changing the IDs
+  // of its unaffected prefix and suffix. Only the differing middle is edited.
+  const auto unchanged = [&](size_t old_index, size_t new_index) {
+    const NodeMap& node = block.nodes[static_cast<wtf_size_t>(old_index)];
+    return node.style == runs[new_index].style &&
+           std::u16string_view(block.text).substr(node.start, node.length) == runs[new_index].text;
+  };
+  const size_t old_count = block.nodes.size(), new_count = runs.size();
+  size_t prefix = 0, suffix = 0;
+  while (prefix < std::min(old_count, new_count) && unchanged(prefix, prefix)) ++prefix;
+  while (suffix < std::min(old_count, new_count) - prefix &&
+         unchanged(old_count - suffix - 1, new_count - suffix - 1)) ++suffix;
+  const size_t kept = std::min(old_count - prefix - suffix, new_count - prefix - suffix);
+  const InlineObject* before = suffix ? context.Find(block.nodes[static_cast<wtf_size_t>(old_count - suffix)].id)->Parent()
+                                     : nullptr;
+  Vector<NodeMap> nodes;
+  nodes.ReserveInitialCapacity(new_count);
   std::u16string text;
   text.reserve(block.text.size());
-  for (size_t i = 0; i < runs.size(); ++i) {
-    NodeMap& node = block.nodes[static_cast<wtf_size_t>(i)];
-    const std::u16string_view before = std::u16string_view(block.text).substr(node.start, node.length);
-    const std::u16string_view after = runs[i].text;
-    if (before != after) {
-      // Replace only the changed middle of the node's text.
-      size_t prefix = 0, suffix = 0;
-      const size_t limit = std::min(before.size(), after.size());
-      while (prefix < limit && before[prefix] == after[prefix]) ++prefix;
-      while (suffix < limit - prefix && before[before.size() - 1 - suffix] == after[after.size() - 1 - suffix]) ++suffix;
-      block.context->ReplaceText(*block.context->Find(node.id), static_cast<unsigned>(prefix),
-                                 static_cast<unsigned>(before.size() - prefix - suffix),
-                                 ToString(after.substr(prefix, after.size() - prefix - suffix)));
+  for (size_t i = 0; i < new_count; ++i) {
+    const bool in_suffix = i >= new_count - suffix;
+    const bool retained = i < prefix + kept || in_suffix;
+    NodeMap node;
+    if (retained) {
+      const size_t old_index = in_suffix ? old_count - (new_count - i) : i;
+      node = block.nodes[static_cast<wtf_size_t>(old_index)];
+      // The prefix/suffix matched both text and style. In the changed middle,
+      // let style invalidation decide whether to repaint, lay out or reshape.
+      if (i >= prefix && !in_suffix) {
+        const auto& object = *context.Find(node.id);
+        if (node.style != runs[i].style)
+          context.SetInlineStyle(*object.Parent(), document.GetStyle(runs[i].style).declaration);
+        const std::u16string_view old_text = std::u16string_view(block.text).substr(node.start, node.length);
+        const std::u16string_view new_text = runs[i].text;
+        if (old_text != new_text) {
+          size_t common_start = 0, common_end = 0;
+          const size_t limit = std::min(old_text.size(), new_text.size());
+          while (common_start < limit && old_text[common_start] == new_text[common_start]) ++common_start;
+          while (common_end < limit - common_start &&
+                 old_text[old_text.size() - 1 - common_end] == new_text[new_text.size() - 1 - common_end]) ++common_end;
+          context.ReplaceText(object, static_cast<unsigned>(common_start),
+                              static_cast<unsigned>(old_text.size() - common_start - common_end),
+                              ToString(new_text.substr(common_start, new_text.size() - common_start - common_end)));
+        }
+      }
+    } else {
+      const auto& span = context.AppendInline(context.RootObject());
+      context.SetInlineStyle(span, document.GetStyle(runs[i].style).declaration);
+      const auto& object = context.AppendText(span, ToString(runs[i].text));
+      if (before) {
+        [[maybe_unused]] const bool moved = context.Move(span, context.RootObject(), before);
+        assert(moved);
+      }
+      node.id = object.Id();
     }
     node.start = static_cast<uint32_t>(text.size());
-    node.length = static_cast<uint32_t>(after.size());
-    text += after;
+    node.length = static_cast<uint32_t>(runs[i].text.size());
+    node.style = runs[i].style;
+    nodes.push_back(node);
+    text += runs[i].text;
   }
-  block.text = std::move(text);
-  Measure(block);
+  for (size_t i = prefix + kept; i < old_count - suffix; ++i)
+    context.Remove(*context.Find(block.nodes[static_cast<wtf_size_t>(i)].id)->Parent());
+  block.nodes = std::move(nodes);
+  const bool text_changed = text != block.text;
+  if (text_changed) block.text = std::move(text);
+  Measure(block, text_changed);
   return true;
 }
 
-void DocumentView::Measure(Block& block) {
+void DocumentView::Measure(Block& block, bool text_changed) {
   block.context->UpdateLayout();
   const auto size = block.context->Fragments().SizeInPhysicalCoordinates();
   block.width = std::max(scale_, size.width.ToFloat());
   block.height = std::max(28 * scale_, size.height.ToFloat());
+  if (!text_changed) return;
   // A newline is always a grapheme boundary, so paragraphs break alone.
   block.boundaries.Shrink(0);
   block.boundaries.push_back(0);

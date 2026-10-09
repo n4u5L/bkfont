@@ -69,13 +69,24 @@ inline bool MoveToEndOfCollapsibleSpaces(const StringView& string, unsigned* off
 // open/close or bidi controls are ignored.
 // Returns nullptr if there were no previous items.
 InlineItem* InlineItemsBuilder::LastItemToCollapseWith() {
-  for (wtf_size_t i = items_->size(); i;) {
+  // Items are only appended while collecting. Their opaque/non-opaque status
+  // is finalized before this lookup, and removing/restoring a trailing space
+  // does not change it. Inspect only new items so a sequence of collapsed-away
+  // text nodes does not repeatedly scan the same opaque suffix.
+  assert(collapse_scan_end_ <= items_->size());
+  const wtf_size_t previous_end = collapse_scan_end_;
+  collapse_scan_end_ = items_->size();
+  for (wtf_size_t i = collapse_scan_end_; i > previous_end;) {
     InlineItem& item = (*items_)[--i];
     if (item.end_collapse_type != InlineItem::kOpaqueToCollapsing) {
-      return &item;
+      last_collapse_item_ = i;
+      break;
     }
   }
-  return nullptr;
+  if (last_collapse_item_ == kNotFound) return nullptr;
+  InlineItem& item = (*items_)[last_collapse_item_];
+  assert(item.end_collapse_type != InlineItem::kOpaqueToCollapsing);
+  return &item;
 }
 
 // Append a string as a text item.

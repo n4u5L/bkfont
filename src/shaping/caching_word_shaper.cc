@@ -25,6 +25,9 @@
  */
 
 #include "caching_word_shaper.h"
+
+#include <utility>
+
 #include "font/font.h"
 
 #include "font/character_range.h"
@@ -88,7 +91,7 @@ static inline float ShapeResultsForRun(ShapeCache* shape_cache,
   while (iterator.Next(&word_result)) {
     if (word_result) {
       total_width += word_result->Width();
-      results_buffer->AppendResult(word_result.get());
+      results_buffer->AppendResult(std::move(word_result));
     }
   }
   return total_width;

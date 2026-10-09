@@ -133,15 +133,15 @@ typedef void (*GraphemeClusterCallback)(void* context,
                                         float cluster_advance,
                                         CanvasRotationInVertical);
 
-class ShapeResult : public std::enable_shared_from_this<ShapeResult> {
+class ShapeResult {
 public:
   ShapeResult(unsigned start_index, unsigned num_characters, TextDirection);
   ShapeResult(const ShapeResult&);
 
-  static std::shared_ptr<ShapeResult> CreateEmpty(const ShapeResult& other) {
-    return std::make_shared<ShapeResult>(0, 0, other.Direction());
+  static std::unique_ptr<ShapeResult> CreateEmpty(const ShapeResult& other) {
+    return std::make_unique<ShapeResult>(0, 0, other.Direction());
   }
-  static std::shared_ptr<const ShapeResult> CreateForTabulationCharacters(
+  static std::unique_ptr<const ShapeResult> CreateForTabulationCharacters(
       const Font* font,
       TextDirection direction,
       const TabSize& tab_size,
@@ -149,16 +149,16 @@ public:
       unsigned start_index,
       unsigned length);
   // The first glyph has |width| advance, and other glyphs have 0 advance.
-  static std::shared_ptr<const ShapeResult> CreateForSpaces(const Font* font,
+  static std::unique_ptr<const ShapeResult> CreateForSpaces(const Font* font,
                                                             TextDirection direction,
                                                             unsigned start_index,
                                                             unsigned length,
                                                             float width);
-  static std::shared_ptr<const ShapeResult> CreateForStretchyMathOperator(const Font*,
+  static std::unique_ptr<const ShapeResult> CreateForStretchyMathOperator(const Font*,
                                                                           TextDirection,
                                                                           Glyph,
                                                                           float stretch_size);
-  static std::shared_ptr<const ShapeResult> CreateForStretchyMathOperator(
+  static std::unique_ptr<const ShapeResult> CreateForStretchyMathOperator(
       const Font*,
       TextDirection,
       OpenTypeMathStretchData::StretchAxis,
@@ -287,7 +287,7 @@ public:
   //
   // The function returns spacing amount on the right of the last glyph.
   float ApplySpacing(ShapeResultSpacing<String>&, int text_start_offset = 0);
-  std::shared_ptr<ShapeResult> ApplySpacingToCopy(ShapeResultSpacing<TextRun>&,
+  std::unique_ptr<ShapeResult> ApplySpacingToCopy(ShapeResultSpacing<TextRun>&,
                                                   const TextRun&) const;
 
   // Local, opt-in layout extension; HarfBuzz shaping keeps upstream behavior.
@@ -315,7 +315,7 @@ public:
 
   // Returns a line-end `ShapeResult` when breaking at `break_offset`, and the
   // glyph before `break_offset` has auto-spacing.
-  std::shared_ptr<const ShapeResult> UnapplyAutoSpacing(float spacing_width,
+  std::unique_ptr<const ShapeResult> UnapplyAutoSpacing(float spacing_width,
                                                         unsigned start_offset,
                                                         unsigned break_offset) const;
 
@@ -351,10 +351,13 @@ public:
   void CopyRanges(const ShapeRange* ranges, unsigned num_ranges) const;
 
   // Create a new ShapeResult instance from a range within an existing result.
-  std::shared_ptr<ShapeResult> SubRange(unsigned start_offset, unsigned end_offset) const;
+  std::unique_ptr<ShapeResult> SubRange(unsigned start_offset, unsigned end_offset) const;
+
+  // Copy the range once and adjust its start, without copying glyphs again.
+  std::unique_ptr<ShapeResult> SubRange(unsigned start_offset, unsigned end_offset, unsigned new_start_index) const;
 
   // Create a new ShapeResult instance with the start offset adjusted.
-  std::shared_ptr<const ShapeResult> CopyAdjustedOffset(unsigned start_offset) const;
+  std::unique_ptr<const ShapeResult> CopyAdjustedOffset(unsigned start_offset) const;
 
   // Computes the list of fonts along with the number of glyphs for each font.
   struct RunFontData {
@@ -536,6 +539,9 @@ private:
   friend class ShapeResultView;
   friend class ShapeResultTest;
   friend class StretchyOperatorShaper;
+
+  // Only used on a fresh copy whose runs are not shared with another result.
+  void AdjustStartIndex(unsigned start_index);
 
   static void AddRunInfoRanges(const ShapeResultRun& run_info,
                                float offset,

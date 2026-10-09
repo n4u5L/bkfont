@@ -77,7 +77,8 @@ public:
       return cached;
     }
 
-    auto result = shape_result_func();
+    // Promote a newly owned result only at the shared cache boundary.
+    std::shared_ptr<const ShapeResult> result = shape_result_func();
 
     // Only shape-results without font-fallback are valid, because the cache is
     // in the `primary_font_`.

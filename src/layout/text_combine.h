@@ -22,11 +22,11 @@
 #include "layout/layout_unit.h"
 #include "text/text_direction.h"
 #include "paint/affine_transform.h"
+#include "shaping/shape_result.h"
 
 namespace bkit {
 
 class FontSelector;
-class ShapeResult;
 
 // The box of an element having "text-combine-upright: all" in vertical writing
 // mode, e.g. <i style="text-combine-upright: all"><b>12</b>34</i>. Ports the
@@ -48,7 +48,7 @@ public:
     unsigned start;
     unsigned end;
     TextDirection direction;
-    std::shared_ptr<const ShapeResult> shape_result;
+    std::unique_ptr<const ShapeResult> shape_result;
     // The rect in the combined box, as FragmentItem::RectInContainerFragment().
     PhysicalRect rect;
   };

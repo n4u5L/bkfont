@@ -65,6 +65,7 @@ public:
 
 private:
   friend class PlainTextNode;
+  friend class FrameShapeCache;
   friend class FrameShapeCacheTest;
 
   std::shared_ptr<const ShapeResult> shape_result_;

@@ -42,7 +42,9 @@
 #include "fonts.h"
 #include "paint/path.h"
 #include "platform/font_manager.h"
+#include "text/character_break_iterator.h"
 #include "../raster_tiles.h"
+#include "../frame_benchmark.h"
 #ifdef _WIN32
 #include "window_presenter_win.h"
 #endif
@@ -546,11 +548,6 @@ public:
   WNDPROC previous_proc = nullptr;
   WindowPresenter presenter;
   std::optional<WindowPresenter::Scroll> present_scroll;
-  struct PresentationMeasurement {
-    double raster_seconds = 0, present_seconds = 0;
-    uint64_t gdi_calls = 0;
-  };
-  PresentationMeasurement* measurement = nullptr; // Only enabled by --present-scenario.
   float preview_scale = 1;
 #endif
 
@@ -2249,7 +2246,6 @@ public:
   }
   void Render(int pixel_width, int pixel_height, float device_scale) {
 #ifdef _WIN32
-    const double raster_start = measurement ? glfwGetTime() : 0;
     // If a second render supersedes an unsubmitted image, scrolling can no
     // longer refer to the GPU's previous frame. Recover with a full upload.
     if (!upload_damage.empty() || present_scroll) present_full = true;
@@ -2413,9 +2409,6 @@ public:
     if (confirm || path_dialog) buttons = dialog_buttons;
     frame = std::move(next);
     frame_valid = true;
-#ifdef _WIN32
-    if (measurement) measurement->raster_seconds += glfwGetTime() - raster_start;
-#endif
   }
   // True when a tooltip has become due (or expired) since the last frame.
   bool OverlayChanged() {
@@ -3127,7 +3120,6 @@ void PaintWindow(Editor& editor, HWND window) {
   // Exposure alone requires no upload: DWM retains the composition surface.
   // Still check the device on every WM_PAINT, since driver resets use this
   // message to request reconstruction from our retained CPU image.
-  const double present_start = editor.measurement ? glfwGetTime() : 0;
   const bool composed = editor.presenter.Present(editor.bitmap.GetPixmap(), editor.upload_damage, editor.present_full,
                                                   editor.present_scroll ? &*editor.present_scroll : nullptr, editor.preview_scale);
   if (!composed && editor.presenter.TakeGdiRepaint()) InvalidateRect(window, nullptr, FALSE);
@@ -3137,26 +3129,46 @@ void PaintWindow(Editor& editor, HWND window) {
     editor.present_full = false;
   else if (dc && !editor.bitmap.IsEmpty() && !IsRectEmpty(&paint.rcPaint)) {
     editor.present_full = !PresentGdi(editor.bitmap.GetPixmap(), dc, editor.preview_scale);
-    if (editor.measurement) {
-      ++editor.measurement->gdi_calls;
-    }
   }
   EndPaint(window, &paint);
-  if (editor.measurement) editor.measurement->present_seconds += glfwGetTime() - present_start;
   editor.upload_damage.Shrink(0);
   editor.present_scroll.reset();
   if (render) editor.UpdateIme();
 }
 
-// Exercise the actual editor and WM_PAINT path at compositor cadence. CPU
-// submission time and paced frame time are reported separately: asynchronous
-// D3D submission is not a measurement of GPU completion or display FPS.
-int RunPresentationScenario(Editor& editor, HWND handle, std::string_view requested, int frames) {
-  const std::array<std::string_view, 5> scenarios{"expose", "caret", "scroll", "preview", "resize"};
+// Fixed-size fixtures exercise long mixed-script paragraphs with many style
+// runs and edits near the end of a large paragraph list. JSON construction and
+// loading stay outside measured frames.
+std::string BenchmarkDocument(const Editor& editor, const example::BenchmarkOptions& options) {
+  if (options.workload == "sample") return editor.document.Serialize();
+  const bool paragraphs = options.workload == "paragraphs";
+  std::string source = R"({"format":"bkit-rich-text","version":1,"styles":[{},{"color":"#203040"},{"color":"#506070"}],"paragraphs":[)";
+  for (int i = 0; i < (paragraphs ? options.items : 1); ++i) {
+    if (i) source += ',';
+    source += '0';
+  }
+  source += "],\"runs\":[";
+  for (int i = 0; i < options.items; ++i) {
+    if (i) source += ',';
+    std::string text = "Alpha 日本語 العربية ไทย 01234567 ";
+    if (paragraphs && i + 1 < options.items) text += '\n';
+    source += "{\"style\":" + std::to_string(paragraphs ? 0 : 1 + i % 2) + ",\"text\":" + QuoteJson(text) + "}";
+  }
+  return source + "]}";
+}
+
+constexpr std::array<std::string_view, 10> kPresentationScenarios{
+    "expose", "caret", "scroll", "selection", "edit", "format", "format-partial", "zoom", "preview", "resize"};
+
+// Exercise the actual editor/WM_PAINT path and wait for the compositor before
+// counting each frame. Only FPS and memory are performance results.
+int RunPresentationScenario(Editor& editor, HWND handle, const example::BenchmarkOptions& options) {
   int original_width, original_height;
   glfwGetWindowSize(editor.window, &original_width, &original_height);
+  const std::string source = BenchmarkDocument(editor, options);
+  example::BenchmarkMemorySampler memory;
   const auto flush = [&] {
-    if (!editor.presenter.IsComposed()) GdiFlush();
+    if (!editor.presenter.IsComposed() && !GdiFlush()) return false;
     return SUCCEEDED(DwmFlush());
   };
   const auto paint = [&] {
@@ -3165,97 +3177,159 @@ int RunPresentationScenario(Editor& editor, HWND handle, std::string_view reques
       float sx, sy;
       glfwGetFramebufferSize(editor.window, &width, &height);
       glfwGetWindowContentScale(editor.window, &sx, &sy);
-      if (width <= 0 || height <= 0) return;
+      if (width <= 0 || height <= 0) return false;
       editor.dirty = false;
       editor.Render(width, height, sx > 0 ? sx : 1);
-      // Match the normal event loop, including GDI's actual dirty-region clip.
       InvalidateFrame(editor, handle);
       UpdateWindow(handle);
     }
+    return true;
   };
-  for (const auto scenario : scenarios) {
-    if (requested != "all" && requested != scenario) continue;
-    glfwSetWindowSize(editor.window, original_width, original_height);
-    glfwPollEvents();
+  // A user close cancels the benchmark; it must not open an unsaved-file dialog.
+  glfwSetWindowCloseCallback(editor.window, nullptr);
+  glfwSetKeyCallback(editor.window, nullptr);
+  glfwSetCharCallback(editor.window, nullptr);
+  glfwSetMouseButtonCallback(editor.window, nullptr);
+  glfwSetCursorPosCallback(editor.window, nullptr);
+  glfwSetScrollCallback(editor.window, nullptr);
+  bool first_scenario = true;
+  for (const auto scenario : kPresentationScenarios) {
+    if (options.scenario != "all" && options.scenario != scenario) continue;
+    // Do not dispatch the initial WM_PAINT before timing the first frame.
+    if (!first_scenario) {
+      glfwSetWindowSize(editor.window, original_width, original_height);
+      glfwPollEvents();
+    }
+    first_scenario = false;
+    if (glfwWindowShouldClose(editor.window) || IsIconic(handle) || !IsWindowVisible(handle)) return 1;
+    std::string error;
+    if (!editor.document.Load(source, error)) {
+      std::fprintf(stderr, "benchmark: %s\n", error.c_str());
+      return 1;
+    }
     editor.scroll = editor.pan = 0;
+    editor.zoom = 1;
     editor.preview_scale = 1;
     editor.focused = editor.caret_on = true;
     editor.mouse_x = editor.mouse_y = -100;
     editor.popup = -1;
-    editor.status = "呈现场景: " + std::string(scenario);
-    editor.dirty = true;
-    paint();
-    if (!flush()) return 1;
-    editor.presenter.ReportMemory();
-    const auto before = editor.presenter.GetStatistics();
-    Editor::PresentationMeasurement measurement;
-    editor.measurement = &measurement;
-    Vector<double> cpu_samples;
-    cpu_samples.reserve(frames);
-    double paced_seconds = 0;
-    int completed = 0;
-    for (int i = 0; i < frames && !glfwWindowShouldClose(editor.window); ++i) {
-      const double start = glfwGetTime();
-      if (scenario == "expose") {
-        // Unchanged content: GDI must service the paint clip; DComp retains it.
-        InvalidateRect(handle, nullptr, FALSE);
-        UpdateWindow(handle);
-      } else if (scenario == "caret") {
-        editor.caret_on = !editor.caret_on;
-        editor.dirty = true;
-      } else if (scenario == "scroll") {
-        const float distance = std::min(720.0f, editor.MaxScroll());
-        const float position = distance > 0 ? std::fmod((i + 1) * 8.0f, 2 * distance) : 0;
-        editor.scroll = std::min(position, 2 * distance - position);
-        editor.dirty = true;
-      } else if (scenario == "preview") {
-        // A smooth zoom preview of a retained scene. Both backends resample
-        // the same bitmap; DComp changes a transform without uploading it.
-        editor.preview_scale = 1 + 0.125f * (1 - std::cos((i + 1) * 0.05f));
-        InvalidateRect(handle, nullptr, FALSE);
-        UpdateWindow(handle);
+    editor.document.Select(0, 0);
+    editor.status = "性能测试";
+    // Repeated undo/redo keeps text and history bounded; format-partial also
+    // exercises style-run splitting and merging on alternating frames.
+    // It exercises the same edit log and incremental layout as editing.
+    if (scenario == "edit" || scenario == "format" || scenario == "format-partial") {
+      const auto& tree = editor.document.Tree();
+      const uint32_t paragraph_end = editor.document.Paragraphs().size() > 1 ? tree.LineStart(1) - 1 : tree.Length();
+      if (scenario == "edit") {
+        const uint32_t position = options.workload == "paragraphs"
+                                      ? tree.LineStart(editor.document.Paragraphs().size() - 1)
+                                      : 0;
+        editor.document.Select(position, position);
+        if (!editor.document.ReplaceSelection(u"x", error)) return 1;
       } else {
-        const int phase = (i + 1) % 48;
-        const int inset = std::min(phase, 48 - phase);
-        glfwSetWindowSize(editor.window, original_width - inset * 8, original_height - inset * 4);
-        editor.dirty = true;
+        const auto pieces = tree.Slice(0, paragraph_end);
+        if (pieces.empty()) {
+          std::fputs("benchmark: format requires a nonempty first paragraph\n", stderr);
+          return 1;
+        }
+        uint32_t from = 0, to = pieces.front().length;
+        if (scenario == "format-partial") {
+          // Select an interior grapheme of one style run, so redo splits it
+          // and undo merges it. Do not rely on UTF-16 code-unit boundaries.
+          std::u16string first_run;
+          for (const auto& piece : pieces) {
+            if (piece.style != pieces.front().style) break;
+            first_run.append(tree.View(piece));
+          }
+          CharacterBreakIterator breaks(base::span<const UChar>(first_run.data(), first_run.size()));
+          const int first = breaks.Next();
+          const int second = first == kTextBreakDone ? kTextBreakDone : breaks.Next();
+          if (first <= 0 || second <= first || static_cast<size_t>(second) >= first_run.size()) {
+            std::fputs("benchmark: format-partial requires at least three graphemes in the first style run\n", stderr);
+            return 1;
+          }
+          from = static_cast<uint32_t>(first);
+          to = static_cast<uint32_t>(second);
+        }
+        editor.document.Select(from, to);
+        const uint64_t before = editor.document.Revision();
+        if (!editor.document.Format("color", "#e51573", error) || editor.document.Revision() == before) {
+          std::fputs("benchmark: format must change the document\n", stderr);
+          return 1;
+        }
       }
-      paint();
-      glfwPollEvents();
-      if (!editor.presenter.IsComposed()) GdiFlush();
-      cpu_samples.push_back((glfwGetTime() - start) * 1000);
-      if (!flush()) {
-        editor.measurement = nullptr;
-        return 1;
-      }
-      paced_seconds += glfwGetTime() - start;
-      ++completed;
+      if (!editor.document.Undo()) return 1;
     }
-    editor.measurement = nullptr;
-    if (!completed) return 1;
-    std::sort(cpu_samples.begin(), cpu_samples.end());
-    const auto after = editor.presenter.GetStatistics();
-    const auto percentile = [&](int percent) { return cpu_samples[(cpu_samples.size() - 1) * percent / 100]; };
-    std::fprintf(stderr,
-        "scenario=%.*s backend=%s frames=%d cpu_p50=%.3f ms cpu_p95=%.3f ms raster_avg=%.3f ms present_api_avg=%.3f ms paced_avg=%.3f ms\n"
-        "  gpu_upload=%.3f MiB uploads=%llu surface_scrolls=%llu transforms=%llu commits=%llu retained_paints=%llu gdi_calls=%llu\n",
-        static_cast<int>(scenario.size()), scenario.data(), editor.presenter.IsComposed() ? "directcomposition" : "gdi", completed,
-        percentile(50), percentile(95), measurement.raster_seconds * 1000 / completed,
-        measurement.present_seconds * 1000 / completed, paced_seconds * 1000 / completed,
-        (after.upload_bytes - before.upload_bytes) / 1048576.0,
-        static_cast<unsigned long long>(after.uploads - before.uploads),
-        static_cast<unsigned long long>(after.scrolls - before.scrolls),
-        static_cast<unsigned long long>(after.transforms - before.transforms),
-        static_cast<unsigned long long>(after.commits - before.commits),
-        static_cast<unsigned long long>(after.retained - before.retained),
-        static_cast<unsigned long long>(measurement.gdi_calls));
-    PROCESS_MEMORY_COUNTERS_EX memory{};
-    memory.cb = sizeof memory;
-    if (K32GetProcessMemoryInfo(GetCurrentProcess(), reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&memory), sizeof memory))
-      std::fprintf(stderr, "  private=%.2f MiB peak_commit=%.2f MiB working_set=%.2f MiB peak_working_set=%.2f MiB\n",
-          memory.PrivateUsage / 1048576.0, memory.PeakPagefileUsage / 1048576.0,
-          memory.WorkingSetSize / 1048576.0, memory.PeakWorkingSetSize / 1048576.0);
-    editor.presenter.ReportMemory();
+    editor.dirty = true;
+    example::FrameBenchmark first_frame(1);
+    if (!first_frame.SampleMemory(memory)) return 1;
+    const auto first_start = std::chrono::steady_clock::now();
+    if (!paint() || !flush()) return 1;
+    first_frame.AddFrame(std::chrono::duration<double>(std::chrono::steady_clock::now() - first_start).count());
+    if (!first_frame.SampleMemory(memory)) return 1;
+    Vector<uint32_t> selection_offsets{0};
+    uint32_t offset = 0;
+    // Fixed grapheme boundaries: no selection splits a surrogate or cluster.
+    for (int i = 0; i < 160 && offset < editor.document.Tree().Length(); ++i) {
+      const uint32_t next = editor.view.Move(offset, 1, false);
+      if (next <= offset) break;
+      selection_offsets.push_back(next);
+      offset = next;
+    }
+    if (scenario == "selection" && selection_offsets.size() < 2) return 1;
+    const bool composed = editor.presenter.IsComposed();
+    const example::BenchmarkContext context{"rich_text", scenario, composed ? "directcomposition" : "gdi",
+                                            editor.bitmap.GetPixmap().Width(), editor.bitmap.GetPixmap().Height(),
+                                            editor.scale, 1, options.workload, options.workload == "sample" ? 0 : options.items};
+    first_frame.Report(context, "first_frame", 0);
+    if (!example::RunFrameBenchmark(options, context, memory, [&](int i) {
+          if (glfwWindowShouldClose(editor.window) || IsIconic(handle) || !IsWindowVisible(handle)) return false;
+          if (scenario == "expose") {
+            InvalidateRect(handle, nullptr, FALSE);
+            UpdateWindow(handle);
+          } else if (scenario == "caret") {
+            editor.caret_on = !editor.caret_on;
+            editor.dirty = true;
+          } else if (scenario == "scroll") {
+            const float distance = editor.MaxScroll();
+            if (distance <= 0) return false;
+            // Traverse the full document in a bounded cycle, warming every
+            // visible paragraph rather than only the first screen.
+            const float phase = static_cast<float>((i + 1) % 480) / 240;
+            editor.scroll = distance * std::min(phase, 2 - phase);
+            editor.dirty = true;
+          } else if (scenario == "selection") {
+            const unsigned count = selection_offsets.size() - 1;
+            const unsigned phase = (i + 1) % (2 * count);
+            editor.document.Select(0, selection_offsets[std::min(phase, 2 * count - phase)]);
+            editor.Touch(false);
+          } else if (scenario == "edit" || scenario == "format" || scenario == "format-partial") {
+            if (!(i % 2 ? editor.document.Undo() : editor.document.Redo())) return false;
+            editor.Touch();
+          } else if (scenario == "zoom") {
+            // Real layout/font zoom, distinct from resampling retained pixels.
+            const int phase = (i + 1) % 48;
+            editor.Zoom(1 + std::min(phase, 48 - phase) / 96.0f);
+          } else if (scenario == "preview") {
+            editor.preview_scale = 1 + 0.125f * (1 - std::cos((i + 1) * 0.05f));
+            InvalidateRect(handle, nullptr, FALSE);
+            UpdateWindow(handle);
+          } else {
+            const int phase = (i + 1) % 48;
+            const int inset = std::min(phase, 48 - phase);
+            glfwSetWindowSize(editor.window, original_width - inset * 8, original_height - inset * 4);
+            editor.dirty = true;
+          }
+          if (!paint()) return false;
+          glfwPollEvents();
+          if (!paint() || !flush()) return false;
+          // A fallback midway through a round changes the workload.
+          return editor.presenter.IsComposed() == composed && !editor.present_full && editor.scale == context.scale &&
+                 !glfwWindowShouldClose(editor.window) && !IsIconic(handle) && IsWindowVisible(handle) &&
+                 (scenario == "resize" || (editor.bitmap.GetPixmap().Width() == context.width &&
+                                           editor.bitmap.GetPixmap().Height() == context.height));
+        })) return 1;
   }
   return 0;
 }
@@ -3305,8 +3379,8 @@ int RunEditor(int argc, char** argv) {
   bool profile_memory = false;
 #ifdef _WIN32
   bool force_gdi = false;
-  std::string present_scenario;
-  int scenario_frames = 180;
+  bkit::example::BenchmarkOptions benchmark;
+  bool benchmark_options = false;
 #endif
   float snapshot_scale = 1;
   const auto usage = [] {
@@ -3316,9 +3390,15 @@ int RunEditor(int argc, char** argv) {
               "  [--profile-memory] Report Windows startup memory and exit after presenting.\n"
 #ifdef _WIN32
               "  [--gdi] Use GDI instead of DirectComposition (for comparison).\n"
-              "  [--present-scenario expose|caret|scroll|preview|resize|all] Run a paced scenario and exit.\n"
-              "    preview: animate zoom of cached pixels; scroll/caret/resize use normal editor rendering.\n"
-              "  [--frames 1..3600] Frames per scenario (default 180); compare with --gdi.\n"
+              "  [--present-scenario expose|caret|scroll|selection|edit|format|format-partial|zoom|preview|resize|all]\n"
+              "    format-partial: split/merge a style run by formatting an interior grapheme.\n"
+              "    Emit JSON lines with compositor-paced FPS (average/1% low) and memory MiB only.\n"
+              "  [--frames 1..36000] Frames per measured round (default 300); compare with --gdi.\n"
+              "  [--warmup 0..3600] Warmup frames (default 60), reported separately.\n"
+              "  [--repeat 1..20] Measured rounds without clearing caches (default 3).\n"
+              "    First frame is reported separately; use a fresh process per scenario for cold caches.\n"
+              "  [--workload sample|long-runs|paragraphs] Fixed document (default sample or --file).\n"
+              "  [--items 16..8192] Runs/paragraphs in the synthetic document (default 2048).\n"
 #endif
               "Ctrl+N/O/S, Ctrl+Shift+S, Ctrl+Z/Y, Ctrl+A/C/X/V, Ctrl+B/I/U, Ctrl+L/E/R/J.\n"
               "Ctrl+Shift+C/V: copy/paste formatting. Ctrl+Shift+</>: font size.\n"
@@ -3344,16 +3424,26 @@ int RunEditor(int argc, char** argv) {
     else if (arg == "--gdi")
       force_gdi = true;
     else if (arg == "--present-scenario" && i + 1 < argc) {
-      present_scenario = argv[++i];
-      if (present_scenario != "all" && present_scenario != "expose" && present_scenario != "caret" &&
-          present_scenario != "scroll" && present_scenario != "preview" && present_scenario != "resize") {
+      benchmark.scenario = argv[++i];
+      if (benchmark.scenario != "all" &&
+          std::find(kPresentationScenarios.begin(), kPresentationScenarios.end(), benchmark.scenario) == kPresentationScenarios.end()) {
         usage();
         return 2;
       }
-    } else if (arg == "--frames" && i + 1 < argc) {
-      const std::string_view value = argv[++i];
-      const auto parsed = std::from_chars(value.data(), value.data() + value.size(), scenario_frames);
-      if (parsed.ec != std::errc{} || parsed.ptr != value.data() + value.size() || scenario_frames < 1 || scenario_frames > 3600) {
+    } else if ((arg == "--frames" || arg == "--warmup" || arg == "--repeat" || arg == "--items") && i + 1 < argc) {
+      benchmark_options = true;
+      int& value = arg == "--frames" ? benchmark.frames : arg == "--warmup" ? benchmark.warmup :
+                   arg == "--repeat" ? benchmark.repeats : benchmark.items;
+      const int minimum = arg == "--warmup" ? 0 : arg == "--items" ? 16 : 1;
+      const int maximum = arg == "--frames" ? 36000 : arg == "--warmup" ? 3600 : arg == "--repeat" ? 20 : 8192;
+      if (!bkit::example::ParseBenchmarkCount(argv[++i], minimum, maximum, value)) {
+        usage();
+        return 2;
+      }
+    } else if (arg == "--workload" && i + 1 < argc) {
+      benchmark_options = true;
+      benchmark.workload = argv[++i];
+      if (benchmark.workload != "sample" && benchmark.workload != "long-runs" && benchmark.workload != "paragraphs") {
         usage();
         return 2;
       }
@@ -3391,7 +3481,9 @@ int RunEditor(int argc, char** argv) {
     }
   }
 #ifdef _WIN32
-  if (!present_scenario.empty() && (!snapshot.empty() || !sample_path.empty())) {
+  if ((benchmark_options && benchmark.scenario.empty()) ||
+      (!benchmark.scenario.empty() && (!snapshot.empty() || !sample_path.empty() || backstage || profile_memory)) ||
+      (benchmark.workload != "sample" && (benchmark.scenario.empty() || !file.empty()))) {
     usage();
     return 2;
   }
@@ -3510,7 +3602,11 @@ int RunEditor(int argc, char** argv) {
   glfwSetCursorEnterCallback(window, [](GLFWwindow* w, int entered) {
     if (!entered) Get(w).Leave();
   });
+#ifdef _WIN32
+  if (benchmark.scenario.empty()) editor.Layout();
+#else
   editor.Layout();
+#endif
   memory("layout");
 #ifdef _WIN32
   const HWND handle = glfwGetWin32Window(window);
@@ -3518,8 +3614,8 @@ int RunEditor(int argc, char** argv) {
   memory("presenter");
   SetPropW(handle, L"bkit.RichTextEditor", &editor);
   editor.previous_proc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(handle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(EditorWindowProc)));
-  if (!present_scenario.empty()) {
-    const int result = RunPresentationScenario(editor, handle, present_scenario, scenario_frames);
+  if (!benchmark.scenario.empty()) {
+    const int result = RunPresentationScenario(editor, handle, benchmark);
     SetWindowLongPtrW(handle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(editor.previous_proc));
     RemovePropW(handle, L"bkit.RichTextEditor");
     editor.presenter.Shutdown();

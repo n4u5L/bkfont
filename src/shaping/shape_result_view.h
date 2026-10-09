@@ -113,13 +113,16 @@ public:
                                                  unsigned start_index,
                                                  unsigned end_index);
 
+  // Exactly the width of Create(result, start, end), without allocating a view.
+  static float WidthForRange(const ShapeResult& result, unsigned start, unsigned end);
+
   struct InitData;
   explicit ShapeResultView(const InitData& data);
   ShapeResultView(const ShapeResultView&) = delete;
   ShapeResultView& operator=(const ShapeResultView&) = delete;
   ~ShapeResultView() = default;
 
-  std::shared_ptr<ShapeResult> CreateShapeResult() const;
+  std::unique_ptr<ShapeResult> CreateShapeResult() const;
 
   unsigned StartIndex() const {
     return start_index_ + char_index_offset_;
@@ -182,7 +185,7 @@ public:
   struct RunInfoPart {
 
   public:
-    RunInfoPart(const ShapeResultRun* run,
+    RunInfoPart(std::shared_ptr<const ShapeResultRun> run,
                 GlyphDataRange range,
                 unsigned start_index,
                 unsigned offset,
@@ -304,13 +307,16 @@ public:
   };
 
 private:
+  template <class ShapeResultType>
+  static auto RunsForRange(const ShapeResultType&, const Segment&);
+
   void PopulateRunInfoParts(const Segment& segment);
 
   // Populates `parts_` and accumulates `num_characters_`, and `width_` from
   // runs in `result`.
   template <class ShapeResultType>
   void PopulateRunInfoParts(const ShapeResultType& result,
-                            const Segment& segment);
+                            const Segment& segment, bool retain_parts = true);
 
   unsigned CharacterIndexOffsetForGlyphData(const RunInfoPart&) const;
 

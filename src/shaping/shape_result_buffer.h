@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <optional>
+#include <utility>
 #include "shape_result.h"
 
 #include "base/vector.h"
@@ -27,9 +28,9 @@ public:
   ShapeResultBuffer(const ShapeResultBuffer&) = delete;
   ShapeResultBuffer& operator=(const ShapeResultBuffer&) = delete;
 
-  void AppendResult(const ShapeResult* result) {
+  void AppendResult(std::shared_ptr<const ShapeResult> result) {
     has_vertical_offsets_ |= result->HasVerticalOffsets();
-    results_.push_back(result->shared_from_this());
+    results_.push_back(std::move(result));
   }
 
   bool HasVerticalOffsets() const {

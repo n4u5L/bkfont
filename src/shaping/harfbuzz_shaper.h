@@ -72,14 +72,15 @@ public:
   // occur, such as at the beginning or end of lines or at element boundaries.
   // If given arbitrary positions the results are not guaranteed to be correct.
   // May be called multiple times; font and direction may vary between calls.
-  std::shared_ptr<ShapeResult> Shape(const Font*,
+  // Each call returns a newly owned result; caches may explicitly share it.
+  std::unique_ptr<ShapeResult> Shape(const Font*,
                                      TextDirection,
                                      unsigned start,
                                      unsigned end) const;
 
   // Shape a range that has already been pre-segmented. The ranges must cover
   // [start, end); start and end must be valid break positions.
-  std::shared_ptr<ShapeResult> Shape(const Font*,
+  std::unique_ptr<ShapeResult> Shape(const Font*,
                                      TextDirection,
                                      unsigned start,
                                      unsigned end,
@@ -87,7 +88,7 @@ public:
                                      ShapeOptions = ShapeOptions()) const;
 
   // Shape a view into stored segments, clipping them to [start, end).
-  std::shared_ptr<ShapeResult> Shape(const Font*,
+  std::unique_ptr<ShapeResult> Shape(const Font*,
                                      TextDirection,
                                      unsigned start,
                                      unsigned end,
@@ -95,7 +96,7 @@ public:
                                      ShapeOptions = ShapeOptions()) const;
 
   // Shape a single range. Start and end positions defined by the range.
-  std::shared_ptr<ShapeResult> Shape(const Font*,
+  std::unique_ptr<ShapeResult> Shape(const Font*,
                                      TextDirection,
                                      unsigned start,
                                      unsigned end,
@@ -105,7 +106,7 @@ public:
   // Shape the entire string with a single font and direction.
   // Equivalent to calling the range version with a start offset of zero and an
   // end offset equal to the length.
-  std::shared_ptr<ShapeResult> Shape(const Font*, TextDirection) const;
+  std::unique_ptr<ShapeResult> Shape(const Font*, TextDirection) const;
 
   const String& GetText() const {
     return text_;

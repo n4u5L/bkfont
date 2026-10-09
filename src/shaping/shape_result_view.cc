@@ -18,6 +18,7 @@
 #include <memory>
 #include <numeric>
 #include <span>
+#include <type_traits>
 
 #include "font/font.h"
 #include "glyph_bounds_accumulator.h"
@@ -26,13 +27,26 @@
 
 namespace bkit {
 
-ShapeResultView::RunInfoPart::RunInfoPart(const ShapeResultRun* run,
+namespace {
+
+// Retain the existing owner directly when creating a view or a subview.
+const std::shared_ptr<ShapeResultRun>& RunOwner(const std::shared_ptr<ShapeResultRun>& run) {
+  return run;
+}
+
+const std::shared_ptr<const ShapeResultRun>& RunOwner(const ShapeResultView::RunInfoPart& part) {
+  return part.run_;
+}
+
+} // namespace
+
+ShapeResultView::RunInfoPart::RunInfoPart(std::shared_ptr<const ShapeResultRun> run,
                                           GlyphDataRange range,
                                           unsigned start_index,
                                           unsigned offset,
                                           unsigned num_characters,
                                           float width)
-    : run_(run->shared_from_this()),
+    : run_(std::move(run)),
       range_(range),
       start_index_(start_index),
       offset_(offset),
@@ -77,6 +91,41 @@ GlyphDataRange ShapeResultView::RunInfoPart::FindGlyphDataRange(
 unsigned ShapeResultView::CharacterIndexOffsetForGlyphData(
     const RunInfoPart& part) const {
   return part.start_index_ + char_index_offset_ - part.offset_;
+}
+
+// ShapeResult runs partition the shaped text and are sorted in visual order.
+// A line-sized view must not scan a paragraph's unrelated script/font runs,
+// either to reserve its parts or to populate them. Subviews keep their existing
+// traversal: their adjusted offsets (especially RTL) need not have this order.
+template <class ShapeResultType>
+auto ShapeResultView::RunsForRange(const ShapeResultType& result, const Segment& segment) {
+  const auto& runs = result.RunsOrParts();
+  const auto all = std::span(runs.data(), runs.size());
+  if constexpr (std::is_same_v<ShapeResultType, ShapeResult>) {
+    if (!result.NumCharacters() ||
+        (segment.start_index <= result.StartIndex() && segment.end_index >= result.EndIndex())) {
+      return all;
+    }
+    auto first = all.begin();
+    auto last = all.end();
+    if (result.IsLtr()) {
+      first = std::lower_bound(first, last, segment.start_index, [](const auto& run, unsigned start) {
+        return run->start_index_ + run->num_characters_ <= start;
+      });
+      last = std::lower_bound(first, last, segment.end_index, [](const auto& run, unsigned end) {
+        return run->start_index_ < end;
+      });
+    } else {
+      first = std::lower_bound(first, last, segment.end_index, [](const auto& run, unsigned end) {
+        return run->start_index_ >= end;
+      });
+      last = std::lower_bound(first, last, segment.start_index, [](const auto& run, unsigned start) {
+        return run->start_index_ + run->num_characters_ > start;
+      });
+    }
+    return std::span(first, last);
+  }
+  return all;
 }
 
 // |InitData| provides values of const member variables of |ShapeResultView|
@@ -175,7 +224,7 @@ private:
   static unsigned CountRunInfoParts(const ShapeResultType& result,
                                     const Segment& segment) {
     return static_cast<unsigned>(std::ranges::count_if(
-        result.RunsOrParts(),
+        RunsForRange(result, segment),
         [&result, &segment](const auto& run_or_part) {
           return !!RunInfoPart::ComputeStartEnd(*run_or_part.get(), result, segment);
         }));
@@ -189,8 +238,8 @@ ShapeResultView::ShapeResultView(const InitData& data)
       char_index_offset_(data.char_index_offset) {
 }
 
-std::shared_ptr<ShapeResult> ShapeResultView::CreateShapeResult() const {
-  auto new_result = std::make_shared<ShapeResult>(
+std::unique_ptr<ShapeResult> ShapeResultView::CreateShapeResult() const {
+  auto new_result = std::make_unique<ShapeResult>(
       start_index_ + char_index_offset_,
       num_characters_,
       Direction());
@@ -214,7 +263,7 @@ std::shared_ptr<ShapeResult> ShapeResultView::CreateShapeResult() const {
     new_run->width_ = part.width_;
     new_run->num_characters_ = part.num_characters_;
 
-    new_result->runs_.push_back(new_run);
+    new_result->runs_.push_back(std::move(new_run));
   }
 
   new_result->has_vertical_offsets_ = has_vertical_offsets_;
@@ -225,7 +274,7 @@ std::shared_ptr<ShapeResult> ShapeResultView::CreateShapeResult() const {
 
 template <class ShapeResultType>
 void ShapeResultView::PopulateRunInfoParts(const ShapeResultType& other,
-                                           const Segment& segment) {
+                                           const Segment& segment, bool retain_parts) {
   // Compute the diff of index and the number of characters from the source
   // ShapeResult and given offsets, because computing them from runs/parts can
   // be inaccurate when all characters in a run/part are missing.
@@ -234,7 +283,7 @@ void ShapeResultView::PopulateRunInfoParts(const ShapeResultType& other,
   // |num_characters_| is accumulated for computing |index_diff|.
   num_characters_ += std::min(segment.end_index, other.EndIndex()) - std::max(segment.start_index, other.StartIndex());
 
-  for (const auto& run_or_part : other.RunsOrParts()) {
+  for (const auto& run_or_part : RunsForRange(other, segment)) {
     const auto* const run = run_or_part.get();
     const auto part_start_end =
         RunInfoPart::ComputeStartEnd(*run, other, segment);
@@ -266,9 +315,7 @@ void ShapeResultView::PopulateRunInfoParts(const ShapeResultType& other,
     } else {
       range = run->FindGlyphDataRange(range_start, range_end);
       part_width = std::accumulate(
-          range.begin(),
-          range.end(),
-          InlineLayoutUnit(),
+          range.begin(), range.end(), InlineLayoutUnit(),
           [](InlineLayoutUnit sum, const auto& glyph) {
             return sum + glyph.advance.template To<InlineLayoutUnit>();
           });
@@ -279,8 +326,16 @@ void ShapeResultView::PopulateRunInfoParts(const ShapeResultType& other,
     // Adjust start_index for runs to be continuous.
     const unsigned part_start_index = run_start + range_start + index_diff;
     const unsigned part_offset = range_start;
-    parts_.emplace_back(run->GetRunInfo(), range, part_start_index, part_offset, part_characters, part_width);
+    if (retain_parts)
+      parts_.emplace_back(RunOwner(run_or_part), range, part_start_index, part_offset, part_characters, part_width);
   }
+}
+
+float ShapeResultView::WidthForRange(const ShapeResult& result, unsigned start, unsigned end) {
+  InitData data;
+  ShapeResultView measured(data);
+  measured.PopulateRunInfoParts(result, Segment(&result, start, end), false);
+  return measured.Width();
 }
 
 void ShapeResultView::PopulateRunInfoParts(const Segment& segment) {

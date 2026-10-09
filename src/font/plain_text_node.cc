@@ -315,7 +315,7 @@ void PlainTextNode::Shape(const Font& font, FrameShapeCache* cache) {
         }
       }
     }
-    item.shape_result_ = shape_result;
+    item.shape_result_ = std::move(shape_result);
     item.ink_bounds_ = ink_bounds;
     has_vertical_offsets_ |= item.shape_result_->HasVerticalOffsets();
     if (cache) {

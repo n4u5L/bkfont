@@ -29,9 +29,10 @@ class FontSelector;
 // The local subset of core/frame/settings.json5 (with the content-layer
 // WebPreferences defaults) used by style resolution.
 struct Settings {
+  static GenericFontFamilySettings DefaultGenericFontFamilySettings();
   // FontBuilder::StandardFontFamilyName() and the generic family mapping of
-  // the font cache.
-  GenericFontFamilySettings generic_font_family_settings;
+  // CSSFontSelector, initialized from WebPreferences defaults.
+  GenericFontFamilySettings generic_font_family_settings = DefaultGenericFontFamilySettings();
   int default_font_size = 16;
   int default_fixed_font_size = 13;
   int minimum_font_size = 0;
@@ -73,7 +74,9 @@ public:
   void InvalidateInitialStyle() { initial_style_.reset(); }
 
 private:
+  void UpdateFontSelector();
   Settings settings_;
+  std::shared_ptr<FontSelector> custom_font_selector_;
   std::shared_ptr<FontSelector> font_selector_;
   std::shared_ptr<const ComputedStyle> root_element_style_;
   DeviceScale device_scale_;

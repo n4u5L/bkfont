@@ -949,12 +949,12 @@ float ShapeResult::ApplySpacing(ShapeResultSpacing<String>& spacing,
   return ApplySpacingImpl(spacing, text_start_offset);
 }
 
-std::shared_ptr<ShapeResult> ShapeResult::ApplySpacingToCopy(
+std::unique_ptr<ShapeResult> ShapeResult::ApplySpacingToCopy(
     ShapeResultSpacing<TextRun>& spacing,
     const TextRun& run) const {
   unsigned index_of_sub_run = spacing.Text().IndexOfSubRun(run);
 
-  auto result = std::make_shared<ShapeResult>(*this);
+  auto result = std::make_unique<ShapeResult>(*this);
   if (index_of_sub_run != std::numeric_limits<unsigned>::max())
     result->ApplySpacingImpl(spacing, index_of_sub_run);
   return result;
@@ -1246,7 +1246,7 @@ void ShapeResult::ApplyTextAutoSpacingCore(Iterator offset_begin,
   // `width_` will be updated in `RecalcCharacterPositions()`.
 }
 
-std::shared_ptr<const ShapeResult> ShapeResult::UnapplyAutoSpacing(
+std::unique_ptr<const ShapeResult> ShapeResult::UnapplyAutoSpacing(
     float spacing_width,
     unsigned start_offset,
     unsigned break_offset) const {
@@ -1575,10 +1575,10 @@ void ShapeResult::InsertRun(std::shared_ptr<ShapeResultRun> run) {
 
   auto it = std::lower_bound(runs_.begin(), runs_.end(), run->start_index_, run->IsLtr() ? ltr_comparer : rtl_comparer);
   if (it != runs_.end()) {
-    runs_.insert(static_cast<wtf_size_t>(it - runs_.begin()), run);
+    runs_.insert(static_cast<wtf_size_t>(it - runs_.begin()), std::move(run));
   } else {
     // If we didn't find an existing slot to place it, append.
-    runs_.push_back(run);
+    runs_.push_back(std::move(run));
   }
 }
 
@@ -1612,27 +1612,10 @@ std::shared_ptr<ShapeResultRun> ShapeResult::InsertRunForTesting(
 // Runs in RTL result are in visual order, and that new runs should be
 // prepended. This function adjusts the run order after runs were appended.
 void ShapeResult::ReorderRtlRuns(unsigned run_size_before) {
-
-  if (runs_.size() == run_size_before + 1) {
-    if (!run_size_before)
-      return;
-    auto new_run = runs_.back();
-    runs_.pop_back();
-    runs_.push_front(new_run);
-    return;
-  }
-
-  // |push_front| is O(n) that we should not call it multiple times.
-  // Create a new list in the correct order and swap it.
-  Vector<std::shared_ptr<ShapeResultRun>, 1> new_runs;
-  new_runs.ReserveInitialCapacity(runs_.size());
-  for (unsigned i = run_size_before; i < runs_.size(); i++)
-    new_runs.push_back(runs_[i]);
-
-  // Then append existing runs.
-  for (unsigned i = 0; i < run_size_before; i++)
-    new_runs.push_back(runs_[i]);
-  runs_.swap(new_runs);
+  assert(run_size_before <= runs_.size());
+  // Move the appended block to the front without allocating another vector
+  // or retaining/releasing each run while changing its position.
+  std::rotate(runs_.begin(), runs_.begin() + run_size_before, runs_.end());
 }
 
 void ShapeResult::CopyRange(unsigned start_offset,
@@ -1709,9 +1692,9 @@ unsigned ShapeResult::CopyRangeInternal(unsigned run_index,
         if (auto merged_run =
                 should_merge ? target->runs_.back()->MergeIfPossible(*sub_run)
                              : nullptr) {
-          target->runs_.back() = merged_run;
+          target->runs_.back() = std::move(merged_run);
         } else {
-          target->runs_.push_back(sub_run);
+          target->runs_.push_back(std::move(sub_run));
         }
       }
       should_merge = false;
@@ -1739,33 +1722,44 @@ unsigned ShapeResult::CopyRangeInternal(unsigned run_index,
   return run_index;
 }
 
-std::shared_ptr<ShapeResult> ShapeResult::SubRange(unsigned start_offset,
+std::unique_ptr<ShapeResult> ShapeResult::SubRange(unsigned start_offset,
                                                    unsigned end_offset) const {
-  auto sub_range = std::make_shared<ShapeResult>(0, 0, Direction());
+  auto sub_range = std::make_unique<ShapeResult>(0, 0, Direction());
   CopyRange(start_offset, end_offset, sub_range.get());
   return sub_range;
 }
 
-std::shared_ptr<const ShapeResult> ShapeResult::CopyAdjustedOffset(unsigned start_index) const {
-  auto result = std::make_shared<ShapeResult>(*this);
+std::unique_ptr<ShapeResult> ShapeResult::SubRange(unsigned start_offset,
+                                                 unsigned end_offset,
+                                                 unsigned new_start_index) const {
+  auto result = SubRange(start_offset, end_offset);
+  result->AdjustStartIndex(new_start_index);
+  return result;
+}
 
-  if (start_index > result->StartIndex()) {
-    unsigned delta = start_index - result->StartIndex();
-    for (auto& run : result->runs_)
+std::unique_ptr<const ShapeResult> ShapeResult::CopyAdjustedOffset(unsigned start_index) const {
+  auto result = std::make_unique<ShapeResult>(*this);
+  result->AdjustStartIndex(start_index);
+  return result;
+}
+
+void ShapeResult::AdjustStartIndex(unsigned start_index) {
+  if (start_index > StartIndex()) {
+    unsigned delta = start_index - StartIndex();
+    for (auto& run : runs_)
       run->start_index_ += delta;
   } else {
-    unsigned delta = result->StartIndex() - start_index;
-    for (auto& run : result->runs_) {
-
+    unsigned delta = StartIndex() - start_index;
+    for (auto& run : runs_) {
+      assert(run->start_index_ >= delta);
       run->start_index_ -= delta;
     }
   }
 
-  result->start_index_ = start_index;
-  return result;
+  start_index_ = start_index;
 }
 
-std::shared_ptr<const ShapeResult> ShapeResult::CreateForTabulationCharacters(
+std::unique_ptr<const ShapeResult> ShapeResult::CreateForTabulationCharacters(
     const Font* font,
     TextDirection direction,
     const TabSize& tab_size,
@@ -1775,7 +1769,7 @@ std::shared_ptr<const ShapeResult> ShapeResult::CreateForTabulationCharacters(
 
   const SimpleFontData* font_data = font->PrimaryFont();
 
-  auto result = std::make_shared<ShapeResult>(start_index, length, direction);
+  auto result = std::make_unique<ShapeResult>(start_index, length, direction);
   result->has_vertical_offsets_ =
       font_data->PlatformData().IsVerticalAnyUpright();
   // Tab characters are always LTR or RTL, not TTB, even when
@@ -1816,7 +1810,7 @@ std::shared_ptr<const ShapeResult> ShapeResult::CreateForTabulationCharacters(
   return result;
 }
 
-std::shared_ptr<const ShapeResult> ShapeResult::CreateForSpaces(const Font* font,
+std::unique_ptr<const ShapeResult> ShapeResult::CreateForSpaces(const Font* font,
                                                                 TextDirection direction,
                                                                 unsigned start_index,
                                                                 unsigned length,
@@ -1824,7 +1818,7 @@ std::shared_ptr<const ShapeResult> ShapeResult::CreateForSpaces(const Font* font
 
   const SimpleFontData* font_data = font->PrimaryFont();
 
-  auto result = std::make_shared<ShapeResult>(start_index, length, direction);
+  auto result = std::make_unique<ShapeResult>(start_index, length, direction);
   result->has_vertical_offsets_ =
       font_data->PlatformData().IsVerticalAnyUpright();
   hb_direction_t hb_direction =
@@ -1849,14 +1843,14 @@ std::shared_ptr<const ShapeResult> ShapeResult::CreateForSpaces(const Font* font
   return result;
 }
 
-std::shared_ptr<const ShapeResult> ShapeResult::CreateForStretchyMathOperator(
+std::unique_ptr<const ShapeResult> ShapeResult::CreateForStretchyMathOperator(
     const Font* font,
     TextDirection direction,
     Glyph glyph_variant,
     float stretch_size) {
   unsigned start_index = 0;
   unsigned num_characters = 1;
-  auto result = std::make_shared<ShapeResult>(start_index, num_characters, direction);
+  auto result = std::make_unique<ShapeResult>(start_index, num_characters, direction);
 
   hb_direction_t hb_direction = HB_DIRECTION_LTR;
   unsigned glyph_index = 0;
@@ -1881,7 +1875,7 @@ std::shared_ptr<const ShapeResult> ShapeResult::CreateForStretchyMathOperator(
   return result;
 }
 
-std::shared_ptr<const ShapeResult> ShapeResult::CreateForStretchyMathOperator(
+std::unique_ptr<const ShapeResult> ShapeResult::CreateForStretchyMathOperator(
     const Font* font,
     TextDirection direction,
     OpenTypeMathStretchData::StretchAxis stretch_axis,
@@ -1891,7 +1885,7 @@ std::shared_ptr<const ShapeResult> ShapeResult::CreateForStretchyMathOperator(
       stretch_axis == OpenTypeMathStretchData::StretchAxis::Horizontal;
   unsigned start_index = 0;
   unsigned num_characters = 1;
-  auto result = std::make_shared<ShapeResult>(start_index, num_characters, direction);
+  auto result = std::make_unique<ShapeResult>(start_index, num_characters, direction);
 
   hb_direction_t hb_direction =
       is_horizontal_assembly ? HB_DIRECTION_LTR : HB_DIRECTION_TTB;

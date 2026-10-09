@@ -96,6 +96,14 @@ public:
                                                    LayoutUnit available_space,
                                                    Result* result_out);
 
+  struct ShapedRange {
+    // Borrowed from this breaker when neither line edge needs reshaping.
+    const ShapeResult* reusable = nullptr;
+    std::unique_ptr<const ShapeResultView> reshaped;
+  };
+  // Resolve line edges once; callers measuring candidates can defer creating
+  // views for reusable ranges until the final break has been selected.
+  ShapedRange ShapeRangeAt(unsigned start, unsigned end);
   std::unique_ptr<const ShapeResultView> ShapeLineAt(unsigned start, unsigned end);
 
 protected:
@@ -103,8 +111,8 @@ protected:
     return *result_;
   }
 
-  // Keep reshaped edges alive until their runs have been retained by the view.
-  virtual std::shared_ptr<const ShapeResult> Shape(unsigned start,
+  // Own reshaped edges until their runs have been retained by the view.
+  virtual std::unique_ptr<const ShapeResult> Shape(unsigned start,
                                                    unsigned end,
                                                    ShapeOptions = ShapeOptions()) = 0;
 
@@ -155,7 +163,7 @@ private:
                      bool backwards) const;
 
   std::unique_ptr<const ShapeResultView> ShapeToEnd(unsigned start,
-                                                    const std::shared_ptr<const ShapeResult>& line_start_result,
+                                                    const ShapeResult* line_start_result,
                                                     unsigned first_safe,
                                                     unsigned range_start,
                                                     unsigned range_end);
@@ -164,8 +172,8 @@ private:
       unsigned end,
       unsigned first_safe,
       unsigned last_safe,
-      const std::shared_ptr<const ShapeResult>& line_start_result,
-      const std::shared_ptr<const ShapeResult>& line_end_result);
+      const ShapeResult* line_start_result,
+      const ShapeResult* line_end_result);
 
   void SetBreakOffset(unsigned break_offset, const String&, Result*);
   void SetBreakOffset(const BreakOpportunity&, const String&, Result*);

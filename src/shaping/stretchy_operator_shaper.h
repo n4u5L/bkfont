@@ -39,7 +39,7 @@ public:
   // origin as the rectangle assigned to the optional OUT Metrics parameter.
   // May be called multiple times; font and direction may vary between calls.
   // https://w3c.github.io/mathml-core/#dfn-shape-a-stretchy-glyph
-  std::shared_ptr<const ShapeResult> Shape(const Font*,
+  std::unique_ptr<const ShapeResult> Shape(const Font*,
                                            float target_size,
                                            Metrics* metrics = nullptr) const;
 

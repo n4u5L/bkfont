@@ -20,6 +20,10 @@ find_package(OpenGL REQUIRED)
 # fonts (DirectWrite/Fontconfig matching with fallback).
 add_executable(bkit_inline_text_render_example inline_text_render.cc)
 target_link_libraries(bkit_inline_text_render_example PRIVATE bkit::bkit glfw OpenGL::GL)
+if(WIN32)
+  target_compile_definitions(bkit_inline_text_render_example PRIVATE _WIN32_WINNT=0x0A00 WINVER=0x0A00)
+  target_link_libraries(bkit_inline_text_render_example PRIVATE dxgi dwmapi)
+endif()
 
 # Noto Sans Egyptian Hieroglyphs (SIL Open Font License 1.1) for the Ancient
 # Egyptian card, which loads it from file as @font-face would. Downloaded at

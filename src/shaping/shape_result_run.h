@@ -56,8 +56,7 @@ namespace bkit {
 
 class SimpleFontData;
 
-struct ShapeResultRun final
-    : public std::enable_shared_from_this<ShapeResultRun> {
+struct ShapeResultRun final {
 public:
   ShapeResultRun(const SimpleFontData* font,
                  hb_direction_t dir,
@@ -337,7 +336,6 @@ public:
     // Note: Caller should be adjust |HarfBuzzRunGlyphData.character_index|.
     void CopyFrom(const GlyphDataCollection& other1,
                   const GlyphDataCollection& other2) {
-
       std::ranges::copy(other1.data_, data_.data());
       std::ranges::copy(other2.data_,
                         data_.data() + other1.size());
@@ -355,7 +353,6 @@ public:
 
     // Note: Caller should be adjust |HarfBuzzRunGlyphData.character_index|.
     void CopyFromRange(const GlyphDataRange& range) {
-
       std::ranges::copy(range, data_.data());
 
       if (!range.HasOffsets() || range.IsEmpty()) {

@@ -313,7 +313,7 @@ std::unique_ptr<const ShapeResultView> ShapingLineBreaker::ShapeLine(
 
   // If the start offset is not at a safe-to-break boundary, the content between
   // the start and the next safe-to-break boundary needs to be reshaped.
-  std::shared_ptr<const ShapeResult> line_start_result = nullptr;
+  std::unique_ptr<const ShapeResult> line_start_result;
   const EdgeOffset first_safe = FirstSafeOffset(start);
   assert((first_safe.offset) >= (start));
   if (first_safe.offset != start) [[unlikely]] {
@@ -349,7 +349,7 @@ std::unique_ptr<const ShapeResultView> ShapingLineBreaker::ShapeLine(
   // Extend the `candidate_break` if the next character can fit by applying the
   // `HanKerning` at the line end.
   unsigned last_safe;
-  std::shared_ptr<const ShapeResult> line_end_result = nullptr;
+  std::unique_ptr<const ShapeResult> line_end_result;
   if (candidate_break < range_end && ShouldTrimEnd(text_spacing_trim_) &&
       Character::MaybeHanKerningClose(text[candidate_break])) [[unlikely]] {
     const unsigned adjusted_candidate_break = candidate_break + 1;
@@ -374,7 +374,7 @@ std::unique_ptr<const ShapeResultView> ShapingLineBreaker::ShapeLine(
     // and thus unable to compute. Return the result up to range_end.
     assert((candidate_break) == (range_end));
     SetBreakOffset(range_end, text, result_out);
-    return ShapeToEnd(start, line_start_result, first_safe.offset, range_start,
+    return ShapeToEnd(start, line_start_result.get(), first_safe.offset, range_start,
                       range_end);
   }
 
@@ -460,7 +460,7 @@ std::unique_ptr<const ShapeResultView> ShapingLineBreaker::ShapeLine(
   if (break_opportunity.offset >= range_end) {
     SetBreakOffset(range_end, text, result_out);
     if (result_out->is_overflow) {
-      return ShapeToEnd(start, line_start_result, first_safe.offset,
+      return ShapeToEnd(start, line_start_result.get(), first_safe.offset,
                         range_start, range_end);
     }
     break_opportunity.offset = range_end;
@@ -577,7 +577,7 @@ std::unique_ptr<const ShapeResultView> ShapingLineBreaker::ShapeLine(
             std::max(candidate_break, start + 1), start, range_end);
         if (break_opportunity.offset >= range_end) {
           SetBreakOffset(range_end, text, result_out);
-          return ShapeToEnd(start, line_start_result, first_safe.offset,
+          return ShapeToEnd(start, line_start_result.get(), first_safe.offset,
                             range_start, range_end);
         }
       }
@@ -608,26 +608,26 @@ std::unique_ptr<const ShapeResultView> ShapingLineBreaker::ShapeLine(
   // Create shape results for the line by copying from the re-shaped result (if
   // reshaping was needed) and the original shape results.
   return ConcatShapeResults(start, break_opportunity.offset, first_safe.offset,
-                            last_safe, line_start_result, line_end_result);
+                            last_safe, line_start_result.get(), line_end_result.get());
 }
 std::unique_ptr<const ShapeResultView> ShapingLineBreaker::ConcatShapeResults(
     unsigned start,
     unsigned end,
     unsigned first_safe,
     unsigned last_safe,
-    const std::shared_ptr<const ShapeResult>& line_start_result,
-    const std::shared_ptr<const ShapeResult>& line_end_result) {
+    const ShapeResult* line_start_result,
+    const ShapeResult* line_end_result) {
   std::array<ShapeResultView::Segment, 3> segments;
   constexpr unsigned max_length = std::numeric_limits<unsigned>::max();
   unsigned count = 0;
   if (line_start_result) {
-    segments[count++] = {line_start_result.get(), 0, max_length};
+    segments[count++] = {line_start_result, 0, max_length};
   }
   if (last_safe > first_safe) {
     segments[count++] = {result_, first_safe, last_safe};
   }
   if (line_end_result) {
-    segments[count++] = {line_end_result.get(), last_safe, max_length};
+    segments[count++] = {line_end_result, last_safe, max_length};
   }
   auto line_result =
       ShapeResultView::Create(UNSAFE_TODO({&segments[0], count}));
@@ -639,7 +639,7 @@ std::unique_ptr<const ShapeResultView> ShapingLineBreaker::ConcatShapeResults(
 // If |start| is safe-to-break, this copies the subset of the result.
 std::unique_ptr<const ShapeResultView> ShapingLineBreaker::ShapeToEnd(
     unsigned start,
-    const std::shared_ptr<const ShapeResult>& line_start_result,
+    const ShapeResult* line_start_result,
     unsigned first_safe,
     unsigned range_start,
     unsigned range_end) {
@@ -664,36 +664,49 @@ std::unique_ptr<const ShapeResultView> ShapingLineBreaker::ShapeToEnd(
 
   // If no safe-to-break offset is found in range, reshape the entire range.
   if (first_safe >= range_end) [[unlikely]] {
-    return ShapeResultView::Create(line_start_result.get(), start, range_end);
+    return ShapeResultView::Create(line_start_result, start, range_end);
   }
 
   // Otherwise reshape to |first_safe|, then copy the rest.
   ShapeResultView::Segment segments[2] = {
-      {line_start_result.get(), 0, std::numeric_limits<unsigned>::max()},
+      {line_start_result, 0, std::numeric_limits<unsigned>::max()},
       {result_, first_safe, range_end}};
   return ShapeResultView::Create(segments);
 }
 
-std::unique_ptr<const ShapeResultView> ShapingLineBreaker::ShapeLineAt(unsigned start,
-                                                                       unsigned end) {
+std::unique_ptr<const ShapeResultView> ShapingLineBreaker::ShapeLineAt(unsigned start, unsigned end) {
+  ShapedRange range = ShapeRangeAt(start, end);
+  return range.reusable ? ShapeResultView::Create(range.reusable, start, end) : std::move(range.reshaped);
+}
+
+ShapingLineBreaker::ShapedRange ShapingLineBreaker::ShapeRangeAt(unsigned start, unsigned end) {
   assert((end) > (start));
+  assert(start >= result_->StartIndex());
+  assert(end <= result_->EndIndex());
+
+  // Avoid position data when the whole result already has the right edges.
+  if (start == result_->StartIndex() && end == result_->EndIndex() &&
+      !(IsStartOfWrappedLine(start) && ShouldTrimStartOfWrappedLine(text_spacing_trim_)) &&
+      result_->IsStartSafeToBreak()) {
+    return {result_, nullptr};
+  }
 
   result_->EnsurePositionData();
   const EdgeOffset first_safe = FirstSafeOffset(start);
   assert((first_safe.offset) >= (start));
-  std::shared_ptr<const ShapeResult> line_start_result = nullptr;
+  std::unique_ptr<const ShapeResult> line_start_result;
   if (first_safe.offset != start) {
     const ShapeOptions options{.is_line_start = true,
                                .han_kerning_start = first_safe.han_kerning};
     if (first_safe.offset >= end) {
       // There is no safe-to-break, reshape the whole range.
-      return ShapeResultView::Create(Shape(start, end, options).get());
+      return {nullptr, ShapeResultView::Create(Shape(start, end, options).get())};
     }
     line_start_result = Shape(start, first_safe.offset, options);
   }
 
   unsigned last_safe;
-  std::shared_ptr<const ShapeResult> line_end_result = nullptr;
+  std::unique_ptr<const ShapeResult> line_end_result;
   if (dont_reshape_end_if_at_space_ && IsBreakableSpace(GetText()[end - 1])) {
     last_safe = end;
   } else {
@@ -704,8 +717,9 @@ std::unique_ptr<const ShapeResultView> ShapingLineBreaker::ShapeLineAt(unsigned 
     }
   }
 
-  return ConcatShapeResults(start, end, first_safe.offset, last_safe,
-                            line_start_result, line_end_result);
+  if (!line_start_result && !line_end_result) return {result_, nullptr};
+  return {nullptr, ConcatShapeResults(start, end, first_safe.offset, last_safe,
+                                     line_start_result.get(), line_end_result.get())};
 }
 
 } // namespace bkit

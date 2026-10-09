@@ -94,6 +94,8 @@ private:
   const InlineObject* block_object_;
   StringBuilder text_;
   Vector<BidiContext> bidi_context_;
+  wtf_size_t collapse_scan_end_ = 0;
+  wtf_size_t last_collapse_item_ = kNotFound;
   bool has_bidi_controls_ = false;
   bool has_unicode_bidi_plain_text_ = false;
   // Preserve collection-time string width; layout later converts to UTF-16.

@@ -1026,13 +1026,13 @@ void HarfBuzzShaper::ShapeSegment(
   }
 }
 
-std::shared_ptr<ShapeResult> HarfBuzzShaper::Shape(const Font* font,
+std::unique_ptr<ShapeResult> HarfBuzzShaper::Shape(const Font* font,
                                                    TextDirection direction,
                                                    unsigned start,
                                                    unsigned end) const {
 
   const unsigned length = end - start;
-  auto result = std::make_shared<ShapeResult>(start, length, direction);
+  auto result = std::make_unique<ShapeResult>(start, length, direction);
   RangeContext range_data(font, direction, start, end);
   if (text_.Is8Bit()) {
     // 8-bit text is guaranteed to be horizontal latin-1.
@@ -1070,7 +1070,7 @@ std::shared_ptr<ShapeResult> HarfBuzzShaper::Shape(const Font* font,
   return result;
 }
 
-std::shared_ptr<ShapeResult> HarfBuzzShaper::Shape(
+std::unique_ptr<ShapeResult> HarfBuzzShaper::Shape(
     const Font* font,
     TextDirection direction,
     unsigned start,
@@ -1081,7 +1081,7 @@ std::shared_ptr<ShapeResult> HarfBuzzShaper::Shape(
                std::span<const RunSegmenter::RunSegmenterRange>(ranges.data(), ranges.size()), options);
 }
 
-std::shared_ptr<ShapeResult> HarfBuzzShaper::Shape(
+std::unique_ptr<ShapeResult> HarfBuzzShaper::Shape(
     const Font* font,
     TextDirection direction,
     unsigned start,
@@ -1090,7 +1090,7 @@ std::shared_ptr<ShapeResult> HarfBuzzShaper::Shape(
     ShapeOptions options) const {
 
   const unsigned length = end - start;
-  auto result = std::make_shared<ShapeResult>(start, length, direction);
+  auto result = std::make_unique<ShapeResult>(start, length, direction);
   RangeContext range_data(font, direction, start, end, options);
   for (RunSegmenter::RunSegmenterRange segment : ranges) {
     // InlineItemSegments::Ranges() clips before shaping. Do the same for a
@@ -1103,7 +1103,7 @@ std::shared_ptr<ShapeResult> HarfBuzzShaper::Shape(
   return result;
 }
 
-std::shared_ptr<ShapeResult> HarfBuzzShaper::Shape(
+std::unique_ptr<ShapeResult> HarfBuzzShaper::Shape(
     const Font* font,
     TextDirection direction,
     unsigned start,
@@ -1112,14 +1112,14 @@ std::shared_ptr<ShapeResult> HarfBuzzShaper::Shape(
     ShapeOptions options) const {
 
   const unsigned length = end - start;
-  auto result = std::make_shared<ShapeResult>(start, length, direction);
+  auto result = std::make_unique<ShapeResult>(start, length, direction);
   RangeContext range_data(font, direction, start, end, options);
   ShapeSegment(&range_data, pre_segmented, result.get());
 
   return result;
 }
 
-std::shared_ptr<ShapeResult> HarfBuzzShaper::Shape(const Font* font,
+std::unique_ptr<ShapeResult> HarfBuzzShaper::Shape(const Font* font,
                                                    TextDirection direction) const {
   return Shape(font, direction, 0, text_.length());
 }

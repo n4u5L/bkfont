@@ -37,7 +37,7 @@ std::shared_ptr<const ShapeResult> CachingWordShapeIterator::ShapeWord(const Tex
     return result;
   }
 
-  std::shared_ptr<ShapeResult> spacing_result = result->ApplySpacingToCopy(spacing_, word_run);
+  auto spacing_result = result->ApplySpacingToCopy(spacing_, word_run);
   RectF ink_bounds = spacing_result->ComputeInkBounds();
 
   // Return bounds as is because glyph bounding box is in logical space.

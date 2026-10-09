@@ -129,12 +129,31 @@ void FragmentItems::DirtyTextRange(const InlineObject& object, unsigned offset) 
   }
   const unsigned text_offset = *mapped;
   size_t dirty = items_.size();
-  for (size_t i = 0; i < items_.size(); ++i) {
-    const auto& item = items_[i];
-    if (item.object_ && (item.object_ == &object || (object.IsInline() && item.object_->IsDescendantOf(object))) &&
-        item.text_offset_.end >= text_offset) {
-      dirty = item.line_index_;
-      break;
+  if (!object.IsInline()) {
+    // InlineCursor::MoveTo()/MoveToNextForSameLayoutObject(): this chain has
+    // the same visual order as items_, including generated hyphens. A local
+    // text edit need not inspect every other object's fragments first.
+    if (size_t index = FirstInlineFragmentItemIndex(object)) {
+      --index;
+      for (;;) {
+        const auto& item = items_[index];
+        if (item.text_offset_.end >= text_offset) {
+          dirty = item.line_index_;
+          break;
+        }
+        if (!item.delta_to_next_) break;
+        index += item.delta_to_next_;
+      }
+    }
+  } else {
+    // Culled inline containers have no own chain; include their descendants.
+    for (size_t i = 0; i < items_.size(); ++i) {
+      const auto& item = items_[i];
+      if (item.object_ && (item.object_ == &object || item.object_->IsDescendantOf(object)) &&
+          item.text_offset_.end >= text_offset) {
+        dirty = item.line_index_;
+        break;
+      }
     }
   }
   if (dirty == items_.size()) {

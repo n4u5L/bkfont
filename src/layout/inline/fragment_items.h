@@ -16,6 +16,7 @@
 #include "layout/inline/offset_mapping.h"
 #include "shaping/run_segmenter.h"
 #include "shaping/shape_options.h"
+#include "shaping/shape_result.h"
 
 namespace bkit {
 
@@ -65,7 +66,7 @@ struct InlineItemRun {
   UBiDiLevel level;
   std::shared_ptr<const ComputedStyle> style;
   const InlineObject* object;
-  std::shared_ptr<ShapeResult> shape;
+  std::unique_ptr<ShapeResult> shape;
   bool control;
   // InlineItem::IsUnsafeToReuseShapeResult(): `shape` was changed after
   // shaping (text-autospace), so a text edit must not reuse it.
@@ -124,17 +125,19 @@ private:
   // Shared with later layouts that reuse the collected items, as
   // InlineNodeData keeps its OffsetMapping.
   std::shared_ptr<const OffsetMapping> mapping_;
-  // Script/orientation/fallback segmentation is context dependent, even when
-  // the text and bidi level before an edit are unchanged.
-  Vector<uint32_t> shaping_context_;
-  // InlineItemSegments: shared by initial shaping and line-edge reshaping.
+  // Blink retains 8-bit storage unless bidi/script analysis widens it. Keep
+  // that width before this adapter normalizes every buffer to UTF-16, so edit
+  // reuse chooses the same shaping context window as InlineNodeDataEditor.
+  bool is_8bit_text_ = false;
+  // InlineItemSegments: shared by initial shaping, line-edge reshaping and
+  // edit reuse checks. Script/orientation/fallback can change after an edit
+  // even when the text and bidi level of a candidate range stay unchanged.
   // Most paragraphs need only one script/fallback/orientation segment.
   Vector<RunSegmenter::RunSegmenterRange, 1> segments_;
   // InlineNodeData equivalent. The next layout reuses the collected runs,
-  // their shape results and the bidi levels unless NeedsCollectInlines().
+  // their shape results and run-level bidi data unless NeedsCollectInlines().
   HeapVector<InlineItem> inline_items_;
   HeapVector<InlineItemRun> runs_;
-  Vector<UBiDiLevel> levels_;
   PhysicalSize physical_size_;
   WritingMode writing_mode_ = WritingMode::kHorizontalTb;
   // LayoutTextCombine boxes by the object whose text they combine.

@@ -20,8 +20,9 @@ namespace rich_text {
 
 // The PieceTree is authoritative. InlineObjects are disposable layout adapters;
 // only their stable IDs are kept when mapping back to document offsets.
-// Paragraphs follow the document's edits: an edit rebuilds the paragraphs it
-// touched and moves the rest, without rescanning the text.
+// Paragraphs follow the document's edits: refresh the paragraphs they touch
+// and update subsequent positions only while they differ, without rescanning
+// the remaining text.
 class DocumentView {
 public:
   // One text node per run of pieces with the same character style, so that
@@ -82,11 +83,12 @@ public:
 
 private:
   void Build(Block&, const Document&, bkit::wtf_size_t paragraph, uint32_t start, float device_scale, float zoom);
-  // Edits the text of a built paragraph in place when its paragraph style
-  // and the styles of its runs are unchanged, so that layout reshapes only
-  // the changed text. Returns false when the paragraph needs Build().
+  void SetParagraphStyle(Block&, const Document&, bkit::wtf_size_t paragraph);
+  // Reconcile style-run splits and merges in the existing paragraph tree.
+  // Retain unaffected nodes and replace only the changed middle of text nodes.
+  // Returns false only when no paragraph context has been built yet.
   bool Refresh(Block&, const Document&, bkit::wtf_size_t paragraph, uint32_t start);
-  void Measure(Block&);
+  void Measure(Block&, bool text_changed);
   bkit::wtf_size_t BlockIndex(uint32_t offset) const;
   bool IsSpace(uint32_t offset) const;
   void DamageRows(float top, float bottom);
